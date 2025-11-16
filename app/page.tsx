@@ -1,0 +1,594 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
+import {
+  Plus,
+  Trash2,
+  Layout,
+  Monitor,
+  Video,
+  Sparkles,
+  Grid2x2,
+  Grid3x3,
+  Columns2,
+  Columns3,
+  Square,
+  Youtube,
+  Twitch as TwitchIcon,
+  Volume2,
+  VolumeX,
+  Headphones,
+  Copy,
+  ExternalLink,
+} from 'lucide-react';
+
+// Types
+type Platform = 'twitch' | 'youtube' | 'kick';
+
+interface Stream {
+  id: string;
+  url: string;
+  platform: Platform;
+  title?: string;
+  isMuted: boolean;
+}
+
+type LayoutType = '1x1' | '2x1' | '2x2' | '3x1' | '3x2';
+
+// Platform Detection
+const detectPlatform = (url: string): Platform | null => {
+  if (url.includes('twitch.tv')) return 'twitch';
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+  if (url.includes('kick.com')) return 'kick';
+  return null;
+};
+
+const getPlatformEmbed = (url: string, platform: Platform, isMuted: boolean = false): string => {
+  switch (platform) {
+    case 'twitch':
+      const twitchChannel = url.split('twitch.tv/')[1]?.split('/')[0];
+      return `https://player.twitch.tv/?channel=${twitchChannel}&parent=${window.location.hostname}&muted=${isMuted}`;
+    case 'youtube':
+      const videoId = url.includes('youtu.be')
+        ? url.split('youtu.be/')[1]?.split('?')[0]
+        : url.split('v=')[1]?.split('&')[0];
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${isMuted ? '1' : '0'}`;
+    case 'kick':
+      const kickChannel = url.split('kick.com/')[1]?.split('/')[0];
+      return `https://player.kick.com/${kickChannel}${isMuted ? '?muted=true' : ''}`;
+    default:
+      return url;
+  }
+};
+
+const getPlatformColor = (platform: Platform): string => {
+  switch (platform) {
+    case 'twitch': return 'from-purple-500 to-purple-600';
+    case 'youtube': return 'from-red-500 to-red-600';
+    case 'kick': return 'from-green-500 to-green-600';
+  }
+};
+
+const getPlatformIcon = (platform: Platform) => {
+  switch (platform) {
+    case 'twitch': return <TwitchIcon className="w-3.5 h-3.5" />;
+    case 'youtube': return <Youtube className="w-3.5 h-3.5" />;
+    case 'kick': return <Video className="w-3.5 h-3.5" />;
+  }
+};
+
+// Layout Configurations
+const layoutConfigs = {
+  '1x1': { icon: Square, label: '1×1', cols: 1 },
+  '2x1': { icon: Columns2, label: '2×1', cols: 2 },
+  '2x2': { icon: Grid2x2, label: '2×2', cols: 2 },
+  '3x1': { icon: Columns3, label: '3×1', cols: 3 },
+  '3x2': { icon: Grid3x3, label: '3×2', cols: 3 },
+};
+
+const STORAGE_KEY = 'multistream-data';
+
+export default function HomePage() {
+  const [streams, setStreams] = useState<Stream[]>([]);
+  const [inputUrl, setInputUrl] = useState('');
+  const [layout, setLayout] = useState<LayoutType>('2x2');
+  const [hoveringStream, setHoveringStream] = useState<string | null>(null);
+  const [unmutingProgress, setUnmutingProgress] = useState<Record<string, number>>({});
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        setStreams(data.streams || []);
+        setLayout(data.layout || '2x2');
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+    }
+  }, []);
+
+  // Save to localStorage whenever streams or layout changes
+  useEffect(() => {
+    try {
+      const data = {
+        streams,
+        layout,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  }, [streams, layout]);
+
+  const addStream = () => {
+    if (!inputUrl.trim()) return;
+
+    const platform = detectPlatform(inputUrl);
+    if (!platform) {
+      alert('URL inválida! Use Twitch, YouTube ou Kick.');
+      return;
+    }
+
+    const newStream: Stream = {
+      id: Date.now().toString(),
+      url: inputUrl,
+      platform,
+      isMuted: streams.length > 0, // Mute all streams after the first one
+    };
+
+    setStreams([...streams, newStream]);
+    setInputUrl('');
+  };
+
+  const toggleMute = (id: string) => {
+    setStreams(streams.map(s =>
+      s.id === id ? { ...s, isMuted: !s.isMuted } : s
+    ));
+  };
+
+  const handleStreamHover = (id: string, isHovering: boolean) => {
+    if (!isHovering) {
+      setHoveringStream(null);
+      setUnmutingProgress(prev => ({ ...prev, [id]: 0 }));
+      return;
+    }
+
+    const stream = streams.find(s => s.id === id);
+    if (!stream?.isMuted) return;
+
+    setHoveringStream(id);
+
+    // Start progress animation
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 2;
+      setUnmutingProgress(prev => ({ ...prev, [id]: progress }));
+
+      if (progress >= 100) {
+        clearInterval(interval);
+        toggleMute(id);
+        setHoveringStream(null);
+        setUnmutingProgress(prev => ({ ...prev, [id]: 0 }));
+      }
+    }, 20); // 100 updates over 2 seconds (2000ms / 20ms = 100 steps)
+  };
+
+  const removeStream = (id: string) => {
+    setStreams(streams.filter(s => s.id !== id));
+  };
+
+  const soloAudio = (id: string) => {
+    setStreams(streams.map(s => ({
+      ...s,
+      isMuted: s.id !== id, // Mute all except the selected one
+    })));
+  };
+
+  const handleStreamClick = (id: string) => {
+    soloAudio(id);
+  };
+
+  const copyStreamUrl = (url: string) => {
+    navigator.clipboard.writeText(url);
+  };
+
+  const openInNewTab = (url: string) => {
+    window.open(url, '_blank');
+  };
+
+  return (
+    <div className="flex min-h-screen bg-[hsl(var(--background))] animate-fade-in">
+      {/* Sidebar */}
+      <aside className="sidebar animate-slide-up">
+        {/* Header */}
+        <div className="flex items-center gap-3 animate-scale-in">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold gradient-text">Multistream</h1>
+            <p className="text-xs text-[hsl(var(--subtle-foreground))]">Watch multiple streams</p>
+          </div>
+        </div>
+
+        <Separator className="bg-[hsl(var(--border))]" />
+
+        {/* Add Stream Section */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <Plus className="w-4 h-4 text-[hsl(var(--primary))]" />
+            <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Add Stream</h2>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <Input
+              type="text"
+              placeholder="Paste stream URL..."
+              value={inputUrl}
+              onChange={(e) => setInputUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addStream()}
+              className="focus-ring bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] text-sm h-11"
+            />
+
+            <Button
+              onClick={addStream}
+              className="gradient-button h-11 text-sm font-medium relative z-10"
+              disabled={!inputUrl.trim()}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Stream
+            </Button>
+
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline" className="text-xs bg-purple-500/10 border-purple-500/20 text-purple-400">
+                <TwitchIcon className="w-3 h-3 mr-1" />
+                Twitch
+              </Badge>
+              <Badge variant="outline" className="text-xs bg-red-500/10 border-red-500/20 text-red-400">
+                <Youtube className="w-3 h-3 mr-1" />
+                YouTube
+              </Badge>
+              <Badge variant="outline" className="text-xs bg-green-500/10 border-green-500/20 text-green-400">
+                <Video className="w-3 h-3 mr-1" />
+                Kick
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        <Separator className="bg-[hsl(var(--border))]" />
+
+        {/* Layout Selection */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <Layout className="w-4 h-4 text-[hsl(var(--primary))]" />
+            <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Layout</h2>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {(Object.keys(layoutConfigs) as LayoutType[]).map((layoutType) => {
+              const config = layoutConfigs[layoutType];
+              const Icon = config.icon;
+              const isActive = layout === layoutType;
+
+              return (
+                <Button
+                  key={layoutType}
+                  variant={isActive ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setLayout(layoutType)}
+                  className={`h-16 flex flex-col gap-1.5 transition-all ${
+                    isActive
+                      ? 'bg-gradient-to-br from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] text-white border-0 shadow-lg shadow-purple-500/30'
+                      : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`} />
+                  <span className={`text-xs font-medium ${isActive ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                    {config.label}
+                  </span>
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+
+        <Separator className="bg-[hsl(var(--border))]" />
+
+        {/* Active Streams List */}
+        <div className="flex flex-col gap-4 flex-1 min-h-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Monitor className="w-4 h-4 text-[hsl(var(--primary))]" />
+              <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Active Streams</h2>
+            </div>
+            <Badge variant="secondary" className="bg-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] border-0 text-xs font-bold">
+              {streams.length}
+            </Badge>
+          </div>
+
+          <div className="flex flex-col gap-2 overflow-y-auto pr-1">
+            {streams.length === 0 ? (
+              <div className="text-center py-8 px-4">
+                <div className="w-12 h-12 rounded-full bg-[hsl(var(--surface-elevated))] flex items-center justify-center mx-auto mb-3">
+                  <Monitor className="w-6 h-6 text-[hsl(var(--subtle-foreground))]" />
+                </div>
+                <p className="text-xs text-[hsl(var(--subtle-foreground))]">No streams yet</p>
+              </div>
+            ) : (
+              streams.map((stream, index) => (
+                <div
+                  key={stream.id}
+                  className="glass-card p-3 group animate-scale-in"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${getPlatformColor(stream.platform)} flex items-center justify-center shadow-sm`}>
+                          {getPlatformIcon(stream.platform)}
+                        </div>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-[hsl(var(--border))]">
+                          {stream.platform}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
+                        {stream.url}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => removeStream(stream.id)}
+                      className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="pt-4 border-t border-[hsl(var(--border))]">
+          <p className="text-[10px] text-[hsl(var(--subtle-foreground))] text-center">
+            Built with Next.js & Shadcn UI
+          </p>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
+        <div className="max-w-[1800px] mx-auto">
+          {/* Header */}
+          <div className="mb-8 lg:mb-12 animate-slide-up">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-2 h-8 bg-gradient-to-b from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] rounded-full" />
+              <h1 className="text-3xl lg:text-4xl font-bold text-[hsl(var(--foreground))]">
+                Your Streams
+              </h1>
+            </div>
+            <p className="text-sm text-[hsl(var(--muted-foreground))] ml-5">
+              Watch multiple streams simultaneously in perfect harmony
+            </p>
+          </div>
+
+          {/* Stream Grid */}
+          {streams.length === 0 ? (
+            <div className="empty-state glass-card animate-scale-in min-h-[500px]">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] flex items-center justify-center mb-6 shadow-lg shadow-purple-500/30">
+                <Video className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-3">
+                Ready to start watching?
+              </h2>
+              <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-md mb-8">
+                Add your first stream using the sidebar. Paste a Twitch, YouTube, or Kick URL to get started.
+              </p>
+              <div className="flex flex-col gap-3 text-left max-w-sm">
+                <div className="flex items-start gap-3 text-sm">
+                  <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-purple-400">1</span>
+                  </div>
+                  <p className="text-[hsl(var(--muted-foreground))]">
+                    Copy a stream URL from your favorite platform
+                  </p>
+                </div>
+                <div className="flex items-start gap-3 text-sm">
+                  <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-purple-400">2</span>
+                  </div>
+                  <p className="text-[hsl(var(--muted-foreground))]">
+                    Paste it in the sidebar and click "Add Stream"
+                  </p>
+                </div>
+                <div className="flex items-start gap-3 text-sm">
+                  <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-purple-400">3</span>
+                  </div>
+                  <p className="text-[hsl(var(--muted-foreground))]">
+                    Choose your layout and enjoy multiple streams at once
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`layout-grid-${layout} animate-fade-in`}
+              style={{ gridTemplateColumns: `repeat(${layoutConfigs[layout].cols}, minmax(0, 1fr))` }}
+            >
+              {streams.map((stream, index) => {
+                const progress = unmutingProgress[stream.id] || 0;
+                const isHovering = hoveringStream === stream.id;
+
+                return (
+                  <ContextMenu key={stream.id}>
+                    <ContextMenuTrigger asChild>
+                      <div
+                        className="stream-container animate-scale-in group cursor-pointer"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                        onMouseEnter={() => handleStreamHover(stream.id, true)}
+                        onMouseLeave={() => handleStreamHover(stream.id, false)}
+                        onClick={() => handleStreamClick(stream.id)}
+                      >
+                        <iframe
+                          key={`${stream.id}-${stream.isMuted}`}
+                          src={getPlatformEmbed(stream.url, stream.platform, stream.isMuted)}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allowFullScreen
+                          allow="autoplay; encrypted-media; picture-in-picture"
+                        />
+
+                        {/* Stream Overlay */}
+                        <div className="absolute top-3 left-3 flex items-center gap-2">
+                          <div className={`px-2.5 py-1.5 rounded-lg bg-gradient-to-br ${getPlatformColor(stream.platform)} backdrop-blur-xl shadow-lg flex items-center gap-2`}>
+                            {getPlatformIcon(stream.platform)}
+                            <span className="text-xs font-semibold text-white capitalize">
+                              {stream.platform}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Audio Control Overlay */}
+                        {stream.isMuted && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+                            <div className="relative flex items-center justify-center">
+                              {/* Circular Progress */}
+                              <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+                                {/* Background circle */}
+                                <circle
+                                  cx="50"
+                                  cy="50"
+                                  r="45"
+                                  fill="none"
+                                  stroke="hsl(var(--border))"
+                                  strokeWidth="4"
+                                />
+                                {/* Progress circle */}
+                                <circle
+                                  cx="50"
+                                  cy="50"
+                                  r="45"
+                                  fill="none"
+                                  stroke="hsl(var(--primary))"
+                                  strokeWidth="4"
+                                  strokeDasharray={`${2 * Math.PI * 45}`}
+                                  strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
+                                  strokeLinecap="round"
+                                  className="transition-all duration-75 ease-linear"
+                                  style={{
+                                    filter: 'drop-shadow(0 0 8px hsl(var(--primary)))'
+                                  }}
+                                />
+                              </svg>
+
+                              {/* Icon in center */}
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] flex items-center justify-center shadow-lg shadow-purple-500/50">
+                                  <VolumeX className="w-8 h-8 text-white" />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Text hint */}
+                            <div className="absolute bottom-8 left-0 right-0 text-center">
+                              <p className="text-sm font-medium text-white drop-shadow-lg">
+                                Hold to unmute
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Unmuted indicator */}
+                        {!stream.isMuted && (
+                          <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleMute(stream.id);
+                              }}
+                              className="w-10 h-10 rounded-full bg-gradient-to-br from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] flex items-center justify-center shadow-lg shadow-purple-500/50 hover:scale-110 transition-transform"
+                            >
+                              <Volume2 className="w-5 h-5 text-white" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </ContextMenuTrigger>
+
+                    <ContextMenuContent className="w-56 glass-card border-[hsl(var(--border))]">
+                      <ContextMenuItem
+                        onClick={() => soloAudio(stream.id)}
+                        className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
+                      >
+                        <Headphones className="w-4 h-4 text-[hsl(var(--primary))]" />
+                        <span>Solo Audio</span>
+                      </ContextMenuItem>
+
+                      <ContextMenuItem
+                        onClick={() => toggleMute(stream.id)}
+                        className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
+                      >
+                        {stream.isMuted ? (
+                          <Volume2 className="w-4 h-4 text-[hsl(var(--primary))]" />
+                        ) : (
+                          <VolumeX className="w-4 h-4 text-[hsl(var(--primary))]" />
+                        )}
+                        <span>{stream.isMuted ? 'Unmute' : 'Mute'}</span>
+                      </ContextMenuItem>
+
+                      <ContextMenuSeparator className="bg-[hsl(var(--border))]" />
+
+                      <ContextMenuItem
+                        onClick={() => copyStreamUrl(stream.url)}
+                        className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
+                      >
+                        <Copy className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                        <span>Copy URL</span>
+                      </ContextMenuItem>
+
+                      <ContextMenuItem
+                        onClick={() => openInNewTab(stream.url)}
+                        className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
+                      >
+                        <ExternalLink className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                        <span>Open in New Tab</span>
+                      </ContextMenuItem>
+
+                      <ContextMenuSeparator className="bg-[hsl(var(--border))]" />
+
+                      <ContextMenuItem
+                        onClick={() => removeStream(stream.id)}
+                        className="flex items-center gap-2 cursor-pointer text-red-400 focus:bg-red-500/10 focus:text-red-400"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Remove Stream</span>
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}

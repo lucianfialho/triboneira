@@ -1,0 +1,310 @@
+@import "tailwindcss";
+
+/* Design System - Global Styles */
+/* Based on: Spotify, Discord, Linear, Twitch */
+/* Scale: 4pt/8pt grid system */
+
+@layer base {
+  /* CSS Variables - Design Tokens */
+  :root {
+    /* Color Palette - Dark Theme */
+    --background: 220 15% 6%;           /* Rich dark background */
+    --surface: 220 15% 9%;              /* Elevated surface */
+    --surface-elevated: 220 15% 11%;    /* More elevated surface */
+    --surface-glass: 220 15% 9% / 0.6;  /* Glassmorphism */
+
+    --foreground: 220 10% 98%;          /* Primary text */
+    --muted-foreground: 220 10% 65%;    /* Secondary text */
+    --subtle-foreground: 220 10% 45%;   /* Tertiary text */
+
+    --border: 220 15% 15%;              /* Subtle borders */
+    --border-strong: 220 15% 20%;       /* Strong borders */
+
+    /* Accent Colors - Purple/Pink Gradient */
+    --primary: 270 80% 65%;             /* Purple accent */
+    --primary-foreground: 220 10% 98%;  /* Text on primary */
+    --primary-hover: 270 80% 60%;       /* Purple hover */
+    --secondary: 320 80% 65%;           /* Pink accent */
+    --secondary-foreground: 220 10% 98%; /* Text on secondary */
+    --secondary-hover: 320 80% 60%;     /* Pink hover */
+
+    /* Shadcn UI Variables */
+    --card: 220 15% 9%;
+    --card-foreground: 220 10% 98%;
+    --popover: 220 15% 9%;
+    --popover-foreground: 220 10% 98%;
+    --muted: 220 15% 15%;
+    --accent: 220 15% 15%;
+    --accent-foreground: 220 10% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 220 10% 98%;
+    --input: 220 15% 15%;
+    --ring: 270 80% 65%;
+    --radius: 0.75rem;
+
+    /* Status Colors */
+    --success: 142 71% 45%;             /* Green */
+    --warning: 38 92% 50%;              /* Orange */
+    --error: 0 72% 51%;                 /* Red */
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(270 80% 65%) 0%, hsl(320 80% 65%) 100%);
+    --gradient-glass: linear-gradient(135deg, hsl(220 15% 11% / 0.8) 0%, hsl(220 15% 9% / 0.8) 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+    --shadow-glow: 0 0 20px rgb(139 92 246 / 0.3);
+
+    /* Spacing Scale (4pt/8pt grid) */
+    --space-1: 0.25rem;  /* 4px */
+    --space-2: 0.5rem;   /* 8px */
+    --space-3: 0.75rem;  /* 12px */
+    --space-4: 1rem;     /* 16px */
+    --space-5: 1.25rem;  /* 20px */
+    --space-6: 1.5rem;   /* 24px */
+    --space-8: 2rem;     /* 32px */
+    --space-10: 2.5rem;  /* 40px */
+    --space-12: 3rem;    /* 48px */
+    --space-16: 4rem;    /* 64px */
+    --space-20: 5rem;    /* 80px */
+
+    /* Border Radius */
+    --radius-sm: 0.5rem;   /* 8px */
+    --radius-md: 0.75rem;  /* 12px */
+    --radius-lg: 1rem;     /* 16px */
+    --radius-xl: 1.5rem;   /* 24px */
+
+    /* Typography */
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+    /* Animation Timing */
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 350ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Base Styles */
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))];
+    font-family: var(--font-sans);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Scrollbar Styles */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-[hsl(var(--border-strong))] rounded-full;
+    transition: background-color var(--duration-normal) var(--ease-out);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-[hsl(var(--muted-foreground))];
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-[hsl(var(--primary))] text-white;
+  }
+}
+
+@layer components {
+  /* Glassmorphism Card */
+  .glass-card {
+    @apply backdrop-blur-xl bg-gradient-to-br from-[hsl(220_15%_11%_/_0.8)] to-[hsl(220_15%_9%_/_0.8)];
+    @apply border border-[hsl(var(--border))];
+    @apply rounded-[var(--radius-lg)];
+    @apply shadow-[var(--shadow-lg)];
+    transition: all var(--duration-normal) var(--ease-out);
+  }
+
+  .glass-card:hover {
+    @apply border-[hsl(var(--border-strong))];
+    @apply shadow-[var(--shadow-xl)];
+    transform: translateY(-2px);
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)];
+    @apply bg-clip-text text-transparent;
+  }
+
+  /* Gradient Button */
+  .gradient-button {
+    @apply bg-gradient-to-r from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)];
+    @apply text-white font-medium;
+    @apply rounded-[var(--radius-md)];
+    @apply shadow-[var(--shadow-md)];
+    @apply transition-all duration-[var(--duration-normal)];
+    position: relative;
+    overflow: hidden;
+  }
+
+  .gradient-button::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-[hsl(270_80%_70%)] to-[hsl(320_80%_70%)];
+    @apply opacity-0 transition-opacity duration-[var(--duration-normal)];
+  }
+
+  .gradient-button:hover::before {
+    @apply opacity-100;
+  }
+
+  .gradient-button:hover {
+    @apply shadow-[var(--shadow-lg)] shadow-[hsl(270_80%_65%_/_0.4)];
+    transform: translateY(-1px);
+  }
+
+  .gradient-button:active {
+    transform: translateY(0);
+  }
+
+  /* Stream Container */
+  .stream-container {
+    @apply relative overflow-hidden rounded-[var(--radius-lg)];
+    @apply bg-[hsl(var(--surface))];
+    @apply border border-[hsl(var(--border))];
+    aspect-ratio: 16 / 9;
+    transition: all var(--duration-normal) var(--ease-out);
+  }
+
+  .stream-container:hover {
+    @apply border-[hsl(var(--primary))];
+    @apply shadow-[0_0_20px_hsl(270_80%_65%_/_0.3)];
+  }
+
+  /* Empty State */
+  .empty-state {
+    @apply flex flex-col items-center justify-center;
+    @apply text-center p-12;
+    @apply text-[hsl(var(--muted-foreground))];
+  }
+
+  /* Sidebar */
+  .sidebar {
+    @apply flex flex-col gap-6;
+    @apply bg-[hsl(var(--surface))] border-r border-[hsl(var(--border))];
+    @apply p-6;
+    width: 280px;
+    min-height: 100vh;
+  }
+
+  /* Layout Grid */
+  .layout-grid-1x1 {
+    @apply grid grid-cols-1 gap-6;
+  }
+
+  .layout-grid-2x1 {
+    @apply grid grid-cols-2 gap-6;
+  }
+
+  .layout-grid-2x2 {
+    @apply grid grid-cols-2 gap-6;
+  }
+
+  .layout-grid-3x1 {
+    @apply grid grid-cols-3 gap-6;
+  }
+
+  .layout-grid-3x2 {
+    @apply grid grid-cols-3 gap-6;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1024px) {
+    .layout-grid-2x1,
+    .layout-grid-2x2,
+    .layout-grid-3x1,
+    .layout-grid-3x2 {
+      @apply grid-cols-1;
+    }
+
+    .sidebar {
+      width: 100%;
+      min-height: auto;
+      @apply border-r-0 border-b;
+    }
+  }
+}
+
+@layer utilities {
+  /* Spacing Utilities */
+  .space-1 { gap: var(--space-1); }
+  .space-2 { gap: var(--space-2); }
+  .space-3 { gap: var(--space-3); }
+  .space-4 { gap: var(--space-4); }
+  .space-5 { gap: var(--space-5); }
+  .space-6 { gap: var(--space-6); }
+  .space-8 { gap: var(--space-8); }
+
+  /* Animation Utilities */
+  .animate-fade-in {
+    animation: fadeIn var(--duration-normal) var(--ease-out);
+  }
+
+  .animate-slide-up {
+    animation: slideUp var(--duration-normal) var(--ease-out);
+  }
+
+  .animate-scale-in {
+    animation: scaleIn var(--duration-fast) var(--ease-out);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Text Utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Focus Visible */
+  .focus-ring {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))];
+  }
+}
