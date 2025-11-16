@@ -49,6 +49,7 @@ import {
   Maximize2,
   Share2,
   Check,
+  Play,
 } from 'lucide-react';
 
 // Types
@@ -158,6 +159,17 @@ const formatViewerCount = (count: number): string => {
   return count.toString();
 };
 
+interface TopStreamer {
+  id: string;
+  username: string;
+  displayName: string;
+  platform: 'twitch' | 'youtube' | 'kick';
+  avatarUrl: string;
+  currentViewers: number;
+  currentTitle: string;
+  url: string;
+}
+
 export default function HomePage() {
   const commandPaletteRef = useRef<CommandPaletteRef>(null);
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -168,6 +180,9 @@ export default function HomePage() {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [topStreamers, setTopStreamers] = useState<TopStreamer[]>([]);
+  const [loadingTopStreamers, setLoadingTopStreamers] = useState(false);
+  const [selectedStreamers, setSelectedStreamers] = useState<Set<string>>(new Set());
 
   const changeLayout = (newLayout: LayoutType) => {
     amplitude.track('Layout Changed', {
@@ -514,6 +529,82 @@ export default function HomePage() {
     navigator.clipboard.writeText(url);
   };
 
+  // Fetch top streamers when no streams are added
+  useEffect(() => {
+    if (streams.length === 0) {
+      setLoadingTopStreamers(true);
+      fetch('/api/streamers/search')
+        .then(res => res.json())
+        .then(data => {
+          setTopStreamers((data.results || []).slice(0, 6));
+          setLoadingTopStreamers(false);
+        })
+        .catch(error => {
+          console.error('Error fetching top streamers:', error);
+          setLoadingTopStreamers(false);
+        });
+    } else {
+      // Reset selection when streams are added
+      setSelectedStreamers(new Set());
+    }
+  }, [streams.length]);
+
+  const toggleStreamerSelection = (streamerId: string) => {
+    setSelectedStreamers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(streamerId)) {
+        newSet.delete(streamerId);
+      } else {
+        newSet.add(streamerId);
+      }
+      return newSet;
+    });
+  };
+
+  const addSelectedStreamers = () => {
+    const streamersToAdd = topStreamers.filter(s => selectedStreamers.has(s.id));
+
+    // Create all new streams at once
+    const newStreams = streamersToAdd.map((streamer, index) => ({
+      id: Date.now().toString() + '-' + index,
+      url: streamer.url,
+      platform: streamer.platform,
+      isMuted: streams.length > 0 || index > 0, // First one unmuted if no existing streams
+      channelName: streamer.username,
+      viewerCount: streamer.currentViewers,
+      isLive: true,
+    }));
+
+    // Batch update streams state
+    setStreams([...streams, ...newStreams]);
+
+    // Track each stream addition
+    streamersToAdd.forEach((streamer, index) => {
+      amplitude.track('Stream Added', {
+        platform: streamer.platform,
+        streamCount: streams.length + index + 1,
+        channelName: streamer.username,
+        method: 'empty_state_selection',
+        was_live: true,
+        viewers: streamer.currentViewers,
+      });
+    });
+
+    amplitude.track('Multiple Streamers Added from Empty State', {
+      count: streamersToAdd.length,
+      platforms: streamersToAdd.map(s => s.platform),
+    });
+
+    setSelectedStreamers(new Set());
+
+    // Show share modal when adding streams (if we now have 2+ total)
+    if (streams.length === 0 && streamersToAdd.length >= 2) {
+      setTimeout(() => setShowShareModal(true), 500);
+    } else if (streams.length === 1 && streamersToAdd.length >= 1) {
+      setTimeout(() => setShowShareModal(true), 500);
+    }
+  };
+
   const openInNewTab = (url: string) => {
     window.open(url, '_blank');
   };
@@ -637,6 +728,92 @@ export default function HomePage() {
             )}
           </div>
         </div>
+
+        {/* Top Live Streams - só mostra quando não há streams adicionados */}
+        {streams.length === 0 && (
+          <>
+            <Separator className="bg-[hsl(var(--border))]" />
+
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-1">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Top Lives</h2>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  {topStreamers.length}
+                </Badge>
+              </div>
+
+              {loadingTopStreamers ? (
+                <div className="flex flex-col gap-2">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="glass-card p-3 animate-pulse">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-[hsl(var(--border))]" />
+                        <div className="flex-1">
+                          <div className="h-4 bg-[hsl(var(--border))] rounded w-3/4 mb-2" />
+                          <div className="h-3 bg-[hsl(var(--border))] rounded w-1/2" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+                  {topStreamers.map((streamer) => (
+                    <button
+                      key={streamer.id}
+                      onClick={() => {
+                        addStreamFromCommandPalette(streamer);
+                        amplitude.track('Top Streamer Selected', {
+                          platform: streamer.platform,
+                          username: streamer.username,
+                          viewers: streamer.currentViewers,
+                        });
+                      }}
+                      className="glass-card p-3 hover:bg-[hsl(var(--surface-elevated))] transition-all duration-200 text-left group cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <Image
+                            src={streamer.avatarUrl}
+                            alt={streamer.displayName}
+                            width={40}
+                            height={40}
+                            className="rounded-lg object-cover"
+                            unoptimized
+                          />
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[hsl(var(--surface-elevated))] flex items-center justify-center border-2 border-[hsl(var(--background))]">
+                            {streamer.platform === 'twitch' && <TwitchIcon className="w-3 h-3 text-purple-400" />}
+                            {streamer.platform === 'youtube' && <Youtube className="w-3 h-3 text-red-400" />}
+                            {streamer.platform === 'kick' && <Video className="w-3 h-3 text-green-400" />}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-[hsl(var(--foreground))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
+                              {streamer.displayName}
+                            </p>
+                          </div>
+                          <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
+                            {streamer.currentTitle || 'Live agora'}
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Eye className="w-3 h-3 text-red-500" />
+                            <span className="text-xs font-medium text-red-500">
+                              {formatViewerCount(streamer.currentViewers)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         <Separator className="bg-[hsl(var(--border))]" />
 
@@ -806,15 +983,126 @@ export default function HomePage() {
                 Pronto para assistir?
               </h2>
               <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-md mb-8">
-                Adicione sua primeira stream usando a sidebar. Cole uma URL da Twitch, YouTube ou Kick para começar.
+                Escolha uma das opções abaixo para começar a assistir suas lives favoritas
               </p>
+
+              {/* Top 3 Lives Preview */}
+              <div className="mb-8 w-full max-w-md">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">Top Lives Agora</h3>
+                  <Badge variant="outline" className="text-xs ml-auto">
+                    {loadingTopStreamers ? 'Carregando...' : selectedStreamers.size > 0 ? `${selectedStreamers.size} selecionado${selectedStreamers.size > 1 ? 's' : ''}` : 'Selecione para assistir'}
+                  </Badge>
+                </div>
+                <div className="flex gap-4 justify-center mb-4">
+                  {loadingTopStreamers ? (
+                    // Skeleton loading state
+                    <>
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex flex-col items-center gap-2 animate-pulse">
+                          <div className="relative">
+                            <div className="w-20 h-20 rounded-xl bg-[hsl(var(--border))] animate-pulse" />
+                            <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[hsl(var(--border))]" />
+                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[hsl(var(--border))] w-12 h-4" />
+                          </div>
+                          <div className="w-16 h-3 bg-[hsl(var(--border))] rounded" />
+                        </div>
+                      ))}
+                    </>
+                  ) : topStreamers.length > 0 ? (
+                    topStreamers.slice(0, 3).map((streamer, index) => {
+                      const isSelected = selectedStreamers.has(streamer.id);
+                      return (
+                        <button
+                          key={streamer.id}
+                          onClick={() => {
+                            toggleStreamerSelection(streamer.id);
+                            amplitude.track('Empty State Streamer Toggled', {
+                              platform: streamer.platform,
+                              username: streamer.username,
+                              selected: !isSelected,
+                              position: index + 1,
+                            });
+                          }}
+                          className={`group flex flex-col items-center gap-2 transition-all duration-200 hover:scale-105 active:scale-95 ${
+                            isSelected ? 'scale-105' : ''
+                          }`}
+                        >
+                          <div className="relative">
+                            <div className={`w-20 h-20 rounded-xl overflow-hidden ring-2 transition-all shadow-lg ${
+                              isSelected
+                                ? 'ring-[hsl(var(--primary))] ring-4'
+                                : 'ring-[hsl(var(--border))] group-hover:ring-[hsl(var(--primary))]'
+                            }`}>
+                              <Image
+                                src={streamer.avatarUrl}
+                                alt={streamer.displayName}
+                                width={80}
+                                height={80}
+                                className={`object-cover w-full h-full transition-all ${
+                                  isSelected ? 'brightness-90' : 'group-hover:brightness-95'
+                                }`}
+                                unoptimized
+                              />
+                            </div>
+                            {/* Checkbox indicator */}
+                            <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center border-2 shadow-lg transition-all ${
+                              isSelected
+                                ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))] scale-100'
+                                : 'bg-[hsl(var(--background))] border-[hsl(var(--border))] scale-0 group-hover:scale-100'
+                            }`}>
+                              {isSelected && <Check className="w-3 h-3 text-white" />}
+                            </div>
+                            <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[hsl(var(--background))] flex items-center justify-center border-2 border-[hsl(var(--border))] shadow-sm">
+                              {streamer.platform === 'twitch' && <TwitchIcon className="w-3 h-3 text-purple-400" />}
+                              {streamer.platform === 'youtube' && <Youtube className="w-3 h-3 text-red-400" />}
+                              {streamer.platform === 'kick' && <Video className="w-3 h-3 text-green-400" />}
+                            </div>
+                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-red-500 flex items-center gap-1 shadow-sm">
+                              <Eye className="w-2.5 h-2.5 text-white" />
+                              <span className="text-[10px] font-bold text-white">
+                                {formatViewerCount(streamer.currentViewers)}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <p className={`text-xs font-semibold transition-colors truncate max-w-[80px] ${
+                              isSelected ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))]'
+                            }`}>
+                              {streamer.displayName}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    // Mensagem quando não há streamers disponíveis
+                    <div className="text-center py-4">
+                      <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                        Nenhuma live disponível no momento
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {!loadingTopStreamers && selectedStreamers.size > 0 && (
+                  <Button
+                    onClick={addSelectedStreamers}
+                    className="gradient-button w-full h-11 text-sm font-medium animate-scale-in"
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    Assistir {selectedStreamers.size} {selectedStreamers.size === 1 ? 'Streamer' : 'Streamers'}
+                  </Button>
+                )}
+              </div>
+
               <div className="flex flex-col gap-3 text-left max-w-sm">
                 <div className="flex items-start gap-3 text-sm">
                   <div className="w-6 h-6 rounded-full bg-[hsl(217_91%_60%)]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-[hsl(217_91%_60%)]">1</span>
                   </div>
                   <p className="text-[hsl(var(--muted-foreground))]">
-                    Copy a stream URL from your favorite platform
+                    <span className="font-semibold text-[hsl(var(--foreground))]">Clique nos "Top Lives"</span> acima ou na sidebar para adicionar streamers populares
                   </p>
                 </div>
                 <div className="flex items-start gap-3 text-sm">
@@ -822,7 +1110,7 @@ export default function HomePage() {
                     <span className="text-xs font-bold text-[hsl(217_91%_60%)]">2</span>
                   </div>
                   <p className="text-[hsl(var(--muted-foreground))]">
-                    Paste it in the sidebar and click "Add Stream"
+                    <span className="font-semibold text-[hsl(var(--foreground))]">Use Cmd+K</span> ou clique no input para buscar qualquer streamer (Twitch, YouTube, Kick)
                   </p>
                 </div>
                 <div className="flex items-start gap-3 text-sm">
@@ -830,7 +1118,7 @@ export default function HomePage() {
                     <span className="text-xs font-bold text-[hsl(217_91%_60%)]">3</span>
                   </div>
                   <p className="text-[hsl(var(--muted-foreground))]">
-                    Choose your layout and enjoy multiple streams at once
+                    Ou <span className="font-semibold text-[hsl(var(--foreground))]">cole uma URL</span> diretamente no input e clique em "Add Stream"
                   </p>
                 </div>
               </div>
