@@ -1144,7 +1144,14 @@ export default function HomePage() {
                           key={`${stream.id}-${stream.isMuted}`}
                           src={getPlatformEmbed(stream.url, stream.platform, stream.isMuted)}
                           className="w-full h-full"
-                          style={{ width: '100%', height: '100%', minWidth: '400px', minHeight: '300px' }}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            minWidth: '400px',
+                            minHeight: '300px',
+                            display: 'block',
+                            visibility: 'visible'
+                          }}
                           frameBorder="0"
                           allowFullScreen
                           allow="autoplay; encrypted-media; picture-in-picture"
