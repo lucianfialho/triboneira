@@ -39,6 +39,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Maximize2,
+  Share2,
+  Check,
 } from 'lucide-react';
 
 // Types
@@ -155,6 +157,7 @@ export default function HomePage() {
   const [hoveringStream, setHoveringStream] = useState<string | null>(null);
   const [unmutingProgress, setUnmutingProgress] = useState<Record<string, number>>({});
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   const changeLayout = (newLayout: LayoutType) => {
     amplitude.track('Layout Changed', {
@@ -184,17 +187,98 @@ export default function HomePage() {
     setSidebarVisible(!sidebarVisible);
   };
 
-  // Load from localStorage on mount
+  const shareSetup = () => {
+    if (streams.length === 0) return;
+
+    // Encode streams as URL params
+    const streamsParam = streams.map(s => {
+      const id = s.channelName || s.videoId || encodeURIComponent(s.url);
+      return `${s.platform}:${id}`;
+    }).join(',');
+
+    const url = `${window.location.origin}${window.location.pathname}?streams=${streamsParam}&layout=${layout}`;
+
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+
+    // Track share
+    amplitude.track('Setup Shared', {
+      streamCount: streams.length,
+      layout,
+      platforms: streams.map(s => s.platform),
+    });
+
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Load from URL params or localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const data = JSON.parse(saved);
-        setStreams(data.streams || []);
-        setLayout(data.layout || 'grid');
+      // Check URL params first
+      const params = new URLSearchParams(window.location.search);
+      const streamsParam = params.get('streams');
+      const layoutParam = params.get('layout') as LayoutType;
+
+      if (streamsParam) {
+        // Parse streams from URL
+        const streamDefs = streamsParam.split(',');
+        const loadedStreams: Stream[] = streamDefs.map((def, index) => {
+          const [platform, id] = def.split(':') as [Platform, string];
+
+          let url = '';
+          let channelName: string | undefined;
+          let videoId: string | undefined;
+
+          if (platform === 'twitch') {
+            channelName = id;
+            url = `https://twitch.tv/${id}`;
+          } else if (platform === 'youtube') {
+            videoId = id;
+            url = `https://youtube.com/watch?v=${id}`;
+          } else if (platform === 'kick') {
+            channelName = id;
+            url = `https://kick.com/${id}`;
+          } else if (platform === 'custom') {
+            url = decodeURIComponent(id);
+          }
+
+          return {
+            id: `${Date.now()}-${index}`,
+            url,
+            platform,
+            channelName,
+            videoId,
+            isMuted: index > 0,
+            viewerCount: 0,
+            isLive: false,
+          };
+        });
+
+        setStreams(loadedStreams);
+        if (layoutParam && layoutConfigs[layoutParam]) {
+          setLayout(layoutParam);
+        }
+
+        // Track shared link opened
+        amplitude.track('Shared Setup Opened', {
+          streamCount: loadedStreams.length,
+          layout: layoutParam || 'grid',
+          platforms: loadedStreams.map(s => s.platform),
+        });
+
+        // Clear URL params after loading
+        window.history.replaceState({}, '', window.location.pathname);
+      } else {
+        // Fallback to localStorage
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          setStreams(data.streams || []);
+          setLayout(data.layout || 'grid');
+        }
       }
     } catch (error) {
-      console.error('Error loading from localStorage:', error);
+      console.error('Error loading streams:', error);
     }
   }, []);
 
@@ -604,6 +688,20 @@ export default function HomePage() {
               <h1 className="text-3xl lg:text-4xl font-bold text-[hsl(var(--foreground))]">
                 Suas Streams
               </h1>
+              {/* Share Setup Button */}
+              {streams.length > 0 && (
+                <button
+                  onClick={shareSetup}
+                  className="ml-auto w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
+                  title="Compartilhar setup"
+                >
+                  {copied ? (
+                    <Check className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <Share2 className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
+                  )}
+                </button>
+              )}
             </div>
             <p className="text-sm text-[hsl(var(--muted-foreground))] ml-5">
               Assista múltiplas lives simultaneamente com controle total
