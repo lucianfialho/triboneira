@@ -13,17 +13,56 @@
   border-width: 0;
 }
 
-[cmdk-root] {
+/* Dialog Overlay */
+.command-palette-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 15vh;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
   animation: fadeIn 150ms ease-out;
 }
 
+/* Dialog Content */
+.command-palette-content {
+  position: fixed;
+  top: 15vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  width: 90%;
+  max-width: 640px;
+  max-height: 70vh;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--surface-elevated) / 0.95),
+    hsl(var(--surface) / 0.95)
+  );
+  backdrop-filter: blur(20px);
+  border: 1px solid hsl(var(--border));
+  border-radius: 16px;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  overflow: hidden;
+  animation: scaleIn 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Command wrapper inside dialog */
+.command-palette {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 70vh;
+}
+
+[cmdk-root] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Keep old selectors for backward compatibility */
 [cmdk-overlay] {
   position: fixed;
   inset: 0;

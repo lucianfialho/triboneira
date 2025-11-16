@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
-import { Search, TrendingUp, Twitch as TwitchIcon, Youtube, Video } from 'lucide-react';
+import * as Dialog from '@radix-ui/react-dialog';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
+import { Search, TrendingUp, Twitch as TwitchIcon, Youtube, Video } from 'lucide-react';
 import amplitude from '@/amplitude';
 import './command-palette.css';
 
@@ -118,7 +119,7 @@ export function StreamerCommandPalette({ onSelectStreamer }: Props) {
   const offlineStreamers = streamers.filter(s => !s.isLive);
 
   return (
-    <Command.Dialog
+    <Dialog.Root
       open={open}
       onOpenChange={(newOpen) => {
         setOpen(newOpen);
@@ -130,25 +131,27 @@ export function StreamerCommandPalette({ onSelectStreamer }: Props) {
           });
         }
       }}
-      label="Buscar streamers"
-      className="command-palette"
     >
-      {/* Accessible title for screen readers */}
-      <VisuallyHidden.Root>
-        <h1>Buscar streamers nas plataformas Twitch, YouTube e Kick</h1>
-      </VisuallyHidden.Root>
+      <Dialog.Portal>
+        <Dialog.Overlay className="command-palette-overlay" />
+        <Dialog.Content className="command-palette-content">
+          {/* Accessible title for screen readers */}
+          <VisuallyHidden.Root>
+            <Dialog.Title>Buscar streamers nas plataformas Twitch, YouTube e Kick</Dialog.Title>
+          </VisuallyHidden.Root>
 
-      <div className="command-palette-input-wrapper">
-        <Search className="command-palette-search-icon" />
-        <Command.Input
-          placeholder="Digite o nome do streamer..."
-          value={search}
-          onValueChange={setSearch}
-          className="command-palette-input"
-        />
-      </div>
+          <Command label="Buscar streamers" className="command-palette">
+            <div className="command-palette-input-wrapper">
+              <Search className="command-palette-search-icon" />
+              <Command.Input
+                placeholder="Digite o nome do streamer..."
+                value={search}
+                onValueChange={setSearch}
+                className="command-palette-input"
+              />
+            </div>
 
-      <Command.List className="command-palette-list">
+            <Command.List className="command-palette-list">
         {loading && (
           <div className="command-palette-loading">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[hsl(var(--primary))]"></div>
@@ -273,21 +276,24 @@ export function StreamerCommandPalette({ onSelectStreamer }: Props) {
             <span>Streamers mais assistidos agora</span>
           </div>
         )}
-      </Command.List>
+            </Command.List>
 
-      <div className="command-palette-footer">
-        <div className="flex items-center gap-4 text-xs text-[hsl(var(--subtle-foreground))]">
-          <span className="flex items-center gap-1">
-            <kbd className="command-palette-kbd">↑↓</kbd> navegar
-          </span>
-          <span className="flex items-center gap-1">
-            <kbd className="command-palette-kbd">Enter</kbd> selecionar
-          </span>
-          <span className="flex items-center gap-1">
-            <kbd className="command-palette-kbd">Esc</kbd> fechar
-          </span>
-        </div>
-      </div>
-    </Command.Dialog>
+            <div className="command-palette-footer">
+              <div className="flex items-center gap-4 text-xs text-[hsl(var(--subtle-foreground))]">
+                <span className="flex items-center gap-1">
+                  <kbd className="command-palette-kbd">↑↓</kbd> navegar
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="command-palette-kbd">Enter</kbd> selecionar
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="command-palette-kbd">Esc</kbd> fechar
+                </span>
+              </div>
+            </div>
+          </Command>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
