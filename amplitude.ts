@@ -6,8 +6,9 @@ import { sessionReplayPlugin } from '@amplitude/plugin-session-replay-browser';
 
 function initAmplitude() {
   if (typeof window !== 'undefined') {
+    const apiKey = process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY || 'fa5780b6941718de741c2152390647fe';
     amplitude.add(sessionReplayPlugin());
-    amplitude.init('fa5780b6941718de741c2152390647fe', { autocapture: true });
+    amplitude.init(apiKey, { autocapture: true });
   }
 }
 
