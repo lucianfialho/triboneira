@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { Command } from 'cmdk';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
@@ -22,6 +22,11 @@ interface StreamerResult {
 
 interface Props {
   onSelectStreamer: (streamer: StreamerResult) => void;
+  existingStreams?: Array<{ platform: string; channelName: string }>;
+}
+
+export interface CommandPaletteRef {
+  open: () => void;
 }
 
 const platformIcons = {
@@ -43,11 +48,22 @@ function formatViewers(count: number): string {
   return count.toString();
 }
 
-export function StreamerCommandPalette({ onSelectStreamer }: Props) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [streamers, setStreamers] = useState<StreamerResult[]>([]);
-  const [loading, setLoading] = useState(false);
+export const StreamerCommandPalette = forwardRef<CommandPaletteRef, Props>(
+  function StreamerCommandPalette({ onSelectStreamer, existingStreams = [] }, ref) {
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState('');
+    const [streamers, setStreamers] = useState<StreamerResult[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    // Expose open method via ref
+    useImperativeHandle(ref, () => ({
+      open: () => {
+        setOpen(true);
+        amplitude.track('Command Palette Opened', {
+          trigger: 'input_click',
+        });
+      },
+    }));
 
   // Cmd+K ou Ctrl+K para abrir
   useEffect(() => {
@@ -78,13 +94,24 @@ export function StreamerCommandPalette({ onSelectStreamer }: Props) {
         const query = search.length >= 2 ? `?q=${encodeURIComponent(search)}` : '';
         const response = await fetch(`/api/streamers/search${query}`);
         const data = await response.json();
-        setStreamers(data.results || []);
+
+        // Filtrar streamers que já estão adicionados
+        const filteredResults = (data.results || []).filter((streamer: StreamerResult) => {
+          return !existingStreams.some(
+            existing =>
+              existing.channelName.toLowerCase() === streamer.username.toLowerCase() &&
+              existing.platform === streamer.platform
+          );
+        });
+
+        setStreamers(filteredResults);
 
         if (search.length >= 2) {
           amplitude.track('Streamer Search', {
             query: search,
-            results_count: data.results?.length || 0,
-            has_live_results: data.results?.some((s: StreamerResult) => s.isLive) || false,
+            results_count: filteredResults.length,
+            has_live_results: filteredResults.some((s: StreamerResult) => s.isLive) || false,
+            filtered_count: (data.results?.length || 0) - filteredResults.length,
           });
         }
       } catch (error) {
@@ -98,7 +125,7 @@ export function StreamerCommandPalette({ onSelectStreamer }: Props) {
     // Debounce
     const timer = setTimeout(fetchStreamers, 300);
     return () => clearTimeout(timer);
-  }, [open, search]);
+  }, [open, search, existingStreams]);
 
   const handleSelect = (streamer: StreamerResult) => {
     amplitude.track('Streamer Selected from Command Palette', {
@@ -295,5 +322,6 @@ export function StreamerCommandPalette({ onSelectStreamer }: Props) {
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-  );
-}
+    );
+  }
+);

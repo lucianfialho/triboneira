@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import amplitude from '@/amplitude';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { StreamerCommandPalette } from '@/components/streamer-command-palette';
+import { StreamerCommandPalette, type CommandPaletteRef } from '@/components/streamer-command-palette';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -159,6 +159,7 @@ const formatViewerCount = (count: number): string => {
 };
 
 export default function HomePage() {
+  const commandPaletteRef = useRef<CommandPaletteRef>(null);
   const [streams, setStreams] = useState<Stream[]>([]);
   const [inputUrl, setInputUrl] = useState('');
   const [layout, setLayout] = useState<LayoutType>('grid');
@@ -523,7 +524,14 @@ export default function HomePage() {
   return (
     <>
       {/* Command Palette for adding streamers */}
-      <StreamerCommandPalette onSelectStreamer={addStreamFromCommandPalette} />
+      <StreamerCommandPalette
+        ref={commandPaletteRef}
+        onSelectStreamer={addStreamFromCommandPalette}
+        existingStreams={streams.map(s => ({
+          platform: s.platform,
+          channelName: s.channelName || '',
+        }))}
+      />
 
       <div className="flex min-h-screen bg-[hsl(var(--background))] animate-fade-in relative">
       {/* Sidebar */}
@@ -579,6 +587,7 @@ export default function HomePage() {
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addStream()}
+              onClick={() => commandPaletteRef.current?.open()}
               className="focus-ring bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] text-sm h-11"
             />
 
