@@ -32,6 +32,8 @@ import {
   Headphones,
   Copy,
   ExternalLink,
+  Eye,
+  Users,
 } from 'lucide-react';
 
 // Types
@@ -43,6 +45,10 @@ interface Stream {
   platform: Platform;
   title?: string;
   isMuted: boolean;
+  channelName?: string;
+  videoId?: string;
+  viewerCount?: number;
+  isLive?: boolean;
 }
 
 type LayoutType = '1x1' | '2x1' | '2x2' | '3x1' | '3x2';
@@ -53,6 +59,24 @@ const detectPlatform = (url: string): Platform | null => {
   if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
   if (url.includes('kick.com')) return 'kick';
   return null;
+};
+
+const extractChannelInfo = (url: string, platform: Platform): { channelName?: string; videoId?: string } => {
+  switch (platform) {
+    case 'twitch':
+      const twitchChannel = url.split('twitch.tv/')[1]?.split('/')[0];
+      return { channelName: twitchChannel };
+    case 'youtube':
+      const videoId = url.includes('youtu.be')
+        ? url.split('youtu.be/')[1]?.split('?')[0]
+        : url.split('v=')[1]?.split('&')[0];
+      return { videoId };
+    case 'kick':
+      const kickChannel = url.split('kick.com/')[1]?.split('/')[0];
+      return { channelName: kickChannel };
+    default:
+      return {};
+  }
 };
 
 const getPlatformEmbed = (url: string, platform: Platform, isMuted: boolean = false): string => {
@@ -100,6 +124,17 @@ const layoutConfigs = {
 
 const STORAGE_KEY = 'multistream-data';
 
+// Helper function to format numbers
+const formatViewerCount = (count: number): string => {
+  if (count >= 1000000) {
+    return `${(count / 1000000).toFixed(1)}M`;
+  }
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(1)}K`;
+  }
+  return count.toString();
+};
+
 export default function HomePage() {
   const [streams, setStreams] = useState<Stream[]>([]);
   const [inputUrl, setInputUrl] = useState('');
@@ -134,6 +169,70 @@ export default function HomePage() {
     }
   }, [streams, layout]);
 
+  // Fetch viewer counts periodically
+  useEffect(() => {
+    if (streams.length === 0) return;
+
+    const fetchStreamInfo = async () => {
+      for (const stream of streams) {
+        const identifier = stream.channelName || stream.videoId;
+        if (!identifier) continue;
+
+        try {
+          let data;
+
+          // For Kick, fetch directly from browser to avoid CORS/blocking
+          if (stream.platform === 'kick') {
+            const response = await fetch(`https://kick.com/api/v2/channels/${identifier}`);
+            if (response.ok) {
+              const kickData = await response.json();
+              const livestream = kickData.livestream;
+              data = {
+                viewerCount: livestream?.viewer_count || 0,
+                isLive: !!livestream,
+                title: livestream?.session_title,
+              };
+            } else {
+              data = { viewerCount: 0, isLive: false };
+            }
+          } else {
+            // For Twitch and YouTube, use our API route
+            const response = await fetch(
+              `/api/stream-info?platform=${stream.platform}&identifier=${identifier}`
+            );
+            if (!response.ok) continue;
+            data = await response.json();
+          }
+
+          console.log(`Fetched data for ${stream.platform}/${identifier}:`, data);
+
+          setStreams(prevStreams =>
+            prevStreams.map(s =>
+              s.id === stream.id
+                ? {
+                    ...s,
+                    viewerCount: data.viewerCount,
+                    isLive: data.isLive,
+                    title: data.title || s.title,
+                  }
+                : s
+            )
+          );
+        } catch (error) {
+          console.error('Error fetching stream info:', error);
+        }
+      }
+    };
+
+    // Fetch immediately
+    fetchStreamInfo();
+
+    // Then fetch every 30 seconds
+    const interval = setInterval(fetchStreamInfo, 30000);
+
+    return () => clearInterval(interval);
+  }, [streams.map(s => s.id).join(',')]); // Depend on stream IDs
+
   const addStream = () => {
     if (!inputUrl.trim()) return;
 
@@ -143,11 +242,16 @@ export default function HomePage() {
       return;
     }
 
+    const channelInfo = extractChannelInfo(inputUrl, platform);
+
     const newStream: Stream = {
       id: Date.now().toString(),
       url: inputUrl,
       platform,
       isMuted: streams.length > 0, // Mute all streams after the first one
+      ...channelInfo,
+      viewerCount: 0,
+      isLive: false,
     };
 
     setStreams([...streams, newStream]);
@@ -210,6 +314,9 @@ export default function HomePage() {
     window.open(url, '_blank');
   };
 
+  // Calculate total viewers
+  const totalViewers = streams.reduce((total, stream) => total + (stream.viewerCount || 0), 0);
+
   return (
     <div className="flex min-h-screen bg-[hsl(var(--background))] animate-fade-in">
       {/* Sidebar */}
@@ -224,6 +331,24 @@ export default function HomePage() {
             <p className="text-xs text-[hsl(var(--subtle-foreground))]">Watch multiple streams</p>
           </div>
         </div>
+
+        {/* Total Viewers Counter */}
+        {streams.length > 0 && (
+          <div className="glass-card p-4 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] flex items-center justify-center">
+                  <Users className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">Total Viewers</p>
+                  <p className="text-lg font-bold gradient-text">{formatViewerCount(totalViewers)}</p>
+                </div>
+              </div>
+              <Eye className="w-5 h-5 text-[hsl(var(--primary))]" />
+            </div>
+          </div>
+        )}
 
         <Separator className="bg-[hsl(var(--border))]" />
 
@@ -345,9 +470,15 @@ export default function HomePage() {
                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-[hsl(var(--border))]">
                           {stream.platform}
                         </Badge>
+                        {stream.viewerCount !== undefined && (
+                          <div className="flex items-center gap-1 text-[10px] text-[hsl(var(--primary))]">
+                            <Eye className="w-3 h-3" />
+                            <span className="font-semibold">{formatViewerCount(stream.viewerCount)}</span>
+                          </div>
+                        )}
                       </div>
                       <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
-                        {stream.url}
+                        {stream.channelName || stream.videoId || stream.url}
                       </p>
                     </div>
                     <Button
