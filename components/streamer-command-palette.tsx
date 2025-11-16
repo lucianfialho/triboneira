@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import { Search, TrendingUp, Twitch as TwitchIcon, Youtube, Video } from 'lucide-react';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import amplitude from '@/amplitude';
 import './command-palette.css';
 
@@ -133,9 +134,9 @@ export function StreamerCommandPalette({ onSelectStreamer }: Props) {
       className="command-palette"
     >
       {/* Accessible title for screen readers */}
-      <div className="sr-only" role="heading" aria-level={1}>
-        Buscar streamers nas plataformas Twitch, YouTube e Kick
-      </div>
+      <VisuallyHidden.Root>
+        <h1>Buscar streamers nas plataformas Twitch, YouTube e Kick</h1>
+      </VisuallyHidden.Root>
 
       <div className="command-palette-input-wrapper">
         <Search className="command-palette-search-icon" />
