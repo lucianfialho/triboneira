@@ -56,7 +56,7 @@ interface Stream {
   isLive?: boolean;
 }
 
-type LayoutType = '1x1' | '2x1' | '2x2' | '3x1' | '3x2';
+type LayoutType = 'single' | 'pip' | 'main-side' | 'focused' | 'grid';
 
 // Platform Detection
 const detectPlatform = (url: string): Platform => {
@@ -128,11 +128,11 @@ const getPlatformIcon = (platform: Platform) => {
 
 // Layout Configurations
 const layoutConfigs = {
-  '1x1': { icon: Square, label: '1×1', cols: 1 },
-  '2x1': { icon: Columns2, label: '2×1', cols: 2 },
-  '2x2': { icon: Grid2x2, label: '2×2', cols: 2 },
-  '3x1': { icon: Columns3, label: '3×1', cols: 3 },
-  '3x2': { icon: Grid3x3, label: '3×2', cols: 3 },
+  'single': { icon: Square, label: 'Single', description: '1 stream full' },
+  'pip': { icon: Maximize2, label: 'PiP', description: '1 main + small' },
+  'main-side': { icon: Columns2, label: 'Sidebar', description: '1 main + side' },
+  'focused': { icon: Layout, label: 'Focused', description: '1 large + grid' },
+  'grid': { icon: Grid2x2, label: 'Grid', description: 'Equal grid' },
 };
 
 const STORAGE_KEY = 'multistream-data';
@@ -151,7 +151,7 @@ const formatViewerCount = (count: number): string => {
 export default function HomePage() {
   const [streams, setStreams] = useState<Stream[]>([]);
   const [inputUrl, setInputUrl] = useState('');
-  const [layout, setLayout] = useState<LayoutType>('2x2');
+  const [layout, setLayout] = useState<LayoutType>('grid');
   const [hoveringStream, setHoveringStream] = useState<string | null>(null);
   const [unmutingProgress, setUnmutingProgress] = useState<Record<string, number>>({});
   const [sidebarVisible, setSidebarVisible] = useState(true);
@@ -161,9 +161,21 @@ export default function HomePage() {
       from: layout,
       to: newLayout,
       streamCount: streams.length,
+      layoutDescription: layoutConfigs[newLayout].description,
     });
     setLayout(newLayout);
   };
+
+  // Track initial layout usage on mount
+  useEffect(() => {
+    if (streams.length > 0) {
+      amplitude.track('Layout Viewed', {
+        layout,
+        layoutDescription: layoutConfigs[layout].description,
+        streamCount: streams.length,
+      });
+    }
+  }, [layout, streams.length]);
 
   const toggleSidebar = () => {
     amplitude.track('Sidebar Toggled', {
@@ -179,7 +191,7 @@ export default function HomePage() {
       if (saved) {
         const data = JSON.parse(saved);
         setStreams(data.streams || []);
-        setLayout(data.layout || '2x2');
+        setLayout(data.layout || 'grid');
       }
     } catch (error) {
       console.error('Error loading from localStorage:', error);
@@ -373,7 +385,7 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen bg-[hsl(var(--background))] animate-fade-in relative">
       {/* Sidebar */}
-      <aside className={`sidebar animate-slide-up transition-transform duration-300 ${!sidebarVisible ? '-translate-x-full' : 'translate-x-0'}`}>
+      <aside className={`sidebar animate-slide-up transition-transform duration-300 ${!sidebarVisible ? '-translate-x-full absolute' : 'translate-x-0'}`}>
         {/* Header */}
         <div className="flex items-center gap-3 animate-scale-in">
           <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg relative">
@@ -463,7 +475,7 @@ export default function HomePage() {
             <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Layout</h2>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {(Object.keys(layoutConfigs) as LayoutType[]).map((layoutType) => {
               const config = layoutConfigs[layoutType];
               const Icon = config.icon;
@@ -475,15 +487,19 @@ export default function HomePage() {
                   variant={isActive ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => changeLayout(layoutType)}
-                  className={`h-16 flex flex-col gap-1.5 transition-all ${
+                  className={`h-20 flex flex-col gap-1 transition-all ${
                     isActive
                       ? 'bg-[hsl(217_91%_60%)] text-white border-0 shadow-lg'
                       : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
                   }`}
+                  title={config.description}
                 >
                   <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`} />
                   <span className={`text-xs font-medium ${isActive ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`}>
                     {config.label}
+                  </span>
+                  <span className={`text-[10px] ${isActive ? 'text-white/70' : 'text-[hsl(var(--subtle-foreground))]'}`}>
+                    {config.description}
                   </span>
                 </Button>
               );
@@ -544,7 +560,7 @@ export default function HomePage() {
                       size="sm"
                       variant="ghost"
                       onClick={() => removeStream(stream.id)}
-                      className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
+                      className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -566,21 +582,8 @@ export default function HomePage() {
         </div>
       </aside>
 
-      {/* Toggle Sidebar Button */}
-      <button
-        onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 w-12 h-12 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg hover:scale-110 hover:bg-[hsl(217_91%_55%)] transition-all"
-        title={sidebarVisible ? 'Esconder sidebar' : 'Mostrar sidebar'}
-      >
-        {sidebarVisible ? (
-          <ChevronLeft className="w-6 h-6 text-white" />
-        ) : (
-          <ChevronRight className="w-6 h-6 text-white" />
-        )}
-      </button>
-
       {/* Main Content */}
-      <main className={`flex-1 p-8 lg:p-12 overflow-y-auto transition-all duration-300 ${!sidebarVisible ? 'ml-0' : ''}`}>
+      <main className="flex-1 p-8 lg:p-12 overflow-y-auto transition-all duration-300">
         <div className="max-w-[1800px] mx-auto">
           {/* Header */}
           <div className="mb-8 lg:mb-12 animate-slide-up">
@@ -589,6 +592,18 @@ export default function HomePage() {
               <h1 className="text-3xl lg:text-4xl font-bold text-[hsl(var(--foreground))]">
                 Suas Streams
               </h1>
+              {/* Toggle Sidebar Button */}
+              <button
+                onClick={toggleSidebar}
+                className="ml-auto w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
+                title={sidebarVisible ? 'Esconder sidebar' : 'Mostrar sidebar'}
+              >
+                {sidebarVisible ? (
+                  <ChevronLeft className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
+                )}
+              </button>
             </div>
             <p className="text-sm text-[hsl(var(--muted-foreground))] ml-5">
               Assista múltiplas lives simultaneamente com controle total
@@ -635,10 +650,7 @@ export default function HomePage() {
               </div>
             </div>
           ) : (
-            <div
-              className={`layout-grid-${layout} animate-fade-in`}
-              style={{ gridTemplateColumns: `repeat(${layoutConfigs[layout].cols}, minmax(0, 1fr))` }}
-            >
+            <div className={`layout-${layout} animate-fade-in`}>
               {streams.map((stream, index) => {
                 const progress = unmutingProgress[stream.id] || 0;
                 const isHovering = hoveringStream === stream.id;
@@ -730,7 +742,7 @@ export default function HomePage() {
                                 e.stopPropagation();
                                 toggleMute(stream.id);
                               }}
-                              className="w-10 h-10 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg hover:scale-110 hover:bg-[hsl(217_91%_55%)] transition-transform"
+                              className="w-10 h-10 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg hover:scale-110 hover:bg-[hsl(217_91%_55%)] transition-transform cursor-pointer"
                             >
                               <Volume2 className="w-5 h-5 text-white" />
                             </button>
