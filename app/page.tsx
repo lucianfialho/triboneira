@@ -100,7 +100,7 @@ const getPlatformEmbed = (url: string, platform: Platform, isMuted: boolean = fa
   switch (platform) {
     case 'twitch':
       const twitchChannel = url.split('twitch.tv/')[1]?.split('/')[0];
-      return `https://player.twitch.tv/?channel=${twitchChannel}&parent=${window.location.hostname}&muted=${isMuted}`;
+      return `https://player.twitch.tv/?channel=${twitchChannel}&parent=${window.location.hostname}&autoplay=true&muted=${isMuted}`;
     case 'youtube':
       const videoId = url.includes('youtu.be')
         ? url.split('youtu.be/')[1]?.split('?')[0]
