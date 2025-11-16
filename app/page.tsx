@@ -1135,6 +1135,7 @@ export default function HomePage() {
                     <ContextMenuTrigger asChild>
                       <div
                         className="stream-container group cursor-pointer"
+                        style={{ opacity: 1, visibility: 'visible' }}
                         onMouseEnter={() => handleStreamHover(stream.id, true)}
                         onMouseLeave={() => handleStreamHover(stream.id, false)}
                         onClick={() => handleStreamClick(stream.id)}
