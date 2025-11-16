@@ -132,6 +132,11 @@ export function StreamerCommandPalette({ onSelectStreamer }: Props) {
       label="Buscar streamers"
       className="command-palette"
     >
+      {/* Accessible title for screen readers */}
+      <div className="sr-only" role="heading" aria-level={1}>
+        Buscar streamers nas plataformas Twitch, YouTube e Kick
+      </div>
+
       <div className="command-palette-input-wrapper">
         <Search className="command-palette-search-icon" />
         <Command.Input
