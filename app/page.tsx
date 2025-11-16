@@ -93,7 +93,8 @@ const getPlatformEmbed = (url: string, platform: Platform, isMuted: boolean = fa
       const videoId = url.includes('youtu.be')
         ? url.split('youtu.be/')[1]?.split('?')[0]
         : url.split('v=')[1]?.split('&')[0];
-      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${isMuted ? '1' : '0'}`;
+      // Works for both live streams and regular videos
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${isMuted ? '1' : '0'}&enablejsapi=1`;
     case 'kick':
       const kickChannel = url.split('kick.com/')[1]?.split('/')[0];
       return `https://player.kick.com/${kickChannel}${isMuted ? '?muted=true' : ''}`;
