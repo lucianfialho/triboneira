@@ -1134,8 +1134,7 @@ export default function HomePage() {
                   <ContextMenu key={stream.id}>
                     <ContextMenuTrigger asChild>
                       <div
-                        className="stream-container animate-scale-in group cursor-pointer"
-                        style={{ animationDelay: `${index * 100}ms` }}
+                        className="stream-container group cursor-pointer"
                         onMouseEnter={() => handleStreamHover(stream.id, true)}
                         onMouseLeave={() => handleStreamHover(stream.id, false)}
                         onClick={() => handleStreamClick(stream.id)}
