@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import amplitude from '@/amplitude';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1315,6 +1316,43 @@ export default function HomePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Footer com links legais */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-[hsl(var(--background))]/80 backdrop-blur-sm border-t border-[hsl(var(--border))] z-40">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-[hsl(var(--muted-foreground))]">
+            <span>© 2025 Entrega Newba</span>
+            <span className="text-[hsl(var(--border))]">•</span>
+            <Link
+              href="/about"
+              className="hover:text-[hsl(var(--foreground))] transition-colors"
+            >
+              Sobre
+            </Link>
+            <span className="text-[hsl(var(--border))]">•</span>
+            <Link
+              href="/privacy"
+              className="hover:text-[hsl(var(--foreground))] transition-colors"
+            >
+              Privacidade
+            </Link>
+            <span className="text-[hsl(var(--border))]">•</span>
+            <Link
+              href="/terms"
+              className="hover:text-[hsl(var(--foreground))] transition-colors"
+            >
+              Termos
+            </Link>
+            <span className="text-[hsl(var(--border))]">•</span>
+            <a
+              href="mailto:contato@entreganewba.com.br"
+              className="hover:text-[hsl(var(--foreground))] transition-colors"
+            >
+              Contato
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
     </>
   );

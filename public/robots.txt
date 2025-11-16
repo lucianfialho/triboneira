@@ -1,0 +1,17 @@
+# *
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://entreganewba.com.br/sitemap.xml
+
+# Disallow admin and API routes
+Disallow: /api/
+
+# Google AdSense
+User-agent: Mediapartners-Google
+Allow: /
+
+# Google AdsBot
+User-agent: AdsBot-Google
+Allow: /
