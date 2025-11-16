@@ -156,21 +156,11 @@
     @apply rounded-[var(--radius-md)];
     @apply shadow-[var(--shadow-md)];
     @apply transition-all duration-[var(--duration-normal)];
-    position: relative;
-    overflow: hidden;
-  }
-
-  .gradient-button::before {
-    content: '';
-    @apply absolute inset-0 bg-[hsl(217_91%_55%)];
-    @apply opacity-0 transition-opacity duration-[var(--duration-normal)];
-  }
-
-  .gradient-button:hover::before {
-    @apply opacity-100;
+    @apply cursor-pointer;
   }
 
   .gradient-button:hover {
+    @apply bg-[hsl(217_91%_55%)];
     @apply shadow-[var(--shadow-lg)] shadow-[hsl(217_91%_60%_/_0.4)];
     transform: translateY(-1px);
   }

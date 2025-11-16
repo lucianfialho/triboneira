@@ -588,14 +588,10 @@ export default function HomePage() {
           {/* Header */}
           <div className="mb-8 lg:mb-12 animate-slide-up">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-2 h-8 bg-[hsl(217_91%_60%)] rounded-full" />
-              <h1 className="text-3xl lg:text-4xl font-bold text-[hsl(var(--foreground))]">
-                Suas Streams
-              </h1>
               {/* Toggle Sidebar Button */}
               <button
                 onClick={toggleSidebar}
-                className="ml-auto w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
+                className="w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
                 title={sidebarVisible ? 'Esconder sidebar' : 'Mostrar sidebar'}
               >
                 {sidebarVisible ? (
@@ -604,6 +600,10 @@ export default function HomePage() {
                   <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
                 )}
               </button>
+              <div className="w-2 h-8 bg-[hsl(217_91%_60%)] rounded-full" />
+              <h1 className="text-3xl lg:text-4xl font-bold text-[hsl(var(--foreground))]">
+                Suas Streams
+              </h1>
             </div>
             <p className="text-sm text-[hsl(var(--muted-foreground))] ml-5">
               Assista múltiplas lives simultaneamente com controle total
