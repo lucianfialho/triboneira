@@ -16,6 +16,13 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Plus,
   Trash2,
   Layout,
@@ -158,6 +165,7 @@ export default function HomePage() {
   const [unmutingProgress, setUnmutingProgress] = useState<Record<string, number>>({});
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const changeLayout = (newLayout: LayoutType) => {
     amplitude.track('Layout Changed', {
@@ -385,6 +393,11 @@ export default function HomePage() {
 
     setStreams([...streams, newStream]);
     setInputUrl('');
+
+    // Show share modal when adding 2nd stream
+    if (streams.length === 1) {
+      setTimeout(() => setShowShareModal(true), 500);
+    }
   };
 
   const toggleMute = (id: string) => {
@@ -547,6 +560,27 @@ export default function HomePage() {
                 Kick
               </Badge>
             </div>
+
+            {/* Share Button in Sidebar */}
+            {streams.length > 0 && (
+              <Button
+                onClick={shareSetup}
+                variant="outline"
+                className="w-full h-11 text-sm font-medium border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-elevated))] hover:border-[hsl(var(--border-strong))] cursor-pointer"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2 text-green-500" />
+                    Copiado!
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Compartilhar
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -905,6 +939,40 @@ export default function HomePage() {
           )}
         </div>
       </main>
+
+      {/* Share Suggestion Modal */}
+      <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+        <DialogContent className="sm:max-w-md glass-card border-[hsl(var(--border))]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-[hsl(var(--primary))]" />
+              Compartilhe seu setup!
+            </DialogTitle>
+            <DialogDescription className="text-[hsl(var(--muted-foreground))]">
+              Você acabou de criar uma combinação de streams. Quer compartilhar com seus amigos?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button
+              onClick={() => {
+                shareSetup();
+                setShowShareModal(false);
+              }}
+              className="gradient-button h-11 text-sm font-medium"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Compartilhar Agora
+            </Button>
+            <Button
+              onClick={() => setShowShareModal(false)}
+              variant="outline"
+              className="h-11 text-sm border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-elevated))] cursor-pointer"
+            >
+              Agora não
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
