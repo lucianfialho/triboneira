@@ -933,11 +933,11 @@ export default function HomePage() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 lg:p-12 overflow-y-auto transition-all duration-300">
+      <main className="flex-1 p-4 lg:p-6 overflow-y-auto transition-all duration-300">
         <div className="max-w-[1800px] mx-auto">
           {/* Header */}
-          <div className="mb-8 lg:mb-12 animate-slide-up">
-            <div className="flex items-center gap-3 mb-3">
+          <div className="mb-4 animate-slide-up">
+            <div className="flex items-center gap-3">
               {/* Toggle Sidebar Button */}
               <button
                 onClick={toggleSidebar}
@@ -950,10 +950,6 @@ export default function HomePage() {
                   <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
                 )}
               </button>
-              <div className="w-2 h-8 bg-[hsl(217_91%_60%)] rounded-full" />
-              <h1 className="text-3xl lg:text-4xl font-bold text-[hsl(var(--foreground))]">
-                Suas Streams
-              </h1>
               {/* Share Setup Button */}
               {streams.length > 0 && (
                 <button
@@ -969,9 +965,6 @@ export default function HomePage() {
                 </button>
               )}
             </div>
-            <p className="text-sm text-[hsl(var(--muted-foreground))] ml-5">
-              Assista múltiplas lives simultaneamente com controle total
-            </p>
           </div>
 
           {/* Stream Grid */}
