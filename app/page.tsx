@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import amplitude from '@/amplitude';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,10 +36,13 @@ import {
   ExternalLink,
   Eye,
   Users,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
 } from 'lucide-react';
 
 // Types
-type Platform = 'twitch' | 'youtube' | 'kick';
+type Platform = 'twitch' | 'youtube' | 'kick' | 'custom';
 
 interface Stream {
   id: string;
@@ -54,11 +59,11 @@ interface Stream {
 type LayoutType = '1x1' | '2x1' | '2x2' | '3x1' | '3x2';
 
 // Platform Detection
-const detectPlatform = (url: string): Platform | null => {
+const detectPlatform = (url: string): Platform => {
   if (url.includes('twitch.tv')) return 'twitch';
   if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
   if (url.includes('kick.com')) return 'kick';
-  return null;
+  return 'custom'; // Any other URL is treated as custom embed
 };
 
 const extractChannelInfo = (url: string, platform: Platform): { channelName?: string; videoId?: string } => {
@@ -92,6 +97,9 @@ const getPlatformEmbed = (url: string, platform: Platform, isMuted: boolean = fa
     case 'kick':
       const kickChannel = url.split('kick.com/')[1]?.split('/')[0];
       return `https://player.kick.com/${kickChannel}${isMuted ? '?muted=true' : ''}`;
+    case 'custom':
+      // For custom URLs, use them directly (Netflix, Prime, etc)
+      return url;
     default:
       return url;
   }
@@ -102,6 +110,8 @@ const getPlatformColor = (platform: Platform): string => {
     case 'twitch': return 'from-purple-500 to-purple-600';
     case 'youtube': return 'from-red-500 to-red-600';
     case 'kick': return 'from-green-500 to-green-600';
+    case 'custom': return 'from-blue-500 to-blue-600';
+    default: return 'from-gray-500 to-gray-600';
   }
 };
 
@@ -110,6 +120,8 @@ const getPlatformIcon = (platform: Platform) => {
     case 'twitch': return <TwitchIcon className="w-3.5 h-3.5" />;
     case 'youtube': return <Youtube className="w-3.5 h-3.5" />;
     case 'kick': return <Video className="w-3.5 h-3.5" />;
+    case 'custom': return <Monitor className="w-3.5 h-3.5" />;
+    default: return <Monitor className="w-3.5 h-3.5" />;
   }
 };
 
@@ -141,6 +153,23 @@ export default function HomePage() {
   const [layout, setLayout] = useState<LayoutType>('2x2');
   const [hoveringStream, setHoveringStream] = useState<string | null>(null);
   const [unmutingProgress, setUnmutingProgress] = useState<Record<string, number>>({});
+  const [sidebarVisible, setSidebarVisible] = useState(true);
+
+  const changeLayout = (newLayout: LayoutType) => {
+    amplitude.track('Layout Changed', {
+      from: layout,
+      to: newLayout,
+      streamCount: streams.length,
+    });
+    setLayout(newLayout);
+  };
+
+  const toggleSidebar = () => {
+    amplitude.track('Sidebar Toggled', {
+      action: sidebarVisible ? 'hide' : 'show',
+    });
+    setSidebarVisible(!sidebarVisible);
+  };
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -237,11 +266,6 @@ export default function HomePage() {
     if (!inputUrl.trim()) return;
 
     const platform = detectPlatform(inputUrl);
-    if (!platform) {
-      alert('URL inválida! Use Twitch, YouTube ou Kick.');
-      return;
-    }
-
     const channelInfo = extractChannelInfo(inputUrl, platform);
 
     const newStream: Stream = {
@@ -253,6 +277,14 @@ export default function HomePage() {
       viewerCount: 0,
       isLive: false,
     };
+
+    // Track stream addition
+    amplitude.track('Stream Added', {
+      platform,
+      streamCount: streams.length + 1,
+      channelName: channelInfo.channelName,
+      videoId: channelInfo.videoId,
+    });
 
     setStreams([...streams, newStream]);
     setInputUrl('');
@@ -292,10 +324,30 @@ export default function HomePage() {
   };
 
   const removeStream = (id: string) => {
+    const stream = streams.find(s => s.id === id);
+
+    // Track stream removal
+    if (stream) {
+      amplitude.track('Stream Removed', {
+        platform: stream.platform,
+        streamCount: streams.length - 1,
+      });
+    }
+
     setStreams(streams.filter(s => s.id !== id));
   };
 
   const soloAudio = (id: string) => {
+    const stream = streams.find(s => s.id === id);
+
+    // Track solo audio
+    if (stream) {
+      amplitude.track('Solo Audio Activated', {
+        platform: stream.platform,
+        streamCount: streams.length,
+      });
+    }
+
     setStreams(streams.map(s => ({
       ...s,
       isMuted: s.id !== id, // Mute all except the selected one
@@ -318,17 +370,23 @@ export default function HomePage() {
   const totalViewers = streams.reduce((total, stream) => total + (stream.viewerCount || 0), 0);
 
   return (
-    <div className="flex min-h-screen bg-[hsl(var(--background))] animate-fade-in">
+    <div className="flex min-h-screen bg-[hsl(var(--background))] animate-fade-in relative">
       {/* Sidebar */}
-      <aside className="sidebar animate-slide-up">
+      <aside className={`sidebar animate-slide-up transition-transform duration-300 ${!sidebarVisible ? '-translate-x-full' : 'translate-x-0'}`}>
         {/* Header */}
         <div className="flex items-center gap-3 animate-scale-in">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] flex items-center justify-center shadow-lg shadow-purple-500/30">
-            <Sparkles className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg relative">
+            <Image
+              src="/logo.jpg"
+              alt="Entrega Newba"
+              width={40}
+              height={40}
+              className="object-cover"
+            />
           </div>
           <div>
-            <h1 className="text-lg font-bold gradient-text">Multistream</h1>
-            <p className="text-xs text-[hsl(var(--subtle-foreground))]">Watch multiple streams</p>
+            <h1 className="text-lg font-bold text-[hsl(var(--foreground))]">Entrega Newba</h1>
+            <p className="text-xs text-[hsl(var(--subtle-foreground))]">Watch smarter, not harder</p>
           </div>
         </div>
 
@@ -337,7 +395,7 @@ export default function HomePage() {
           <div className="glass-card p-4 animate-scale-in">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[hsl(217_91%_60%)] flex items-center justify-center">
                   <Users className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -415,10 +473,10 @@ export default function HomePage() {
                   key={layoutType}
                   variant={isActive ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setLayout(layoutType)}
+                  onClick={() => changeLayout(layoutType)}
                   className={`h-16 flex flex-col gap-1.5 transition-all ${
                     isActive
-                      ? 'bg-gradient-to-br from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] text-white border-0 shadow-lg shadow-purple-500/30'
+                      ? 'bg-[hsl(217_91%_60%)] text-white border-0 shadow-lg'
                       : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
                   }`}
                 >
@@ -499,59 +557,75 @@ export default function HomePage() {
         {/* Footer */}
         <div className="pt-4 border-t border-[hsl(var(--border))]">
           <p className="text-[10px] text-[hsl(var(--subtle-foreground))] text-center">
-            Built with Next.js & Shadcn UI
+            Entrega Newba © 2025
+          </p>
+          <p className="text-[9px] text-[hsl(var(--subtle-foreground))] text-center mt-1">
+            Do newba ao pro
           </p>
         </div>
       </aside>
 
+      {/* Toggle Sidebar Button */}
+      <button
+        onClick={toggleSidebar}
+        className="fixed top-4 left-4 z-50 w-12 h-12 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg hover:scale-110 hover:bg-[hsl(217_91%_55%)] transition-all"
+        title={sidebarVisible ? 'Esconder sidebar' : 'Mostrar sidebar'}
+      >
+        {sidebarVisible ? (
+          <ChevronLeft className="w-6 h-6 text-white" />
+        ) : (
+          <ChevronRight className="w-6 h-6 text-white" />
+        )}
+      </button>
+
       {/* Main Content */}
-      <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
+      <main className={`flex-1 p-8 lg:p-12 overflow-y-auto transition-all duration-300 ${!sidebarVisible ? 'ml-0' : ''}`}>
         <div className="max-w-[1800px] mx-auto">
           {/* Header */}
           <div className="mb-8 lg:mb-12 animate-slide-up">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-2 h-8 bg-gradient-to-b from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] rounded-full" />
+              <div className="w-2 h-8 bg-[hsl(217_91%_60%)] rounded-full" />
               <h1 className="text-3xl lg:text-4xl font-bold text-[hsl(var(--foreground))]">
-                Your Streams
+                Suas Streams
               </h1>
             </div>
             <p className="text-sm text-[hsl(var(--muted-foreground))] ml-5">
-              Watch multiple streams simultaneously in perfect harmony
+              Assista múltiplas lives simultaneamente com controle total
             </p>
           </div>
 
           {/* Stream Grid */}
           {streams.length === 0 ? (
             <div className="empty-state glass-card animate-scale-in min-h-[500px]">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] flex items-center justify-center mb-6 shadow-lg shadow-purple-500/30">
+              <div className="w-20 h-20 rounded-2xl bg-[hsl(217_91%_60%)] flex items-center justify-center mb-6 shadow-lg">
                 <Video className="w-10 h-10 text-white" />
               </div>
               <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-3">
-                Ready to start watching?
+                Pronto para assistir?
               </h2>
               <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-md mb-8">
-                Add your first stream using the sidebar. Paste a Twitch, YouTube, or Kick URL to get started.
+                Adicione sua primeira stream usando a sidebar. Cole uma URL da Twitch, YouTube ou Kick para começar.
               </p>
               <div className="flex flex-col gap-3 text-left max-w-sm">
                 <div className="flex items-start gap-3 text-sm">
-                  <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-purple-400">1</span>
+                  <div className="w-6 h-6 rounded-full bg-[hsl(217_91%_60%)]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-[hsl(217_91%_60%)]">1</span>
                   </div>
                   <p className="text-[hsl(var(--muted-foreground))]">
                     Copy a stream URL from your favorite platform
                   </p>
                 </div>
                 <div className="flex items-start gap-3 text-sm">
-                  <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-purple-400">2</span>
+                  <div className="w-6 h-6 rounded-full bg-[hsl(217_91%_60%)]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-[hsl(217_91%_60%)]">2</span>
                   </div>
                   <p className="text-[hsl(var(--muted-foreground))]">
                     Paste it in the sidebar and click "Add Stream"
                   </p>
                 </div>
                 <div className="flex items-start gap-3 text-sm">
-                  <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-purple-400">3</span>
+                  <div className="w-6 h-6 rounded-full bg-[hsl(217_91%_60%)]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-[hsl(217_91%_60%)]">3</span>
                   </div>
                   <p className="text-[hsl(var(--muted-foreground))]">
                     Choose your layout and enjoy multiple streams at once
@@ -632,7 +706,7 @@ export default function HomePage() {
 
                               {/* Icon in center */}
                               <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] flex items-center justify-center shadow-lg shadow-purple-500/50">
+                                <div className="w-16 h-16 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg">
                                   <VolumeX className="w-8 h-8 text-white" />
                                 </div>
                               </div>
@@ -655,7 +729,7 @@ export default function HomePage() {
                                 e.stopPropagation();
                                 toggleMute(stream.id);
                               }}
-                              className="w-10 h-10 rounded-full bg-gradient-to-br from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)] flex items-center justify-center shadow-lg shadow-purple-500/50 hover:scale-110 transition-transform"
+                              className="w-10 h-10 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg hover:scale-110 hover:bg-[hsl(217_91%_55%)] transition-transform"
                             >
                               <Volume2 className="w-5 h-5 text-white" />
                             </button>

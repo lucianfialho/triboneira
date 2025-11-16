@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { Amplitude } from '@/amplitude';
 
 export const metadata: Metadata = {
-  title: 'Multistream - Watch Multiple Streams',
-  description: 'Watch multiple Twitch, YouTube, and Kick streams simultaneously in perfect harmony.',
-  keywords: ['multistream', 'twitch', 'youtube', 'kick', 'streaming', 'multiple streams'],
+  title: 'Entrega Newba - Multistream',
+  description: 'Assista múltiplas lives de Twitch, YouTube e Kick simultaneamente. Do newba ao pro, suas streams em um só lugar.',
+  keywords: ['multistream', 'twitch', 'youtube', 'kick', 'streaming', 'cs', 'counter-strike', 'entrega newba'],
 };
 
 export default function RootLayout({
@@ -14,6 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <Amplitude />
       <body className="antialiased">{children}</body>
     </html>
   );

@@ -20,13 +20,13 @@
     --border: 220 15% 15%;              /* Subtle borders */
     --border-strong: 220 15% 20%;       /* Strong borders */
 
-    /* Accent Colors - Purple/Pink Gradient */
-    --primary: 270 80% 65%;             /* Purple accent */
+    /* Accent Colors - Neutral Blue */
+    --primary: 217 91% 60%;             /* Blue accent */
     --primary-foreground: 220 10% 98%;  /* Text on primary */
-    --primary-hover: 270 80% 60%;       /* Purple hover */
-    --secondary: 320 80% 65%;           /* Pink accent */
+    --primary-hover: 217 91% 55%;       /* Blue hover */
+    --secondary: 220 15% 25%;           /* Neutral gray */
     --secondary-foreground: 220 10% 98%; /* Text on secondary */
-    --secondary-hover: 320 80% 60%;     /* Pink hover */
+    --secondary-hover: 220 15% 30%;     /* Gray hover */
 
     /* Shadcn UI Variables */
     --card: 220 15% 9%;
@@ -39,7 +39,7 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 220 10% 98%;
     --input: 220 15% 15%;
-    --ring: 270 80% 65%;
+    --ring: 217 91% 60%;
     --radius: 0.75rem;
 
     /* Status Colors */
@@ -48,7 +48,7 @@
     --error: 0 72% 51%;                 /* Red */
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(270 80% 65%) 0%, hsl(320 80% 65%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(217 91% 70%) 100%);
     --gradient-glass: linear-gradient(135deg, hsl(220 15% 11% / 0.8) 0%, hsl(220 15% 9% / 0.8) 100%);
 
     /* Shadows */
@@ -56,7 +56,7 @@
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
-    --shadow-glow: 0 0 20px rgb(139 92 246 / 0.3);
+    --shadow-glow: 0 0 20px rgb(59 130 246 / 0.3);
 
     /* Spacing Scale (4pt/8pt grid) */
     --space-1: 0.25rem;  /* 4px */
@@ -124,7 +124,7 @@
 
   /* Selection */
   ::selection {
-    @apply bg-[hsl(var(--primary))] text-white;
+    @apply bg-[hsl(217_91%_60%)] text-white;
   }
 }
 
@@ -146,13 +146,12 @@
 
   /* Gradient Text */
   .gradient-text {
-    @apply bg-gradient-to-r from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)];
-    @apply bg-clip-text text-transparent;
+    @apply text-[hsl(217_91%_60%)];
   }
 
   /* Gradient Button */
   .gradient-button {
-    @apply bg-gradient-to-r from-[hsl(270_80%_65%)] to-[hsl(320_80%_65%)];
+    @apply bg-[hsl(217_91%_60%)];
     @apply text-white font-medium;
     @apply rounded-[var(--radius-md)];
     @apply shadow-[var(--shadow-md)];
@@ -163,7 +162,7 @@
 
   .gradient-button::before {
     content: '';
-    @apply absolute inset-0 bg-gradient-to-r from-[hsl(270_80%_70%)] to-[hsl(320_80%_70%)];
+    @apply absolute inset-0 bg-[hsl(217_91%_55%)];
     @apply opacity-0 transition-opacity duration-[var(--duration-normal)];
   }
 
@@ -172,7 +171,7 @@
   }
 
   .gradient-button:hover {
-    @apply shadow-[var(--shadow-lg)] shadow-[hsl(270_80%_65%_/_0.4)];
+    @apply shadow-[var(--shadow-lg)] shadow-[hsl(217_91%_60%_/_0.4)];
     transform: translateY(-1px);
   }
 
@@ -190,8 +189,8 @@
   }
 
   .stream-container:hover {
-    @apply border-[hsl(var(--primary))];
-    @apply shadow-[0_0_20px_hsl(270_80%_65%_/_0.3)];
+    @apply border-[hsl(217_91%_60%)];
+    @apply shadow-[0_0_20px_hsl(217_91%_60%_/_0.2)];
   }
 
   /* Empty State */
