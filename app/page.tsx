@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { StreamerCommandPalette } from '@/components/streamer-command-palette';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -267,11 +268,21 @@ export default function HomePage() {
           setLayout(layoutParam);
         }
 
-        // Track shared link opened
+        // Track shared link opened with detailed info
+        const channels = loadedStreams.map(s => s.channelName || s.videoId || 'custom').join(', ');
+        const platformCounts = loadedStreams.reduce((acc, s) => {
+          acc[s.platform] = (acc[s.platform] || 0) + 1;
+          return acc;
+        }, {} as Record<Platform, number>);
+
         amplitude.track('Shared Setup Opened', {
           streamCount: loadedStreams.length,
           layout: layoutParam || 'grid',
           platforms: loadedStreams.map(s => s.platform),
+          channels,
+          platformCounts,
+          shareUrl: window.location.href,
+          streamsParam,
         });
 
         // Clear URL params after loading
@@ -389,10 +400,40 @@ export default function HomePage() {
       streamCount: streams.length + 1,
       channelName: channelInfo.channelName,
       videoId: channelInfo.videoId,
+      method: 'url_input',
     });
 
     setStreams([...streams, newStream]);
     setInputUrl('');
+
+    // Show share modal when adding 2nd stream
+    if (streams.length === 1) {
+      setTimeout(() => setShowShareModal(true), 500);
+    }
+  };
+
+  const addStreamFromCommandPalette = (streamer: any) => {
+    const newStream: Stream = {
+      id: Date.now().toString(),
+      url: streamer.url,
+      platform: streamer.platform,
+      isMuted: streams.length > 0,
+      channelName: streamer.username,
+      viewerCount: streamer.currentViewers,
+      isLive: streamer.isLive,
+    };
+
+    // Track stream addition from command palette
+    amplitude.track('Stream Added', {
+      platform: streamer.platform,
+      streamCount: streams.length + 1,
+      channelName: streamer.username,
+      method: 'command_palette',
+      was_live: streamer.isLive,
+      viewers: streamer.currentViewers,
+    });
+
+    setStreams([...streams, newStream]);
 
     // Show share modal when adding 2nd stream
     if (streams.length === 1) {
@@ -480,7 +521,11 @@ export default function HomePage() {
   const totalViewers = streams.reduce((total, stream) => total + (stream.viewerCount || 0), 0);
 
   return (
-    <div className="flex min-h-screen bg-[hsl(var(--background))] animate-fade-in relative">
+    <>
+      {/* Command Palette for adding streamers */}
+      <StreamerCommandPalette onSelectStreamer={addStreamFromCommandPalette} />
+
+      <div className="flex min-h-screen bg-[hsl(var(--background))] animate-fade-in relative">
       {/* Sidebar */}
       <aside className={`sidebar animate-slide-up transition-transform duration-300 ${!sidebarVisible ? '-translate-x-full absolute' : 'translate-x-0'}`}>
         {/* Header */}
@@ -974,5 +1019,6 @@ export default function HomePage() {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   );
 }
