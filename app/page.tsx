@@ -722,8 +722,8 @@ export default function HomePage() {
           <div className="flex items-center gap-3 animate-scale-in">
             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg relative">
               <Image
-                src="/logo.jpg"
-                alt="Entrega Newba"
+                src="/android-chrome-192x192.png"
+                alt="Multistream"
                 width={40}
                 height={40}
                 className="object-cover"
