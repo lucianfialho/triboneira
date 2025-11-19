@@ -81,8 +81,7 @@ export const metadata: Metadata = {
     canonical: 'https://entreganewba.com.br',
   },
   verification: {
-    // Adicionar Google Search Console verification quando disponível
-    // google: 'your-google-verification-code',
+    google: 'RTLPxCdxEWQ8a_W6vGX0WDHxxUAaIPwh_B2i_rwpnAo',
   },
 };
 

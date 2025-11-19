@@ -838,8 +838,8 @@ export default function HomePage() {
                     size="sm"
                     onClick={() => changeLayout(layoutType)}
                     className={`h-20 flex flex-col gap-1 transition-all ${isActive
-                        ? 'bg-[hsl(217_91%_60%)] text-white border-0 shadow-lg'
-                        : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
+                      ? 'bg-[hsl(217_91%_60%)] text-white border-0 shadow-lg'
+                      : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
                       }`}
                     title={config.description}
                   >
@@ -1023,8 +1023,8 @@ export default function HomePage() {
                           >
                             <div className="relative">
                               <div className={`w-20 h-20 rounded-xl overflow-hidden ring-2 transition-all shadow-lg ${isSelected
-                                  ? 'ring-[hsl(var(--primary))] ring-4'
-                                  : 'ring-[hsl(var(--border))] group-hover:ring-[hsl(var(--primary))]'
+                                ? 'ring-[hsl(var(--primary))] ring-4'
+                                : 'ring-[hsl(var(--border))] group-hover:ring-[hsl(var(--primary))]'
                                 }`}>
                                 <Image
                                   src={streamer.avatarUrl}
@@ -1038,8 +1038,8 @@ export default function HomePage() {
                               </div>
                               {/* Checkbox indicator */}
                               <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center border-2 shadow-lg transition-all ${isSelected
-                                  ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))] scale-100'
-                                  : 'bg-[hsl(var(--background))] border-[hsl(var(--border))] scale-0 group-hover:scale-100'
+                                ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))] scale-100'
+                                : 'bg-[hsl(var(--background))] border-[hsl(var(--border))] scale-0 group-hover:scale-100'
                                 }`}>
                                 {isSelected && <Check className="w-3 h-3 text-white" />}
                               </div>
@@ -1323,6 +1323,20 @@ export default function HomePage() {
                 className="hover:text-[hsl(var(--foreground))] transition-colors"
               >
                 Sobre
+              </Link>
+              <span className="text-[hsl(var(--border))]">•</span>
+              <Link
+                href="/guides"
+                className="hover:text-[hsl(var(--foreground))] transition-colors"
+              >
+                Guias
+              </Link>
+              <span className="text-[hsl(var(--border))]">•</span>
+              <Link
+                href="/faq"
+                className="hover:text-[hsl(var(--foreground))] transition-colors"
+              >
+                FAQ
               </Link>
               <span className="text-[hsl(var(--border))]">•</span>
               <Link
