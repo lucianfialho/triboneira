@@ -47,14 +47,21 @@ export function parseStreamUrl(url: string): Stream | null {
 }
 
 export function getPlatformColor(platform: Platform): string {
-  const colors = {
+  const colors: Record<Platform, string> = {
     twitch: 'from-purple-500 to-purple-600',
     youtube: 'from-red-500 to-red-600',
     kick: 'from-green-500 to-green-600',
+    custom: 'from-blue-500 to-blue-600',
   };
   return colors[platform];
 }
 
 export function getPlatformIcon(platform: Platform): string {
-  return { twitch: '🟣', youtube: '🔴', kick: '🟢' }[platform];
+  const icons: Record<Platform, string> = {
+    twitch: '🟣',
+    youtube: '🔴',
+    kick: '🟢',
+    custom: '🔵',
+  };
+  return icons[platform];
 }
