@@ -5,28 +5,44 @@
 /* Scale: 4pt/8pt grid system */
 
 @layer base {
+
   /* CSS Variables - Design Tokens */
   :root {
     /* Color Palette - Dark Theme */
-    --background: 220 15% 6%;           /* Rich dark background */
-    --surface: 220 15% 9%;              /* Elevated surface */
-    --surface-elevated: 220 15% 11%;    /* More elevated surface */
-    --surface-glass: 220 15% 9% / 0.6;  /* Glassmorphism */
+    --background: 220 15% 6%;
+    /* Rich dark background */
+    --surface: 220 15% 9%;
+    /* Elevated surface */
+    --surface-elevated: 220 15% 11%;
+    /* More elevated surface */
+    --surface-glass: 220 15% 9% / 0.6;
+    /* Glassmorphism */
 
-    --foreground: 220 10% 98%;          /* Primary text */
-    --muted-foreground: 220 10% 65%;    /* Secondary text */
-    --subtle-foreground: 220 10% 45%;   /* Tertiary text */
+    --foreground: 220 10% 98%;
+    /* Primary text */
+    --muted-foreground: 220 10% 65%;
+    /* Secondary text */
+    --subtle-foreground: 220 10% 45%;
+    /* Tertiary text */
 
-    --border: 220 15% 15%;              /* Subtle borders */
-    --border-strong: 220 15% 20%;       /* Strong borders */
+    --border: 220 15% 15%;
+    /* Subtle borders */
+    --border-strong: 220 15% 20%;
+    /* Strong borders */
 
     /* Accent Colors - Neutral Blue */
-    --primary: 217 91% 60%;             /* Blue accent */
-    --primary-foreground: 220 10% 98%;  /* Text on primary */
-    --primary-hover: 217 91% 55%;       /* Blue hover */
-    --secondary: 220 15% 25%;           /* Neutral gray */
-    --secondary-foreground: 220 10% 98%; /* Text on secondary */
-    --secondary-hover: 220 15% 30%;     /* Gray hover */
+    --primary: 217 91% 60%;
+    /* Blue accent */
+    --primary-foreground: 220 10% 98%;
+    /* Text on primary */
+    --primary-hover: 217 91% 55%;
+    /* Blue hover */
+    --secondary: 220 15% 25%;
+    /* Neutral gray */
+    --secondary-foreground: 220 10% 98%;
+    /* Text on secondary */
+    --secondary-hover: 220 15% 30%;
+    /* Gray hover */
 
     /* Shadcn UI Variables */
     --card: 220 15% 9%;
@@ -43,9 +59,12 @@
     --radius: 0.75rem;
 
     /* Status Colors */
-    --success: 142 71% 45%;             /* Green */
-    --warning: 38 92% 50%;              /* Orange */
-    --error: 0 72% 51%;                 /* Red */
+    --success: 142 71% 45%;
+    /* Green */
+    --warning: 38 92% 50%;
+    /* Orange */
+    --error: 0 72% 51%;
+    /* Red */
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(217 91% 70%) 100%);
@@ -59,23 +78,38 @@
     --shadow-glow: 0 0 20px rgb(59 130 246 / 0.3);
 
     /* Spacing Scale (4pt/8pt grid) */
-    --space-1: 0.25rem;  /* 4px */
-    --space-2: 0.5rem;   /* 8px */
-    --space-3: 0.75rem;  /* 12px */
-    --space-4: 1rem;     /* 16px */
-    --space-5: 1.25rem;  /* 20px */
-    --space-6: 1.5rem;   /* 24px */
-    --space-8: 2rem;     /* 32px */
-    --space-10: 2.5rem;  /* 40px */
-    --space-12: 3rem;    /* 48px */
-    --space-16: 4rem;    /* 64px */
-    --space-20: 5rem;    /* 80px */
+    --space-1: 0.25rem;
+    /* 4px */
+    --space-2: 0.5rem;
+    /* 8px */
+    --space-3: 0.75rem;
+    /* 12px */
+    --space-4: 1rem;
+    /* 16px */
+    --space-5: 1.25rem;
+    /* 20px */
+    --space-6: 1.5rem;
+    /* 24px */
+    --space-8: 2rem;
+    /* 32px */
+    --space-10: 2.5rem;
+    /* 40px */
+    --space-12: 3rem;
+    /* 48px */
+    --space-16: 4rem;
+    /* 64px */
+    --space-20: 5rem;
+    /* 80px */
 
     /* Border Radius */
-    --radius-sm: 0.5rem;   /* 8px */
-    --radius-md: 0.75rem;  /* 12px */
-    --radius-lg: 1rem;     /* 16px */
-    --radius-xl: 1.5rem;   /* 24px */
+    --radius-sm: 0.5rem;
+    /* 8px */
+    --radius-md: 0.75rem;
+    /* 12px */
+    --radius-lg: 1rem;
+    /* 16px */
+    --radius-xl: 1.5rem;
+    /* 24px */
 
     /* Typography */
     --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -92,6 +126,10 @@
   /* Base Styles */
   * {
     border-color: hsl(var(--border));
+  }
+
+  html {
+    overflow-x: hidden;
   }
 
   body {
@@ -129,6 +167,7 @@
 }
 
 @layer components {
+
   /* Glassmorphism Card */
   .glass-card {
     @apply backdrop-blur-xl bg-gradient-to-br from-[hsl(220_15%_11%_/_0.8)] to-[hsl(220_15%_9%_/_0.8)];
@@ -212,25 +251,26 @@
     gap: 1.5rem;
   }
 
-  .layout-pip > *:first-child {
+  .layout-pip>*:first-child {
     grid-column: 1;
     grid-row: 1;
   }
 
-  .layout-pip > *:not(:first-child) {
+  .layout-pip>*:not(:first-child) {
     position: absolute;
     bottom: 1.5rem;
     right: 1.5rem;
     width: 25%;
-    min-width: 300px;
+    min-width: 250px;
+    max-width: 100%;
     z-index: 10;
   }
 
-  .layout-pip > *:nth-child(3) {
+  .layout-pip>*:nth-child(3) {
     bottom: calc(1.5rem + 180px);
   }
 
-  .layout-pip > *:nth-child(4) {
+  .layout-pip>*:nth-child(4) {
     bottom: calc(1.5rem + 360px);
   }
 
@@ -240,7 +280,7 @@
     grid-auto-rows: minmax(200px, 1fr);
   }
 
-  .layout-main-side > *:first-child {
+  .layout-main-side>*:first-child {
     grid-row: span 10;
   }
 
@@ -250,7 +290,7 @@
     grid-auto-rows: minmax(200px, auto);
   }
 
-  .layout-focused > *:first-child {
+  .layout-focused>*:first-child {
     grid-row: span 2;
   }
 
@@ -261,6 +301,7 @@
 
   /* Responsive adjustments */
   @media (max-width: 1024px) {
+
     .layout-pip,
     .layout-main-side,
     .layout-focused,
@@ -268,7 +309,7 @@
       @apply grid-cols-1;
     }
 
-    .layout-pip > *:not(:first-child) {
+    .layout-pip>*:not(:first-child) {
       position: relative;
       width: 100%;
       min-width: auto;
@@ -281,8 +322,8 @@
       grid-template-columns: 1fr;
     }
 
-    .layout-main-side > *:first-child,
-    .layout-focused > *:first-child {
+    .layout-main-side>*:first-child,
+    .layout-focused>*:first-child {
       grid-row: auto;
     }
 
@@ -292,17 +333,99 @@
       @apply border-r-0 border-b;
     }
   }
+
+  /* Mobile-specific optimizations */
+  @media (max-width: 768px) {
+
+    /* Force single column on all layouts */
+    .layout-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1rem;
+    }
+
+    /* PiP layout mobile fix */
+    .layout-pip>*:not(:first-child) {
+      position: relative;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      bottom: auto;
+      right: auto;
+    }
+
+    /* Stream containers - mobile optimized */
+    .stream-container {
+      min-height: 250px;
+    }
+
+    .stream-container iframe {
+      min-width: 100% !important;
+      min-height: 250px !important;
+    }
+
+    /* Sidebar full width on mobile */
+    .sidebar {
+      width: 100% !important;
+      padding: 1rem;
+    }
+
+    /* Larger touch targets */
+    button,
+    .cursor-pointer {
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
+  /* Mobile landscape optimizations */
+  @media (max-width: 768px) and (orientation: landscape) {
+
+    /* Allow 2 columns in landscape if space permits */
+    .layout-grid {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+    }
+
+    /* Reduce vertical spacing in landscape */
+    .stream-container {
+      min-height: 200px;
+    }
+
+    .stream-container iframe {
+      min-height: 200px !important;
+    }
+  }
 }
 
 @layer utilities {
+
   /* Spacing Utilities */
-  .space-1 { gap: var(--space-1); }
-  .space-2 { gap: var(--space-2); }
-  .space-3 { gap: var(--space-3); }
-  .space-4 { gap: var(--space-4); }
-  .space-5 { gap: var(--space-5); }
-  .space-6 { gap: var(--space-6); }
-  .space-8 { gap: var(--space-8); }
+  .space-1 {
+    gap: var(--space-1);
+  }
+
+  .space-2 {
+    gap: var(--space-2);
+  }
+
+  .space-3 {
+    gap: var(--space-3);
+  }
+
+  .space-4 {
+    gap: var(--space-4);
+  }
+
+  .space-5 {
+    gap: var(--space-5);
+  }
+
+  .space-6 {
+    gap: var(--space-6);
+  }
+
+  .space-8 {
+    gap: var(--space-8);
+  }
 
   /* Animation Utilities */
   .animate-fade-in {
@@ -318,8 +441,13 @@
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes slideUp {
@@ -327,6 +455,7 @@
       opacity: 0;
       transform: translateY(12px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -338,6 +467,7 @@
       opacity: 0;
       transform: scale(0.96);
     }
+
     to {
       opacity: 1;
       transform: scale(1);

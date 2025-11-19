@@ -51,6 +51,7 @@ import {
   Share2,
   Check,
   Play,
+  Menu,
 } from 'lucide-react';
 
 // Types
@@ -188,6 +189,37 @@ export default function HomePage() {
   // Drag and drop states
   const [draggedStreamIndex, setDraggedStreamIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
+
+  // Detect mobile and orientation
+  useEffect(() => {
+    const checkMobile = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const mobile = width < 768;
+      const landscape = width > height;
+
+      setIsMobile(mobile);
+      setIsLandscape(landscape);
+
+      // Auto-hide sidebar on mobile portrait
+      if (mobile && !landscape && sidebarVisible) {
+        setSidebarVisible(false);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    window.addEventListener('orientationchange', checkMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('orientationchange', checkMobile);
+    };
+  }, []);
 
   const changeLayout = (newLayout: LayoutType) => {
     amplitude.track('Layout Changed', {
@@ -671,9 +703,21 @@ export default function HomePage() {
         }))}
       />
 
-      <div className="flex min-h-screen bg-[hsl(var(--background))] animate-fade-in relative">
+      <div className="flex min-h-screen bg-[hsl(var(--background))] animate-fade-in relative max-w-screen overflow-x-hidden">
+        {/* Mobile backdrop */}
+        {isMobile && sidebarVisible && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 animate-fade-in"
+            onClick={() => setSidebarVisible(false)}
+          />
+        )}
+
         {/* Sidebar */}
-        <aside className={`sidebar animate-slide-up transition-transform duration-300 ${!sidebarVisible ? '-translate-x-full absolute' : 'translate-x-0'}`}>
+        <aside className={`
+          sidebar animate-slide-up transition-transform duration-300
+          ${!sidebarVisible ? '-translate-x-full' : 'translate-x-0'}
+          ${isMobile ? 'fixed inset-y-0 left-0 z-50 w-full md:w-80' : 'relative'}
+        `}>
           {/* Header */}
           <div className="flex items-center gap-3 animate-scale-in">
             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg relative">
@@ -685,10 +729,21 @@ export default function HomePage() {
                 className="object-cover"
               />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-[hsl(var(--foreground))]">Entrega Newba</h1>
-              <p className="text-xs text-[hsl(var(--subtle-foreground))]">Watch smarter, not harder</p>
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">Multistream</h1>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">Watch multiple streams</p>
             </div>
+
+            {/* Close button - Mobile only */}
+            {isMobile && (
+              <button
+                onClick={() => setSidebarVisible(false)}
+                className="w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] transition-all"
+                title="Fechar sidebar"
+              >
+                <ChevronLeft className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
+              </button>
+            )}
           </div>
 
           {/* Total Viewers Counter */}
@@ -983,13 +1038,22 @@ export default function HomePage() {
             {/* Header */}
             <div className="mb-4 animate-slide-up">
               <div className="flex items-center gap-3">
-                {/* Toggle Sidebar Button */}
+                {/* Toggle Sidebar Button - Hamburger on mobile, chevron on desktop */}
                 <button
                   onClick={toggleSidebar}
-                  className="w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
+                  className={`
+                    ${isMobile && !sidebarVisible
+                      ? 'fixed top-4 left-4 z-30 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg'
+                      : 'w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))]'
+                    }
+                    flex items-center justify-center 
+                    hover:scale-110 transition-all cursor-pointer group
+                  `}
                   title={sidebarVisible ? 'Esconder sidebar' : 'Mostrar sidebar'}
                 >
-                  {sidebarVisible ? (
+                  {isMobile && !sidebarVisible ? (
+                    <Menu className="w-6 h-6 text-white" />
+                  ) : sidebarVisible ? (
                     <ChevronLeft className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
                   ) : (
                     <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
@@ -1180,6 +1244,7 @@ export default function HomePage() {
                         cursor: 'move',
                         userSelect: 'none',
                         WebkitUserSelect: 'none',
+                        maxWidth: isMobile ? '370px' : '100%',
                       }}
                       onMouseEnter={() => handleStreamHover(stream.id, true)}
                       onMouseLeave={() => handleStreamHover(stream.id, false)}
@@ -1207,7 +1272,8 @@ export default function HomePage() {
                         height="100%"
                         className="w-full h-full"
                         style={{
-                          minWidth: '400px',
+                          minWidth: isMobile ? '100%' : '400px',
+                          maxWidth: '100%',
                           minHeight: '300px',
                           display: 'block',
                           pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto',
