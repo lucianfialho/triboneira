@@ -185,6 +185,10 @@ export default function HomePage() {
   const [loadingTopStreamers, setLoadingTopStreamers] = useState(false);
   const [selectedStreamers, setSelectedStreamers] = useState<Set<string>>(new Set());
 
+  // Drag and drop states
+  const [draggedStreamIndex, setDraggedStreamIndex] = useState<number | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+
   const changeLayout = (newLayout: LayoutType) => {
     amplitude.track('Layout Changed', {
       from: layout,
@@ -608,6 +612,48 @@ export default function HomePage() {
 
   const openInNewTab = (url: string) => {
     window.open(url, '_blank');
+  };
+
+  // Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedStreamIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedStreamIndex !== index) {
+      setDropTargetIndex(index);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+
+    if (draggedStreamIndex === null || draggedStreamIndex === dropIndex) {
+      setDraggedStreamIndex(null);
+      setDropTargetIndex(null);
+      return;
+    }
+
+    // Swap streams
+    const newStreams = [...streams];
+    [newStreams[draggedStreamIndex], newStreams[dropIndex]] =
+      [newStreams[dropIndex], newStreams[draggedStreamIndex]];
+
+    setStreams(newStreams);
+    setDraggedStreamIndex(null);
+    setDropTargetIndex(null);
+
+    amplitude.track('Streams Reordered', {
+      from: draggedStreamIndex,
+      to: dropIndex,
+    });
+  };
+
+  const handleDragEnd = () => {
+    setDraggedStreamIndex(null);
+    setDropTargetIndex(null);
   };
 
   // Calculate total viewers
@@ -1118,159 +1164,157 @@ export default function HomePage() {
                   const isHovering = hoveringStream === stream.id;
 
                   return (
-                    <ContextMenu key={stream.id}>
-                      <ContextMenuTrigger asChild>
-                        <div
-                          className="stream-container group cursor-pointer"
-                          style={{ opacity: 1, visibility: 'visible' }}
-                          onMouseEnter={() => handleStreamHover(stream.id, true)}
-                          onMouseLeave={() => handleStreamHover(stream.id, false)}
-                          onClick={() => handleStreamClick(stream.id)}
-                        >
-                          <iframe
-                            key={`${stream.id}-${stream.isMuted}`}
-                            src={getPlatformEmbed(stream.url, stream.platform, stream.isMuted)}
-                            width="100%"
-                            height="100%"
-                            className="w-full h-full"
-                            style={{
-                              minWidth: '400px',
-                              minHeight: '300px',
-                              display: 'block',
-                              visibility: 'visible'
-                            }}
-                            frameBorder="0"
-                            allowFullScreen
-                            allow="autoplay; encrypted-media; picture-in-picture"
-                          />
+                    <div
+                      key={stream.id}
+                      draggable={true}
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                      onDragEnd={handleDragEnd}
+                      className={`stream-container group ${draggedStreamIndex === index ? 'opacity-50' : ''
+                        } ${dropTargetIndex === index ? 'ring-4 ring-[hsl(var(--primary))] ring-offset-2' : ''
+                        }`}
+                      style={{
+                        opacity: draggedStreamIndex === index ? 0.5 : 1,
+                        visibility: 'visible',
+                        cursor: 'move',
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                      }}
+                      onMouseEnter={() => handleStreamHover(stream.id, true)}
+                      onMouseLeave={() => handleStreamHover(stream.id, false)}
+                      onClick={() => handleStreamClick(stream.id)}
+                    >
+                      {/* Drag Handle Bar */}
+                      <div
+                        className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black/60 to-transparent backdrop-blur-sm z-20 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-move"
+                        style={{
+                          pointerEvents: 'auto',
+                          cursor: 'move',
+                        }}
+                      >
+                        <div className="flex gap-0.5">
+                          <div className="w-1 h-1 rounded-full bg-white/50" />
+                          <div className="w-1 h-1 rounded-full bg-white/50" />
+                          <div className="w-1 h-1 rounded-full bg-white/50" />
+                        </div>
+                      </div>
 
-                          {/* Stream Overlay */}
-                          <div className="absolute top-3 left-3 flex items-center gap-2">
-                            <div className={`px-2.5 py-1.5 rounded-lg bg-gradient-to-br ${getPlatformColor(stream.platform)} backdrop-blur-xl shadow-lg flex items-center gap-2`}>
-                              {getPlatformIcon(stream.platform)}
-                              <span className="text-xs font-semibold text-white capitalize">
-                                {stream.platform}
-                              </span>
-                            </div>
-                          </div>
+                      <iframe
+                        key={`${stream.id}-${stream.isMuted}`}
+                        src={getPlatformEmbed(stream.url, stream.platform, stream.isMuted)}
+                        width="100%"
+                        height="100%"
+                        className="w-full h-full"
+                        style={{
+                          minWidth: '400px',
+                          minHeight: '300px',
+                          display: 'block',
+                          pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto',
+                        }}
+                        frameBorder="0"
+                        allowFullScreen
+                        allow="autoplay; encrypted-media; picture-in-picture"
+                      />
 
-                          {/* Audio Control Overlay */}
-                          {stream.isMuted && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0 group-hover:opacity-100">
-                              <div className="relative flex items-center justify-center">
-                                {/* Circular Progress */}
-                                <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
-                                  {/* Background circle */}
-                                  <circle
-                                    cx="50"
-                                    cy="50"
-                                    r="45"
-                                    fill="none"
-                                    stroke="hsl(var(--border))"
-                                    strokeWidth="4"
-                                  />
-                                  {/* Progress circle */}
-                                  <circle
-                                    cx="50"
-                                    cy="50"
-                                    r="45"
-                                    fill="none"
-                                    stroke="hsl(var(--primary))"
-                                    strokeWidth="4"
-                                    strokeDasharray={`${2 * Math.PI * 45}`}
-                                    strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
-                                    strokeLinecap="round"
-                                    className="transition-all duration-75 ease-linear"
-                                    style={{
-                                      filter: 'drop-shadow(0 0 8px hsl(var(--primary)))'
-                                    }}
-                                  />
-                                </svg>
-
-                                {/* Icon in center */}
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <div className="w-16 h-16 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg">
-                                    <VolumeX className="w-8 h-8 text-white" />
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Text hint */}
-                              <div className="absolute bottom-8 left-0 right-0 text-center">
-                                <p className="text-sm font-medium text-white drop-shadow-lg">
-                                  Hold to unmute
-                                </p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Unmuted indicator */}
-                          {!stream.isMuted && (
-                            <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleMute(stream.id);
-                                }}
-                                className="w-10 h-10 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg hover:scale-110 hover:bg-[hsl(217_91%_55%)] transition-transform cursor-pointer"
-                              >
-                                <Volume2 className="w-5 h-5 text-white" />
-                              </button>
+                      {/* Stream Overlay */}
+                      <div
+                        className="absolute top-3 left-3 flex items-center gap-2"
+                        style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
+                      >
+                        <div className={`px-2.5 py-1.5 rounded-lg bg-gradient-to-br ${getPlatformColor(stream.platform)} backdrop-blur-xl shadow-lg flex items-center gap-2`}>
+                          {getPlatformIcon(stream.platform)}
+                          <span className="text-xs font-semibold text-white capitalize">
+                            {stream.platform}
+                          </span>
+                          {stream.isLive !== undefined && (
+                            <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-white/30">
+                              <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                              <span className="text-xs font-medium text-white">LIVE</span>
                             </div>
                           )}
                         </div>
-                      </ContextMenuTrigger>
+                      </div>
 
-                      <ContextMenuContent className="w-56 glass-card border-[hsl(var(--border))]">
-                        <ContextMenuItem
-                          onClick={() => soloAudio(stream.id)}
-                          className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
+                      {/* Channel Info */}
+                      {stream.channelName && (
+                        <div
+                          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
                         >
-                          <Headphones className="w-4 h-4 text-[hsl(var(--primary))]" />
-                          <span>Solo Audio</span>
-                        </ContextMenuItem>
+                          <div className="px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-sm shadow-lg">
+                            <p className="text-sm font-semibold text-white truncate max-w-[200px]">
+                              {stream.channelName}
+                            </p>
+                            {stream.viewerCount !== undefined && (
+                              <p className="text-xs text-white/80 flex items-center gap-1">
+                                <Users className="w-3 h-3" />
+                                {stream.viewerCount.toLocaleString()} viewers
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
-                        <ContextMenuItem
-                          onClick={() => toggleMute(stream.id)}
-                          className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
+                      {/* Hold to Unmute Overlay */}
+                      {stream.isMuted && isHovering && (
+                        <div
+                          className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-4 animate-fade-in z-10"
+                          style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
                         >
-                          {stream.isMuted ? (
-                            <Volume2 className="w-4 h-4 text-[hsl(var(--primary))]" />
-                          ) : (
-                            <VolumeX className="w-4 h-4 text-[hsl(var(--primary))]" />
-                          )}
-                          <span>{stream.isMuted ? 'Unmute' : 'Mute'}</span>
-                        </ContextMenuItem>
+                          <div className="relative w-24 h-24">
+                            <svg className="w-24 h-24 transform -rotate-90">
+                              <circle
+                                cx="48"
+                                cy="48"
+                                r="45"
+                                fill="none"
+                                stroke="hsl(var(--border))"
+                                strokeWidth="4"
+                              />
+                              <circle
+                                cx="48"
+                                cy="48"
+                                r="45"
+                                fill="none"
+                                stroke="hsl(var(--primary))"
+                                strokeWidth="4"
+                                strokeDasharray={`${2 * Math.PI * 45}`}
+                                strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
+                                className="transition-all duration-100"
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <VolumeX className="w-10 h-10 text-white" />
+                            </div>
+                          </div>
 
-                        <ContextMenuSeparator className="bg-[hsl(var(--border))]" />
+                          <div className="absolute bottom-8 left-0 right-0 text-center">
+                            <p className="text-sm font-medium text-white drop-shadow-lg">
+                              Hold to unmute
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
-                        <ContextMenuItem
-                          onClick={() => copyStreamUrl(stream.url)}
-                          className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
+                      {/* Unmuted indicator */}
+                      {!stream.isMuted && (
+                        <div
+                          className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
                         >
-                          <Copy className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                          <span>Copy URL</span>
-                        </ContextMenuItem>
-
-                        <ContextMenuItem
-                          onClick={() => openInNewTab(stream.url)}
-                          className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
-                        >
-                          <ExternalLink className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                          <span>Open in New Tab</span>
-                        </ContextMenuItem>
-
-                        <ContextMenuSeparator className="bg-[hsl(var(--border))]" />
-
-                        <ContextMenuItem
-                          onClick={() => removeStream(stream.id)}
-                          className="flex items-center gap-2 cursor-pointer text-red-400 focus:bg-red-500/10 focus:text-red-400"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          <span>Remove Stream</span>
-                        </ContextMenuItem>
-                      </ContextMenuContent>
-                    </ContextMenu>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleMute(stream.id);
+                            }}
+                            className="w-10 h-10 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg hover:scale-110 hover:bg-[hsl(217_91%_55%)] transition-transform cursor-pointer"
+                          >
+                            <Volume2 className="w-5 h-5 text-white" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -1279,7 +1323,7 @@ export default function HomePage() {
         </main>
 
         {/* Share Suggestion Modal */}
-        <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+        < Dialog open={showShareModal} onOpenChange={setShowShareModal} >
           <DialogContent className="sm:max-w-md glass-card border-[hsl(var(--border))]">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
@@ -1310,10 +1354,10 @@ export default function HomePage() {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
+        </Dialog >
 
         {/* Footer com links legais */}
-        <footer className="fixed bottom-0 left-0 right-0 bg-[hsl(var(--background))]/80 backdrop-blur-sm border-t border-[hsl(var(--border))] z-40">
+        < footer className="fixed bottom-0 left-0 right-0 bg-[hsl(var(--background))]/80 backdrop-blur-sm border-t border-[hsl(var(--border))] z-40" >
           <div className="max-w-7xl mx-auto px-4 py-3">
             <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-[hsl(var(--muted-foreground))]">
               <span>© 2025 Entrega Newba</span>
@@ -1361,8 +1405,8 @@ export default function HomePage() {
               </a>
             </div>
           </div>
-        </footer>
-      </div>
+        </footer >
+      </div >
     </>
   );
 }
