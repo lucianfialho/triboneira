@@ -197,7 +197,7 @@ export default function HomePage() {
 
   // Track initial layout usage on mount
   useEffect(() => {
-    if (streams.length > 0) {
+    if (streams.length > 0 && layoutConfigs[layout]) {
       amplitude.track('Layout Viewed', {
         layout,
         layoutDescription: layoutConfigs[layout].description,
@@ -372,11 +372,11 @@ export default function HomePage() {
             prevStreams.map(s =>
               s.id === stream.id
                 ? {
-                    ...s,
-                    viewerCount: data.viewerCount,
-                    isLive: data.isLive,
-                    title: data.title || s.title,
-                  }
+                  ...s,
+                  viewerCount: data.viewerCount,
+                  isLive: data.isLive,
+                  title: data.title || s.title,
+                }
                 : s
             )
           );
@@ -626,735 +626,729 @@ export default function HomePage() {
       />
 
       <div className="flex min-h-screen bg-[hsl(var(--background))] animate-fade-in relative">
-      {/* Sidebar */}
-      <aside className={`sidebar animate-slide-up transition-transform duration-300 ${!sidebarVisible ? '-translate-x-full absolute' : 'translate-x-0'}`}>
-        {/* Header */}
-        <div className="flex items-center gap-3 animate-scale-in">
-          <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg relative">
-            <Image
-              src="/logo.jpg"
-              alt="Entrega Newba"
-              width={40}
-              height={40}
-              className="object-cover"
-            />
+        {/* Sidebar */}
+        <aside className={`sidebar animate-slide-up transition-transform duration-300 ${!sidebarVisible ? '-translate-x-full absolute' : 'translate-x-0'}`}>
+          {/* Header */}
+          <div className="flex items-center gap-3 animate-scale-in">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg relative">
+              <Image
+                src="/logo.jpg"
+                alt="Entrega Newba"
+                width={40}
+                height={40}
+                className="object-cover"
+              />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-[hsl(var(--foreground))]">Entrega Newba</h1>
+              <p className="text-xs text-[hsl(var(--subtle-foreground))]">Watch smarter, not harder</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-[hsl(var(--foreground))]">Entrega Newba</h1>
-            <p className="text-xs text-[hsl(var(--subtle-foreground))]">Watch smarter, not harder</p>
-          </div>
-        </div>
 
-        {/* Total Viewers Counter */}
-        {streams.length > 0 && (
-          <div className="glass-card p-4 animate-scale-in">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[hsl(217_91%_60%)] flex items-center justify-center">
-                  <Users className="w-4 h-4 text-white" />
+          {/* Total Viewers Counter */}
+          {streams.length > 0 && (
+            <div className="glass-card p-4 animate-scale-in">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-[hsl(217_91%_60%)] flex items-center justify-center">
+                    <Users className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))]">Total Viewers</p>
+                    <p className="text-lg font-bold gradient-text">{formatViewerCount(totalViewers)}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))]">Total Viewers</p>
-                  <p className="text-lg font-bold gradient-text">{formatViewerCount(totalViewers)}</p>
-                </div>
+                <Eye className="w-5 h-5 text-[hsl(var(--primary))]" />
               </div>
-              <Eye className="w-5 h-5 text-[hsl(var(--primary))]" />
             </div>
-          </div>
-        )}
+          )}
 
-        <Separator className="bg-[hsl(var(--border))]" />
+          <Separator className="bg-[hsl(var(--border))]" />
 
-        {/* Add Stream Section */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <Plus className="w-4 h-4 text-[hsl(var(--primary))]" />
-            <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Add Stream</h2>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <Input
-              type="text"
-              placeholder="Paste stream URL..."
-              value={inputUrl}
-              onChange={(e) => setInputUrl(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && addStream()}
-              onClick={() => commandPaletteRef.current?.open()}
-              className="focus-ring bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] text-sm h-11"
-            />
-
-            <Button
-              onClick={addStream}
-              className="gradient-button h-11 text-sm font-medium relative z-10"
-              disabled={!inputUrl.trim()}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Stream
-            </Button>
-
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="text-xs bg-purple-500/10 border-purple-500/20 text-purple-400">
-                <TwitchIcon className="w-3 h-3 mr-1" />
-                Twitch
-              </Badge>
-              <Badge variant="outline" className="text-xs bg-red-500/10 border-red-500/20 text-red-400">
-                <Youtube className="w-3 h-3 mr-1" />
-                YouTube
-              </Badge>
-              <Badge variant="outline" className="text-xs bg-green-500/10 border-green-500/20 text-green-400">
-                <Video className="w-3 h-3 mr-1" />
-                Kick
-              </Badge>
+          {/* Add Stream Section */}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <Plus className="w-4 h-4 text-[hsl(var(--primary))]" />
+              <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Add Stream</h2>
             </div>
 
-            {/* Share Button in Sidebar */}
-            {streams.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <Input
+                type="text"
+                placeholder="Paste stream URL..."
+                value={inputUrl}
+                onChange={(e) => setInputUrl(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addStream()}
+                onClick={() => commandPaletteRef.current?.open()}
+                className="focus-ring bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] text-sm h-11"
+              />
+
               <Button
-                onClick={shareSetup}
-                variant="outline"
-                className="w-full h-11 text-sm font-medium border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-elevated))] hover:border-[hsl(var(--border-strong))] cursor-pointer"
+                onClick={addStream}
+                className="gradient-button h-11 text-sm font-medium relative z-10"
+                disabled={!inputUrl.trim()}
               >
-                {copied ? (
-                  <>
-                    <Check className="w-4 h-4 mr-2 text-green-500" />
-                    Copiado!
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Compartilhar
-                  </>
-                )}
+                <Plus className="w-4 h-4 mr-2" />
+                Add Stream
               </Button>
-            )}
-          </div>
-        </div>
 
-        {/* Top Live Streams - só mostra quando não há streams adicionados */}
-        {streams.length === 0 && (
-          <>
-            <Separator className="bg-[hsl(var(--border))]" />
-
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 flex-1">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Top Lives</h2>
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  {topStreamers.length}
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline" className="text-xs bg-purple-500/10 border-purple-500/20 text-purple-400">
+                  <TwitchIcon className="w-3 h-3 mr-1" />
+                  Twitch
+                </Badge>
+                <Badge variant="outline" className="text-xs bg-red-500/10 border-red-500/20 text-red-400">
+                  <Youtube className="w-3 h-3 mr-1" />
+                  YouTube
+                </Badge>
+                <Badge variant="outline" className="text-xs bg-green-500/10 border-green-500/20 text-green-400">
+                  <Video className="w-3 h-3 mr-1" />
+                  Kick
                 </Badge>
               </div>
 
-              {loadingTopStreamers ? (
-                <div className="flex flex-col gap-2">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="glass-card p-3 animate-pulse">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-lg bg-[hsl(var(--border))]" />
-                        <div className="flex-1">
-                          <div className="h-4 bg-[hsl(var(--border))] rounded w-3/4 mb-2" />
-                          <div className="h-3 bg-[hsl(var(--border))] rounded w-1/2" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto custom-scrollbar">
-                  {topStreamers.map((streamer) => (
-                    <button
-                      key={streamer.id}
-                      onClick={() => {
-                        addStreamFromCommandPalette(streamer);
-                        amplitude.track('Top Streamer Selected', {
-                          platform: streamer.platform,
-                          username: streamer.username,
-                          viewers: streamer.currentViewers,
-                        });
-                      }}
-                      className="glass-card p-3 hover:bg-[hsl(var(--surface-elevated))] transition-all duration-200 text-left group cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="relative">
-                          <Image
-                            src={streamer.avatarUrl}
-                            alt={streamer.displayName}
-                            width={40}
-                            height={40}
-                            className="rounded-lg object-cover"
-                            unoptimized
-                          />
-                          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[hsl(var(--surface-elevated))] flex items-center justify-center border-2 border-[hsl(var(--background))]">
-                            {streamer.platform === 'twitch' && <TwitchIcon className="w-3 h-3 text-purple-400" />}
-                            {streamer.platform === 'youtube' && <Youtube className="w-3 h-3 text-red-400" />}
-                            {streamer.platform === 'kick' && <Video className="w-3 h-3 text-green-400" />}
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-[hsl(var(--foreground))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
-                              {streamer.displayName}
-                            </p>
-                          </div>
-                          <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
-                            {streamer.currentTitle || 'Live agora'}
-                          </p>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Eye className="w-3 h-3 text-red-500" />
-                            <span className="text-xs font-medium text-red-500">
-                              {formatViewerCount(streamer.currentViewers)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        <Separator className="bg-[hsl(var(--border))]" />
-
-        {/* Layout Selection */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <Layout className="w-4 h-4 text-[hsl(var(--primary))]" />
-            <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Layout</h2>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            {(Object.keys(layoutConfigs) as LayoutType[]).map((layoutType) => {
-              const config = layoutConfigs[layoutType];
-              const Icon = config.icon;
-              const isActive = layout === layoutType;
-
-              return (
-                <Button
-                  key={layoutType}
-                  variant={isActive ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => changeLayout(layoutType)}
-                  className={`h-20 flex flex-col gap-1 transition-all ${
-                    isActive
-                      ? 'bg-[hsl(217_91%_60%)] text-white border-0 shadow-lg'
-                      : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
-                  }`}
-                  title={config.description}
-                >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`} />
-                  <span className={`text-xs font-medium ${isActive ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`}>
-                    {config.label}
-                  </span>
-                  <span className={`text-[10px] ${isActive ? 'text-white/70' : 'text-[hsl(var(--subtle-foreground))]'}`}>
-                    {config.description}
-                  </span>
-                </Button>
-              );
-            })}
-          </div>
-        </div>
-
-        <Separator className="bg-[hsl(var(--border))]" />
-
-        {/* Active Streams List */}
-        <div className="flex flex-col gap-4 flex-1 min-h-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Monitor className="w-4 h-4 text-[hsl(var(--primary))]" />
-              <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Active Streams</h2>
-            </div>
-            <Badge variant="secondary" className="bg-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] border-0 text-xs font-bold">
-              {streams.length}
-            </Badge>
-          </div>
-
-          <div className="flex flex-col gap-2 overflow-y-auto pr-1">
-            {streams.length === 0 ? (
-              <div className="text-center py-8 px-4">
-                <div className="w-12 h-12 rounded-full bg-[hsl(var(--surface-elevated))] flex items-center justify-center mx-auto mb-3">
-                  <Monitor className="w-6 h-6 text-[hsl(var(--subtle-foreground))]" />
-                </div>
-                <p className="text-xs text-[hsl(var(--subtle-foreground))]">No streams yet</p>
-              </div>
-            ) : (
-              streams.map((stream, index) => (
-                <div
-                  key={stream.id}
-                  className="glass-card p-3 group animate-scale-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${getPlatformColor(stream.platform)} flex items-center justify-center shadow-sm`}>
-                          {getPlatformIcon(stream.platform)}
-                        </div>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-[hsl(var(--border))]">
-                          {stream.platform}
-                        </Badge>
-                        {stream.viewerCount !== undefined && (
-                          <div className="flex items-center gap-1 text-[10px] text-[hsl(var(--primary))]">
-                            <Eye className="w-3 h-3" />
-                            <span className="font-semibold">{formatViewerCount(stream.viewerCount)}</span>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
-                        {stream.channelName || stream.videoId || stream.url}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => removeStream(stream.id)}
-                      className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400 cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="pt-4 border-t border-[hsl(var(--border))]">
-          <p className="text-[10px] text-[hsl(var(--subtle-foreground))] text-center">
-            Entrega Newba © 2025
-          </p>
-          <p className="text-[9px] text-[hsl(var(--subtle-foreground))] text-center mt-1">
-            Do newba ao pro
-          </p>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 p-4 lg:p-6 overflow-y-auto transition-all duration-300">
-        <div className="max-w-[1800px] mx-auto">
-          {/* Header */}
-          <div className="mb-4 animate-slide-up">
-            <div className="flex items-center gap-3">
-              {/* Toggle Sidebar Button */}
-              <button
-                onClick={toggleSidebar}
-                className="w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
-                title={sidebarVisible ? 'Esconder sidebar' : 'Mostrar sidebar'}
-              >
-                {sidebarVisible ? (
-                  <ChevronLeft className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
-                ) : (
-                  <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
-                )}
-              </button>
-              {/* Share Setup Button */}
+              {/* Share Button in Sidebar */}
               {streams.length > 0 && (
-                <button
+                <Button
                   onClick={shareSetup}
-                  className="ml-auto w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
-                  title="Compartilhar setup"
+                  variant="outline"
+                  className="w-full h-11 text-sm font-medium border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-elevated))] hover:border-[hsl(var(--border-strong))] cursor-pointer"
                 >
                   {copied ? (
-                    <Check className="w-5 h-5 text-green-500" />
+                    <>
+                      <Check className="w-4 h-4 mr-2 text-green-500" />
+                      Copiado!
+                    </>
                   ) : (
-                    <Share2 className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
+                    <>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Compartilhar
+                    </>
                   )}
-                </button>
+                </Button>
               )}
             </div>
           </div>
 
-          {/* Stream Grid */}
-          {streams.length === 0 ? (
-            <div className="empty-state glass-card animate-scale-in min-h-[500px]">
-              <div className="w-20 h-20 rounded-2xl bg-[hsl(217_91%_60%)] flex items-center justify-center mb-6 shadow-lg">
-                <Video className="w-10 h-10 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-3">
-                Pronto para assistir?
-              </h2>
-              <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-md mb-8">
-                Escolha uma das opções abaixo para começar a assistir suas lives favoritas
-              </p>
+          {/* Top Live Streams - só mostra quando não há streams adicionados */}
+          {streams.length === 0 && (
+            <>
+              <Separator className="bg-[hsl(var(--border))]" />
 
-              {/* Top 3 Lives Preview */}
-              <div className="mb-8 w-full max-w-md">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">Top Lives Agora</h3>
-                  <Badge variant="outline" className="text-xs ml-auto">
-                    {loadingTopStreamers ? 'Carregando...' : selectedStreamers.size > 0 ? `${selectedStreamers.size} selecionado${selectedStreamers.size > 1 ? 's' : ''}` : 'Selecione para assistir'}
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Top Lives</h2>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {topStreamers.length}
                   </Badge>
                 </div>
-                <div className="flex gap-4 justify-center mb-4">
-                  {loadingTopStreamers ? (
-                    // Skeleton loading state
-                    <>
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex flex-col items-center gap-2 animate-pulse">
-                          <div className="relative">
-                            <div className="w-20 h-20 rounded-xl bg-[hsl(var(--border))] animate-pulse" />
-                            <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[hsl(var(--border))]" />
-                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[hsl(var(--border))] w-12 h-4" />
+
+                {loadingTopStreamers ? (
+                  <div className="flex flex-col gap-2">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <div key={i} className="glass-card p-3 animate-pulse">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-lg bg-[hsl(var(--border))]" />
+                          <div className="flex-1">
+                            <div className="h-4 bg-[hsl(var(--border))] rounded w-3/4 mb-2" />
+                            <div className="h-3 bg-[hsl(var(--border))] rounded w-1/2" />
                           </div>
-                          <div className="w-16 h-3 bg-[hsl(var(--border))] rounded" />
                         </div>
-                      ))}
-                    </>
-                  ) : topStreamers.length > 0 ? (
-                    topStreamers.slice(0, 3).map((streamer, index) => {
-                      const isSelected = selectedStreamers.has(streamer.id);
-                      return (
-                        <button
-                          key={streamer.id}
-                          onClick={() => {
-                            toggleStreamerSelection(streamer.id);
-                            amplitude.track('Empty State Streamer Toggled', {
-                              platform: streamer.platform,
-                              username: streamer.username,
-                              selected: !isSelected,
-                              position: index + 1,
-                            });
-                          }}
-                          className={`group flex flex-col items-center gap-2 transition-all duration-200 hover:scale-105 active:scale-95 ${
-                            isSelected ? 'scale-105' : ''
-                          }`}
-                        >
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+                    {topStreamers.map((streamer) => (
+                      <button
+                        key={streamer.id}
+                        onClick={() => {
+                          addStreamFromCommandPalette(streamer);
+                          amplitude.track('Top Streamer Selected', {
+                            platform: streamer.platform,
+                            username: streamer.username,
+                            viewers: streamer.currentViewers,
+                          });
+                        }}
+                        className="glass-card p-3 hover:bg-[hsl(var(--surface-elevated))] transition-all duration-200 text-left group cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                      >
+                        <div className="flex items-center gap-3">
                           <div className="relative">
-                            <div className={`w-20 h-20 rounded-xl overflow-hidden ring-2 transition-all shadow-lg ${
-                              isSelected
-                                ? 'ring-[hsl(var(--primary))] ring-4'
-                                : 'ring-[hsl(var(--border))] group-hover:ring-[hsl(var(--primary))]'
-                            }`}>
-                              <Image
-                                src={streamer.avatarUrl}
-                                alt={streamer.displayName}
-                                width={80}
-                                height={80}
-                                className={`object-cover w-full h-full transition-all ${
-                                  isSelected ? 'brightness-90' : 'group-hover:brightness-95'
-                                }`}
-                                unoptimized
-                              />
-                            </div>
-                            {/* Checkbox indicator */}
-                            <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center border-2 shadow-lg transition-all ${
-                              isSelected
-                                ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))] scale-100'
-                                : 'bg-[hsl(var(--background))] border-[hsl(var(--border))] scale-0 group-hover:scale-100'
-                            }`}>
-                              {isSelected && <Check className="w-3 h-3 text-white" />}
-                            </div>
-                            <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[hsl(var(--background))] flex items-center justify-center border-2 border-[hsl(var(--border))] shadow-sm">
+                            <Image
+                              src={streamer.avatarUrl}
+                              alt={streamer.displayName}
+                              width={40}
+                              height={40}
+                              className="rounded-lg object-cover"
+                              unoptimized
+                            />
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[hsl(var(--surface-elevated))] flex items-center justify-center border-2 border-[hsl(var(--background))]">
                               {streamer.platform === 'twitch' && <TwitchIcon className="w-3 h-3 text-purple-400" />}
                               {streamer.platform === 'youtube' && <Youtube className="w-3 h-3 text-red-400" />}
                               {streamer.platform === 'kick' && <Video className="w-3 h-3 text-green-400" />}
                             </div>
-                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-red-500 flex items-center gap-1 shadow-sm">
-                              <Eye className="w-2.5 h-2.5 text-white" />
-                              <span className="text-[10px] font-bold text-white">
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-semibold text-[hsl(var(--foreground))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
+                                {streamer.displayName}
+                              </p>
+                            </div>
+                            <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
+                              {streamer.currentTitle || 'Live agora'}
+                            </p>
+                            <div className="flex items-center gap-1 mt-1">
+                              <Eye className="w-3 h-3 text-red-500" />
+                              <span className="text-xs font-medium text-red-500">
                                 {formatViewerCount(streamer.currentViewers)}
                               </span>
                             </div>
                           </div>
-                          <div className="text-center">
-                            <p className={`text-xs font-semibold transition-colors truncate max-w-[80px] ${
-                              isSelected ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))]'
-                            }`}>
-                              {streamer.displayName}
-                            </p>
-                          </div>
-                        </button>
-                      );
-                    })
-                  ) : (
-                    // Mensagem quando não há streamers disponíveis
-                    <div className="text-center py-4">
-                      <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                        Nenhuma live disponível no momento
-                      </p>
-                    </div>
-                  )}
-                </div>
-                {!loadingTopStreamers && selectedStreamers.size > 0 && (
-                  <Button
-                    onClick={addSelectedStreamers}
-                    className="gradient-button w-full h-11 text-sm font-medium animate-scale-in"
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Assistir {selectedStreamers.size} {selectedStreamers.size === 1 ? 'Streamer' : 'Streamers'}
-                  </Button>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
+            </>
+          )}
 
-              <div className="flex flex-col gap-3 text-left max-w-sm">
-                <div className="flex items-start gap-3 text-sm">
-                  <div className="w-6 h-6 rounded-full bg-[hsl(217_91%_60%)]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-[hsl(217_91%_60%)]">1</span>
-                  </div>
-                  <p className="text-[hsl(var(--muted-foreground))]">
-                    <span className="font-semibold text-[hsl(var(--foreground))]">Clique nos "Top Lives"</span> acima ou na sidebar para adicionar streamers populares
-                  </p>
-                </div>
-                <div className="flex items-start gap-3 text-sm">
-                  <div className="w-6 h-6 rounded-full bg-[hsl(217_91%_60%)]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-[hsl(217_91%_60%)]">2</span>
-                  </div>
-                  <p className="text-[hsl(var(--muted-foreground))]">
-                    <span className="font-semibold text-[hsl(var(--foreground))]">Use Cmd+K</span> ou clique no input para buscar qualquer streamer (Twitch, YouTube, Kick)
-                  </p>
-                </div>
-                <div className="flex items-start gap-3 text-sm">
-                  <div className="w-6 h-6 rounded-full bg-[hsl(217_91%_60%)]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-[hsl(217_91%_60%)]">3</span>
-                  </div>
-                  <p className="text-[hsl(var(--muted-foreground))]">
-                    Ou <span className="font-semibold text-[hsl(var(--foreground))]">cole uma URL</span> diretamente no input e clique em "Add Stream"
-                  </p>
-                </div>
-              </div>
+          <Separator className="bg-[hsl(var(--border))]" />
+
+          {/* Layout Selection */}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <Layout className="w-4 h-4 text-[hsl(var(--primary))]" />
+              <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Layout</h2>
             </div>
-          ) : (
-            <div className={`layout-${layout} animate-fade-in`}>
-              {streams.map((stream, index) => {
-                const progress = unmutingProgress[stream.id] || 0;
-                const isHovering = hoveringStream === stream.id;
+
+            <div className="grid grid-cols-2 gap-2">
+              {(Object.keys(layoutConfigs) as LayoutType[]).map((layoutType) => {
+                const config = layoutConfigs[layoutType];
+                const Icon = config.icon;
+                const isActive = layout === layoutType;
 
                 return (
-                  <ContextMenu key={stream.id}>
-                    <ContextMenuTrigger asChild>
-                      <div
-                        className="stream-container group cursor-pointer"
-                        style={{ opacity: 1, visibility: 'visible' }}
-                        onMouseEnter={() => handleStreamHover(stream.id, true)}
-                        onMouseLeave={() => handleStreamHover(stream.id, false)}
-                        onClick={() => handleStreamClick(stream.id)}
-                      >
-                        <iframe
-                          key={`${stream.id}-${stream.isMuted}`}
-                          src={getPlatformEmbed(stream.url, stream.platform, stream.isMuted)}
-                          width="100%"
-                          height="100%"
-                          className="w-full h-full"
-                          style={{
-                            minWidth: '400px',
-                            minHeight: '300px',
-                            display: 'block',
-                            visibility: 'visible'
-                          }}
-                          frameBorder="0"
-                          allowFullScreen
-                          allow="autoplay; encrypted-media; picture-in-picture"
-                        />
-
-                        {/* Stream Overlay */}
-                        <div className="absolute top-3 left-3 flex items-center gap-2">
-                          <div className={`px-2.5 py-1.5 rounded-lg bg-gradient-to-br ${getPlatformColor(stream.platform)} backdrop-blur-xl shadow-lg flex items-center gap-2`}>
-                            {getPlatformIcon(stream.platform)}
-                            <span className="text-xs font-semibold text-white capitalize">
-                              {stream.platform}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Audio Control Overlay */}
-                        {stream.isMuted && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0 group-hover:opacity-100">
-                            <div className="relative flex items-center justify-center">
-                              {/* Circular Progress */}
-                              <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
-                                {/* Background circle */}
-                                <circle
-                                  cx="50"
-                                  cy="50"
-                                  r="45"
-                                  fill="none"
-                                  stroke="hsl(var(--border))"
-                                  strokeWidth="4"
-                                />
-                                {/* Progress circle */}
-                                <circle
-                                  cx="50"
-                                  cy="50"
-                                  r="45"
-                                  fill="none"
-                                  stroke="hsl(var(--primary))"
-                                  strokeWidth="4"
-                                  strokeDasharray={`${2 * Math.PI * 45}`}
-                                  strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
-                                  strokeLinecap="round"
-                                  className="transition-all duration-75 ease-linear"
-                                  style={{
-                                    filter: 'drop-shadow(0 0 8px hsl(var(--primary)))'
-                                  }}
-                                />
-                              </svg>
-
-                              {/* Icon in center */}
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-16 h-16 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg">
-                                  <VolumeX className="w-8 h-8 text-white" />
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Text hint */}
-                            <div className="absolute bottom-8 left-0 right-0 text-center">
-                              <p className="text-sm font-medium text-white drop-shadow-lg">
-                                Hold to unmute
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Unmuted indicator */}
-                        {!stream.isMuted && (
-                          <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleMute(stream.id);
-                              }}
-                              className="w-10 h-10 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg hover:scale-110 hover:bg-[hsl(217_91%_55%)] transition-transform cursor-pointer"
-                            >
-                              <Volume2 className="w-5 h-5 text-white" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </ContextMenuTrigger>
-
-                    <ContextMenuContent className="w-56 glass-card border-[hsl(var(--border))]">
-                      <ContextMenuItem
-                        onClick={() => soloAudio(stream.id)}
-                        className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
-                      >
-                        <Headphones className="w-4 h-4 text-[hsl(var(--primary))]" />
-                        <span>Solo Audio</span>
-                      </ContextMenuItem>
-
-                      <ContextMenuItem
-                        onClick={() => toggleMute(stream.id)}
-                        className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
-                      >
-                        {stream.isMuted ? (
-                          <Volume2 className="w-4 h-4 text-[hsl(var(--primary))]" />
-                        ) : (
-                          <VolumeX className="w-4 h-4 text-[hsl(var(--primary))]" />
-                        )}
-                        <span>{stream.isMuted ? 'Unmute' : 'Mute'}</span>
-                      </ContextMenuItem>
-
-                      <ContextMenuSeparator className="bg-[hsl(var(--border))]" />
-
-                      <ContextMenuItem
-                        onClick={() => copyStreamUrl(stream.url)}
-                        className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
-                      >
-                        <Copy className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                        <span>Copy URL</span>
-                      </ContextMenuItem>
-
-                      <ContextMenuItem
-                        onClick={() => openInNewTab(stream.url)}
-                        className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
-                      >
-                        <ExternalLink className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                        <span>Open in New Tab</span>
-                      </ContextMenuItem>
-
-                      <ContextMenuSeparator className="bg-[hsl(var(--border))]" />
-
-                      <ContextMenuItem
-                        onClick={() => removeStream(stream.id)}
-                        className="flex items-center gap-2 cursor-pointer text-red-400 focus:bg-red-500/10 focus:text-red-400"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span>Remove Stream</span>
-                      </ContextMenuItem>
-                    </ContextMenuContent>
-                  </ContextMenu>
+                  <Button
+                    key={layoutType}
+                    variant={isActive ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => changeLayout(layoutType)}
+                    className={`h-20 flex flex-col gap-1 transition-all ${isActive
+                        ? 'bg-[hsl(217_91%_60%)] text-white border-0 shadow-lg'
+                        : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
+                      }`}
+                    title={config.description}
+                  >
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`} />
+                    <span className={`text-xs font-medium ${isActive ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                      {config.label}
+                    </span>
+                    <span className={`text-[10px] ${isActive ? 'text-white/70' : 'text-[hsl(var(--subtle-foreground))]'}`}>
+                      {config.description}
+                    </span>
+                  </Button>
                 );
               })}
             </div>
-          )}
-        </div>
-      </main>
-
-      {/* Share Suggestion Modal */}
-      <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
-        <DialogContent className="sm:max-w-md glass-card border-[hsl(var(--border))]">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
-              <Share2 className="w-5 h-5 text-[hsl(var(--primary))]" />
-              Compartilhe seu setup!
-            </DialogTitle>
-            <DialogDescription className="text-[hsl(var(--muted-foreground))]">
-              Você acabou de criar uma combinação de streams. Quer compartilhar com seus amigos?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 mt-4">
-            <Button
-              onClick={() => {
-                shareSetup();
-                setShowShareModal(false);
-              }}
-              className="gradient-button h-11 text-sm font-medium"
-            >
-              <Share2 className="w-4 h-4 mr-2" />
-              Compartilhar Agora
-            </Button>
-            <Button
-              onClick={() => setShowShareModal(false)}
-              variant="outline"
-              className="h-11 text-sm border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-elevated))] cursor-pointer"
-            >
-              Agora não
-            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
 
-      {/* Footer com links legais */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-[hsl(var(--background))]/80 backdrop-blur-sm border-t border-[hsl(var(--border))] z-40">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-[hsl(var(--muted-foreground))]">
-            <span>© 2025 Entrega Newba</span>
-            <span className="text-[hsl(var(--border))]">•</span>
-            <Link
-              href="/about"
-              className="hover:text-[hsl(var(--foreground))] transition-colors"
-            >
-              Sobre
-            </Link>
-            <span className="text-[hsl(var(--border))]">•</span>
-            <Link
-              href="/privacy"
-              className="hover:text-[hsl(var(--foreground))] transition-colors"
-            >
-              Privacidade
-            </Link>
-            <span className="text-[hsl(var(--border))]">•</span>
-            <Link
-              href="/terms"
-              className="hover:text-[hsl(var(--foreground))] transition-colors"
-            >
-              Termos
-            </Link>
-            <span className="text-[hsl(var(--border))]">•</span>
-            <a
-              href="mailto:contato@entreganewba.com.br"
-              className="hover:text-[hsl(var(--foreground))] transition-colors"
-            >
-              Contato
-            </a>
+          <Separator className="bg-[hsl(var(--border))]" />
+
+          {/* Active Streams List */}
+          <div className="flex flex-col gap-4 flex-1 min-h-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Monitor className="w-4 h-4 text-[hsl(var(--primary))]" />
+                <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Active Streams</h2>
+              </div>
+              <Badge variant="secondary" className="bg-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] border-0 text-xs font-bold">
+                {streams.length}
+              </Badge>
+            </div>
+
+            <div className="flex flex-col gap-2 overflow-y-auto pr-1">
+              {streams.length === 0 ? (
+                <div className="text-center py-8 px-4">
+                  <div className="w-12 h-12 rounded-full bg-[hsl(var(--surface-elevated))] flex items-center justify-center mx-auto mb-3">
+                    <Monitor className="w-6 h-6 text-[hsl(var(--subtle-foreground))]" />
+                  </div>
+                  <p className="text-xs text-[hsl(var(--subtle-foreground))]">No streams yet</p>
+                </div>
+              ) : (
+                streams.map((stream, index) => (
+                  <div
+                    key={stream.id}
+                    className="glass-card p-3 group animate-scale-in"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${getPlatformColor(stream.platform)} flex items-center justify-center shadow-sm`}>
+                            {getPlatformIcon(stream.platform)}
+                          </div>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-[hsl(var(--border))]">
+                            {stream.platform}
+                          </Badge>
+                          {stream.viewerCount !== undefined && (
+                            <div className="flex items-center gap-1 text-[10px] text-[hsl(var(--primary))]">
+                              <Eye className="w-3 h-3" />
+                              <span className="font-semibold">{formatViewerCount(stream.viewerCount)}</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
+                          {stream.channelName || stream.videoId || stream.url}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeStream(stream.id)}
+                        className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
-      </footer>
-    </div>
+
+          {/* Footer */}
+          <div className="pt-4 border-t border-[hsl(var(--border))]">
+            <p className="text-[10px] text-[hsl(var(--subtle-foreground))] text-center">
+              Entrega Newba © 2025
+            </p>
+            <p className="text-[9px] text-[hsl(var(--subtle-foreground))] text-center mt-1">
+              Do newba ao pro
+            </p>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 lg:p-6 overflow-y-auto transition-all duration-300">
+          <div className="max-w-[1800px] mx-auto">
+            {/* Header */}
+            <div className="mb-4 animate-slide-up">
+              <div className="flex items-center gap-3">
+                {/* Toggle Sidebar Button */}
+                <button
+                  onClick={toggleSidebar}
+                  className="w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
+                  title={sidebarVisible ? 'Esconder sidebar' : 'Mostrar sidebar'}
+                >
+                  {sidebarVisible ? (
+                    <ChevronLeft className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
+                  )}
+                </button>
+                {/* Share Setup Button */}
+                {streams.length > 0 && (
+                  <button
+                    onClick={shareSetup}
+                    className="ml-auto w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
+                    title="Compartilhar setup"
+                  >
+                    {copied ? (
+                      <Check className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <Share2 className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Stream Grid */}
+            {streams.length === 0 ? (
+              <div className="empty-state glass-card animate-scale-in min-h-[500px]">
+                <div className="w-20 h-20 rounded-2xl bg-[hsl(217_91%_60%)] flex items-center justify-center mb-6 shadow-lg">
+                  <Video className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-3">
+                  Pronto para assistir?
+                </h2>
+                <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-md mb-8">
+                  Escolha uma das opções abaixo para começar a assistir suas lives favoritas
+                </p>
+
+                {/* Top 3 Lives Preview */}
+                <div className="mb-8 w-full max-w-md">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">Top Lives Agora</h3>
+                    <Badge variant="outline" className="text-xs ml-auto">
+                      {loadingTopStreamers ? 'Carregando...' : selectedStreamers.size > 0 ? `${selectedStreamers.size} selecionado${selectedStreamers.size > 1 ? 's' : ''}` : 'Selecione para assistir'}
+                    </Badge>
+                  </div>
+                  <div className="flex gap-4 justify-center mb-4">
+                    {loadingTopStreamers ? (
+                      // Skeleton loading state
+                      <>
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="flex flex-col items-center gap-2 animate-pulse">
+                            <div className="relative">
+                              <div className="w-20 h-20 rounded-xl bg-[hsl(var(--border))] animate-pulse" />
+                              <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[hsl(var(--border))]" />
+                              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[hsl(var(--border))] w-12 h-4" />
+                            </div>
+                            <div className="w-16 h-3 bg-[hsl(var(--border))] rounded" />
+                          </div>
+                        ))}
+                      </>
+                    ) : topStreamers.length > 0 ? (
+                      topStreamers.slice(0, 3).map((streamer, index) => {
+                        const isSelected = selectedStreamers.has(streamer.id);
+                        return (
+                          <button
+                            key={streamer.id}
+                            onClick={() => {
+                              toggleStreamerSelection(streamer.id);
+                              amplitude.track('Empty State Streamer Toggled', {
+                                platform: streamer.platform,
+                                username: streamer.username,
+                                selected: !isSelected,
+                                position: index + 1,
+                              });
+                            }}
+                            className={`group flex flex-col items-center gap-2 transition-all duration-200 hover:scale-105 active:scale-95 ${isSelected ? 'scale-105' : ''
+                              }`}
+                          >
+                            <div className="relative">
+                              <div className={`w-20 h-20 rounded-xl overflow-hidden ring-2 transition-all shadow-lg ${isSelected
+                                  ? 'ring-[hsl(var(--primary))] ring-4'
+                                  : 'ring-[hsl(var(--border))] group-hover:ring-[hsl(var(--primary))]'
+                                }`}>
+                                <Image
+                                  src={streamer.avatarUrl}
+                                  alt={streamer.displayName}
+                                  width={80}
+                                  height={80}
+                                  className={`object-cover w-full h-full transition-all ${isSelected ? 'brightness-90' : 'group-hover:brightness-95'
+                                    }`}
+                                  unoptimized
+                                />
+                              </div>
+                              {/* Checkbox indicator */}
+                              <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center border-2 shadow-lg transition-all ${isSelected
+                                  ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))] scale-100'
+                                  : 'bg-[hsl(var(--background))] border-[hsl(var(--border))] scale-0 group-hover:scale-100'
+                                }`}>
+                                {isSelected && <Check className="w-3 h-3 text-white" />}
+                              </div>
+                              <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[hsl(var(--background))] flex items-center justify-center border-2 border-[hsl(var(--border))] shadow-sm">
+                                {streamer.platform === 'twitch' && <TwitchIcon className="w-3 h-3 text-purple-400" />}
+                                {streamer.platform === 'youtube' && <Youtube className="w-3 h-3 text-red-400" />}
+                                {streamer.platform === 'kick' && <Video className="w-3 h-3 text-green-400" />}
+                              </div>
+                              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-red-500 flex items-center gap-1 shadow-sm">
+                                <Eye className="w-2.5 h-2.5 text-white" />
+                                <span className="text-[10px] font-bold text-white">
+                                  {formatViewerCount(streamer.currentViewers)}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <p className={`text-xs font-semibold transition-colors truncate max-w-[80px] ${isSelected ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))]'
+                                }`}>
+                                {streamer.displayName}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      // Mensagem quando não há streamers disponíveis
+                      <div className="text-center py-4">
+                        <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                          Nenhuma live disponível no momento
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  {!loadingTopStreamers && selectedStreamers.size > 0 && (
+                    <Button
+                      onClick={addSelectedStreamers}
+                      className="gradient-button w-full h-11 text-sm font-medium animate-scale-in"
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      Assistir {selectedStreamers.size} {selectedStreamers.size === 1 ? 'Streamer' : 'Streamers'}
+                    </Button>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-3 text-left max-w-sm">
+                  <div className="flex items-start gap-3 text-sm">
+                    <div className="w-6 h-6 rounded-full bg-[hsl(217_91%_60%)]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-[hsl(217_91%_60%)]">1</span>
+                    </div>
+                    <p className="text-[hsl(var(--muted-foreground))]">
+                      <span className="font-semibold text-[hsl(var(--foreground))]">Clique nos "Top Lives"</span> acima ou na sidebar para adicionar streamers populares
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3 text-sm">
+                    <div className="w-6 h-6 rounded-full bg-[hsl(217_91%_60%)]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-[hsl(217_91%_60%)]">2</span>
+                    </div>
+                    <p className="text-[hsl(var(--muted-foreground))]">
+                      <span className="font-semibold text-[hsl(var(--foreground))]">Use Cmd+K</span> ou clique no input para buscar qualquer streamer (Twitch, YouTube, Kick)
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3 text-sm">
+                    <div className="w-6 h-6 rounded-full bg-[hsl(217_91%_60%)]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-[hsl(217_91%_60%)]">3</span>
+                    </div>
+                    <p className="text-[hsl(var(--muted-foreground))]">
+                      Ou <span className="font-semibold text-[hsl(var(--foreground))]">cole uma URL</span> diretamente no input e clique em "Add Stream"
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className={`layout-${layout} animate-fade-in`}>
+                {streams.map((stream, index) => {
+                  const progress = unmutingProgress[stream.id] || 0;
+                  const isHovering = hoveringStream === stream.id;
+
+                  return (
+                    <ContextMenu key={stream.id}>
+                      <ContextMenuTrigger asChild>
+                        <div
+                          className="stream-container group cursor-pointer"
+                          style={{ opacity: 1, visibility: 'visible' }}
+                          onMouseEnter={() => handleStreamHover(stream.id, true)}
+                          onMouseLeave={() => handleStreamHover(stream.id, false)}
+                          onClick={() => handleStreamClick(stream.id)}
+                        >
+                          <iframe
+                            key={`${stream.id}-${stream.isMuted}`}
+                            src={getPlatformEmbed(stream.url, stream.platform, stream.isMuted)}
+                            width="100%"
+                            height="100%"
+                            className="w-full h-full"
+                            style={{
+                              minWidth: '400px',
+                              minHeight: '300px',
+                              display: 'block',
+                              visibility: 'visible'
+                            }}
+                            frameBorder="0"
+                            allowFullScreen
+                            allow="autoplay; encrypted-media; picture-in-picture"
+                          />
+
+                          {/* Stream Overlay */}
+                          <div className="absolute top-3 left-3 flex items-center gap-2">
+                            <div className={`px-2.5 py-1.5 rounded-lg bg-gradient-to-br ${getPlatformColor(stream.platform)} backdrop-blur-xl shadow-lg flex items-center gap-2`}>
+                              {getPlatformIcon(stream.platform)}
+                              <span className="text-xs font-semibold text-white capitalize">
+                                {stream.platform}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Audio Control Overlay */}
+                          {stream.isMuted && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+                              <div className="relative flex items-center justify-center">
+                                {/* Circular Progress */}
+                                <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+                                  {/* Background circle */}
+                                  <circle
+                                    cx="50"
+                                    cy="50"
+                                    r="45"
+                                    fill="none"
+                                    stroke="hsl(var(--border))"
+                                    strokeWidth="4"
+                                  />
+                                  {/* Progress circle */}
+                                  <circle
+                                    cx="50"
+                                    cy="50"
+                                    r="45"
+                                    fill="none"
+                                    stroke="hsl(var(--primary))"
+                                    strokeWidth="4"
+                                    strokeDasharray={`${2 * Math.PI * 45}`}
+                                    strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
+                                    strokeLinecap="round"
+                                    className="transition-all duration-75 ease-linear"
+                                    style={{
+                                      filter: 'drop-shadow(0 0 8px hsl(var(--primary)))'
+                                    }}
+                                  />
+                                </svg>
+
+                                {/* Icon in center */}
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="w-16 h-16 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg">
+                                    <VolumeX className="w-8 h-8 text-white" />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Text hint */}
+                              <div className="absolute bottom-8 left-0 right-0 text-center">
+                                <p className="text-sm font-medium text-white drop-shadow-lg">
+                                  Hold to unmute
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Unmuted indicator */}
+                          {!stream.isMuted && (
+                            <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleMute(stream.id);
+                                }}
+                                className="w-10 h-10 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg hover:scale-110 hover:bg-[hsl(217_91%_55%)] transition-transform cursor-pointer"
+                              >
+                                <Volume2 className="w-5 h-5 text-white" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </ContextMenuTrigger>
+
+                      <ContextMenuContent className="w-56 glass-card border-[hsl(var(--border))]">
+                        <ContextMenuItem
+                          onClick={() => soloAudio(stream.id)}
+                          className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
+                        >
+                          <Headphones className="w-4 h-4 text-[hsl(var(--primary))]" />
+                          <span>Solo Audio</span>
+                        </ContextMenuItem>
+
+                        <ContextMenuItem
+                          onClick={() => toggleMute(stream.id)}
+                          className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
+                        >
+                          {stream.isMuted ? (
+                            <Volume2 className="w-4 h-4 text-[hsl(var(--primary))]" />
+                          ) : (
+                            <VolumeX className="w-4 h-4 text-[hsl(var(--primary))]" />
+                          )}
+                          <span>{stream.isMuted ? 'Unmute' : 'Mute'}</span>
+                        </ContextMenuItem>
+
+                        <ContextMenuSeparator className="bg-[hsl(var(--border))]" />
+
+                        <ContextMenuItem
+                          onClick={() => copyStreamUrl(stream.url)}
+                          className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
+                        >
+                          <Copy className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                          <span>Copy URL</span>
+                        </ContextMenuItem>
+
+                        <ContextMenuItem
+                          onClick={() => openInNewTab(stream.url)}
+                          className="flex items-center gap-2 cursor-pointer focus:bg-[hsl(var(--surface-elevated))]"
+                        >
+                          <ExternalLink className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                          <span>Open in New Tab</span>
+                        </ContextMenuItem>
+
+                        <ContextMenuSeparator className="bg-[hsl(var(--border))]" />
+
+                        <ContextMenuItem
+                          onClick={() => removeStream(stream.id)}
+                          className="flex items-center gap-2 cursor-pointer text-red-400 focus:bg-red-500/10 focus:text-red-400"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Remove Stream</span>
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </main>
+
+        {/* Share Suggestion Modal */}
+        <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+          <DialogContent className="sm:max-w-md glass-card border-[hsl(var(--border))]">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-[hsl(var(--primary))]" />
+                Compartilhe seu setup!
+              </DialogTitle>
+              <DialogDescription className="text-[hsl(var(--muted-foreground))]">
+                Você acabou de criar uma combinação de streams. Quer compartilhar com seus amigos?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-3 mt-4">
+              <Button
+                onClick={() => {
+                  shareSetup();
+                  setShowShareModal(false);
+                }}
+                className="gradient-button h-11 text-sm font-medium"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Compartilhar Agora
+              </Button>
+              <Button
+                onClick={() => setShowShareModal(false)}
+                variant="outline"
+                className="h-11 text-sm border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-elevated))] cursor-pointer"
+              >
+                Agora não
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Footer com links legais */}
+        <footer className="fixed bottom-0 left-0 right-0 bg-[hsl(var(--background))]/80 backdrop-blur-sm border-t border-[hsl(var(--border))] z-40">
+          <div className="max-w-7xl mx-auto px-4 py-3">
+            <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-[hsl(var(--muted-foreground))]">
+              <span>© 2025 Entrega Newba</span>
+              <span className="text-[hsl(var(--border))]">•</span>
+              <Link
+                href="/about"
+                className="hover:text-[hsl(var(--foreground))] transition-colors"
+              >
+                Sobre
+              </Link>
+              <span className="text-[hsl(var(--border))]">•</span>
+              <Link
+                href="/privacy"
+                className="hover:text-[hsl(var(--foreground))] transition-colors"
+              >
+                Privacidade
+              </Link>
+              <span className="text-[hsl(var(--border))]">•</span>
+              <Link
+                href="/terms"
+                className="hover:text-[hsl(var(--foreground))] transition-colors"
+              >
+                Termos
+              </Link>
+              <span className="text-[hsl(var(--border))]">•</span>
+              <a
+                href="mailto:contato@entreganewba.com.br"
+                className="hover:text-[hsl(var(--foreground))] transition-colors"
+              >
+                Contato
+              </a>
+            </div>
+          </div>
+        </footer>
+      </div>
     </>
   );
 }

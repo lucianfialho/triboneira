@@ -153,6 +153,45 @@ export async function getYouTubeLiveStream(channelId: string): Promise<YouTubeLi
 }
 
 /**
+ * Busca informações de um vídeo do YouTube por ID
+ */
+export async function getYouTubeVideoInfo(videoId: string): Promise<YouTubeLiveStream | null> {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?` +
+        new URLSearchParams({
+          part: 'snippet,liveStreamingDetails',
+          id: videoId,
+          key: apiKey,
+        }),
+      { next: { revalidate: 30 } } // Cache por 30 segundos
+    );
+
+    if (!response.ok) {
+      console.error('YouTube API error:', await response.text());
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.items || data.items.length === 0) {
+      return null;
+    }
+
+    return data.items[0];
+  } catch (error) {
+    console.error('Error getting YouTube video info:', error);
+    return null;
+  }
+}
+
+/**
  * Busca canal do YouTube por handle/username
  */
 export async function getYouTubeChannelByHandle(handle: string): Promise<YouTubeChannel | null> {

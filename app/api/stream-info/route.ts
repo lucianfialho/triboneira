@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getYouTubeVideoInfo } from '@/lib/services/youtube';
 
 type Platform = 'twitch' | 'youtube' | 'kick';
 
@@ -6,6 +7,8 @@ interface StreamInfo {
   viewerCount: number;
   title?: string;
   isLive: boolean;
+  channelName?: string;
+  thumbnail?: string;
 }
 
 // Twitch API requires client ID and token - for now we'll use public endpoints where possible
@@ -33,13 +36,27 @@ async function getTwitchStreamInfo(channelName: string): Promise<StreamInfo> {
 
 async function getYouTubeStreamInfo(videoId: string): Promise<StreamInfo> {
   try {
-    // YouTube requires API key for accurate data
-    // For demo, we'll return estimated values
-    // In production, use YouTube Data API v3
+    const videoInfo = await getYouTubeVideoInfo(videoId);
+
+    if (!videoInfo) {
+      return {
+        viewerCount: 0,
+        isLive: false,
+        title: 'YouTube Video',
+      };
+    }
+
+    const isLive = !!videoInfo.liveStreamingDetails;
+    const viewerCount = videoInfo.liveStreamingDetails?.concurrentViewers
+      ? parseInt(videoInfo.liveStreamingDetails.concurrentViewers)
+      : 0;
+
     return {
-      viewerCount: 0, // Requires YouTube API key
-      isLive: true,
-      title: 'YouTube Live',
+      viewerCount,
+      isLive,
+      title: videoInfo.snippet.title,
+      channelName: videoInfo.snippet.channelTitle,
+      thumbnail: videoInfo.snippet.thumbnails.high?.url || videoInfo.snippet.thumbnails.medium?.url,
     };
   } catch (error) {
     console.error('Error fetching YouTube info:', error);
