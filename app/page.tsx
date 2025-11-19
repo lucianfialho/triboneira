@@ -723,7 +723,7 @@ export default function HomePage() {
             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg relative">
               <Image
                 src="/android-chrome-192x192.png"
-                alt="Multistream"
+                alt="Entrega Newba"
                 width={40}
                 height={40}
                 className="object-cover"
