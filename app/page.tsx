@@ -731,8 +731,8 @@ export default function HomePage() {
               />
             </div>
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">Multistream</h1>
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">Watch multiple streams</p>
+              <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">Entrega Newba</h1>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">Watch smarter, not harder</p>
             </div>
 
             {/* Close button - Mobile only */}
