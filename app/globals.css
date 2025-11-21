@@ -256,22 +256,28 @@
     grid-row: 1;
   }
 
-  .layout-pip>*:not(:first-child) {
-    position: absolute;
+  .layout-pip>*:nth-child(2) {
     bottom: 1.5rem;
     right: 1.5rem;
-    width: 25%;
-    min-width: 250px;
-    max-width: 100%;
-    z-index: 10;
   }
 
   .layout-pip>*:nth-child(3) {
-    bottom: calc(1.5rem + 180px);
+    top: 1.5rem;
+    right: 1.5rem;
+    bottom: auto;
   }
 
   .layout-pip>*:nth-child(4) {
-    bottom: calc(1.5rem + 360px);
+    bottom: 1.5rem;
+    left: 1.5rem;
+    right: auto;
+  }
+
+  .layout-pip>*:nth-child(5) {
+    top: 1.5rem;
+    left: 1.5rem;
+    right: auto;
+    bottom: auto;
   }
 
   .layout-main-side {
@@ -297,6 +303,12 @@
   .layout-grid {
     @apply grid gap-6;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  }
+
+  .layout-horizontal {
+    @apply grid gap-6;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
   }
 
   /* Responsive adjustments */
