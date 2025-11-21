@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useTVNavigation } from '@/hooks/use-tv-navigation';
+import { useTVNavigation, isTVDevice } from '@/hooks/use-tv-navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import amplitude from '@/amplitude';
@@ -199,6 +199,9 @@ export default function HomePage() {
   const [isMobile, setIsMobile] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
 
+  // TV detection
+  const [isTV, setIsTV] = useState(false);
+
   // Detect mobile and orientation
   useEffect(() => {
     const checkMobile = () => {
@@ -209,6 +212,9 @@ export default function HomePage() {
 
       setIsMobile(mobile);
       setIsLandscape(landscape);
+
+      // Detect TV
+      setIsTV(isTVDevice());
 
       // Auto-hide sidebar on mobile portrait
       if (mobile && !landscape && sidebarVisible) {
@@ -1243,6 +1249,19 @@ export default function HomePage() {
                       <Share2 className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
                     )}
                   </button>
+                )}
+                {/* Download APK Link - Only on TV */}
+                {isTV && (
+                  <a
+                    href="https://github.com/lucianfialho/triboneira/releases/latest/download/app-release-signed.apk"
+                    className="ml-2 px-4 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 border-0 flex items-center justify-center gap-2 hover:from-green-600 hover:to-green-700 transition-all cursor-pointer shadow-md hover:shadow-lg text-white font-medium text-sm"
+                    title="Baixar app para Android TV"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                    </svg>
+                    <span className="hidden md:inline">TV</span>
+                  </a>
                 )}
               </div>
             </div>
