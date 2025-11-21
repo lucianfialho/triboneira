@@ -1,6 +1,5 @@
 'use client';
 
-import { useDocumentPiP } from '@/hooks/use-document-pip';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -175,7 +174,6 @@ interface TopStreamer {
 }
 
 export default function HomePage() {
-  const { isSupported: isPiPSupported, isOpen: isPiPOpen, requestPiP, PiPWindow } = useDocumentPiP();
   const commandPaletteRef = useRef<CommandPaletteRef>(null);
   const [streams, setStreams] = useState<Stream[]>([]);
   const [inputUrl, setInputUrl] = useState('');
@@ -1228,26 +1226,6 @@ export default function HomePage() {
                     <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
                   )}
                 </button>
-                {/* PiP Button */}
-                {isPiPSupported && (
-                  <button
-                    onClick={requestPiP}
-                    className={`
-                      ml-auto mr-2 w-10 h-10 rounded-lg border flex items-center justify-center transition-all cursor-pointer group
-                      ${isPiPOpen
-                        ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20'
-                        : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:bg-[hsl(var(--border-strong))]'
-                      }
-                    `}
-                    title={isPiPOpen ? 'Restaurar Grid' : 'Pop-out Grid'}
-                  >
-                    {isPiPOpen ? (
-                      <Check className="w-5 h-5" />
-                    ) : (
-                      <ExternalLink className={`w-5 h-5 ${isPiPOpen ? 'text-white' : 'text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]'}`} />
-                    )}
-                  </button>
-                )}
                 {/* Share Setup Button */}
                 {streams.length > 0 && (
                   <button
@@ -1411,16 +1389,7 @@ export default function HomePage() {
                 </div>
               </div>
             ) : (
-              <>
-                {!isPiPOpen && renderGrid()}
-                {isPiPOpen && (
-                  <PiPWindow>
-                    <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] p-4">
-                      {renderGrid()}
-                    </div>
-                  </PiPWindow>
-                )}
-              </>
+              renderGrid()
             )}
           </div>
         </main>
