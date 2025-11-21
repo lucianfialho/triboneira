@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Amplitude } from '@/amplitude';
+import { ServiceWorkerRegistration } from '@/components/service-worker-registration';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://entreganewba.com.br'),
@@ -93,7 +94,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <Amplitude />
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <ServiceWorkerRegistration />
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTVNavigation } from '@/hooks/use-tv-navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import amplitude from '@/amplitude';
@@ -174,6 +175,9 @@ interface TopStreamer {
 }
 
 export default function HomePage() {
+  // TV Navigation Support
+  useTVNavigation();
+
   const commandPaletteRef = useRef<CommandPaletteRef>(null);
   const [streams, setStreams] = useState<Stream[]>([]);
   const [inputUrl, setInputUrl] = useState('');
