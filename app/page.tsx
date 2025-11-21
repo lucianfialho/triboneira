@@ -1206,6 +1206,12 @@ export default function HomePage() {
             <p className="text-[9px] text-[hsl(var(--subtle-foreground))] text-center mt-1">
               Do newba ao pro
             </p>
+            <Link
+              href="/download"
+              className="block text-center text-[10px] text-[hsl(var(--primary))] hover:underline mt-2"
+            >
+              📥 Baixar para TV
+            </Link>
           </div>
         </aside>
 
