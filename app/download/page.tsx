@@ -15,79 +15,114 @@ export default function DownloadPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] p-4 lg:p-8">
-            <div className="max-w-6xl mx-auto">
-                {/* Header */}
-                <div className="mb-8">
-                    <Link
-                        href="/"
-                        className="inline-flex items-center gap-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors mb-6"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                        <span className="text-sm">Voltar</span>
-                    </Link>
+        <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
+            {/* Back Button */}
+            <div className="p-4 lg:p-6">
+                <Link
+                    href="/"
+                    className="inline-flex items-center gap-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="text-sm">Voltar</span>
+                </Link>
+            </div>
 
-                    <div className="text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 mb-4 shadow-lg">
-                            <Tv className="w-8 h-8 text-white" />
-                        </div>
+            {/* Hero Section - 2 Columns */}
+            <div className="max-w-7xl mx-auto px-4 lg:px-8 py-12 lg:py-20">
+                <div className="grid lg:grid-cols-2 gap-12 items-center">
+                    {/* Left Column - Content */}
+                    <div>
+                        {/* Logo */}
+                        <Link href="/" className="inline-block mb-6">
+                            <Image
+                                src="/android-chrome-192x192.png"
+                                alt="Entrega Newba"
+                                width={56}
+                                height={56}
+                                className="rounded-xl"
+                                unoptimized
+                            />
+                        </Link>
 
-                        <h1 className="text-3xl md:text-4xl font-bold mb-3 gradient-text">
-                            App para Android TV
+                        <h1 className="text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                            <span className="gradient-text">Entrega Newba</span>
+                            <br />
+                            <span className="text-3xl lg:text-4xl text-[hsl(var(--muted-foreground))]">
+                                para Android TV
+                            </span>
                         </h1>
 
-                        <p className="text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto">
-                            Transforme sua TV em uma central de multistream profissional
+                        <p className="text-xl text-[hsl(var(--muted-foreground))] mb-4 leading-relaxed">
+                            A forma mais profissional de assistir <strong className="text-[hsl(var(--foreground))]">múltiplas lives simultaneamente</strong> na sua TV
+                        </p>
+
+                        <div className="flex items-center gap-3 text-sm text-[hsl(var(--subtle-foreground))] mb-8">
+                            <span className="px-3 py-1 rounded-full bg-[hsl(var(--surface-elevated))]">Twitch</span>
+                            <span className="px-3 py-1 rounded-full bg-[hsl(var(--surface-elevated))]">YouTube</span>
+                            <span className="px-3 py-1 rounded-full bg-[hsl(var(--surface-elevated))]">Kick</span>
+                        </div>
+
+                        {/* CTA Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                            <a
+                                href="https://github.com/lucianfialho/triboneira/releases/latest/download/app-release-signed.apk"
+                                className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                            >
+                                <Download className="w-5 h-5" />
+                                Baixar para Android TV
+                            </a>
+
+                            <button
+                                onClick={copyInstallCommand}
+                                className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl border-2 border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] transition-all"
+                            >
+                                {copied ? (
+                                    <>
+                                        <Check className="w-5 h-5 text-green-500" />
+                                        <span>Link copiado!</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>📋</span>
+                                        <span>Copiar link</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        <p className="text-xs text-[hsl(var(--subtle-foreground))]">
+                            Versão 1.0.0 • 12 MB • Grátis • Código aberto
                         </p>
                     </div>
+
+                    {/* Right Column - Screenshot */}
+                    <div className="relative">
+                        <div className="glass-card p-3 rounded-2xl">
+                            <Image
+                                src="/screenshot-app.png"
+                                alt="Screenshot do Entrega Newba mostrando 4 lives simultâneas"
+                                width={1024}
+                                height={576}
+                                className="rounded-xl w-full h-auto shadow-2xl"
+                                priority
+                            />
+                        </div>
+                        {/* Decorative gradient */}
+                        <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-gradient-to-br from-blue-500/20 to-purple-600/20 blur-3xl rounded-full"></div>
+                    </div>
                 </div>
+            </div>
 
-                {/* Screenshot */}
-                <div className="glass-card p-4 mb-8 overflow-hidden">
-                    <Image
-                        src="/screenshot-app.png"
-                        alt="Screenshot do app mostrando múltiplas lives"
-                        width={1024}
-                        height={576}
-                        className="rounded-lg w-full h-auto"
-                        priority
-                    />
-                </div>
-
-                {/* Download Card */}
-                <div className="glass-card p-8 mb-8 text-center">
-                    <a
-                        href="https://github.com/lucianfialho/triboneira/releases/latest/download/app-release-signed.apk"
-                        className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 mb-4"
-                    >
-                        <Download className="w-5 h-5" />
-                        Baixar APK (v1.0.0)
-                    </a>
-
-                    <button
-                        onClick={copyInstallCommand}
-                        className="block mx-auto text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
-                    >
-                        {copied ? (
-                            <span className="inline-flex items-center gap-2 text-green-500">
-                                <Check className="w-4 h-4" />
-                                Link copiado!
-                            </span>
-                        ) : (
-                            'Copiar link de download'
-                        )}
-                    </button>
-                </div>
-
+            <div className="max-w-6xl mx-auto px-4 lg:px-8">
                 {/* Features */}
                 <div className="grid md:grid-cols-3 gap-6 mb-8">
                     <div className="glass-card p-6">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4">
                             <Grid3x3 className="w-6 h-6 text-white" />
                         </div>
-                        <h3 className="font-semibold mb-2">Layouts Flexíveis</h3>
+                        <h3 className="font-semibold mb-2">Vários Layouts</h3>
                         <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                            Grade, PiP, horizontal e mais. Escolha o layout ideal.
+                            Grade 2x2, PiP, horizontal ou focado. Organize as lives do seu jeito.
                         </p>
                     </div>
 
@@ -95,9 +130,9 @@ export default function DownloadPage() {
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-4">
                             <Tv className="w-6 h-6 text-white" />
                         </div>
-                        <h3 className="font-semibold mb-2">Controle Remoto</h3>
+                        <h3 className="font-semibold mb-2">100% Otimizado para TV</h3>
                         <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                            Interface otimizada para navegação com D-pad.
+                            Controle tudo com as setas do controle remoto. Sem mouse, sem complicação.
                         </p>
                     </div>
 
@@ -105,9 +140,9 @@ export default function DownloadPage() {
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center mb-4">
                             <Zap className="w-6 h-6 text-white" />
                         </div>
-                        <h3 className="font-semibold mb-2">Máxima Qualidade</h3>
+                        <h3 className="font-semibold mb-2">Players Oficiais</h3>
                         <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                            Players oficiais Twitch, YouTube e Kick.
+                            Qualidade máxima direto dos servidores Twitch, YouTube e Kick.
                         </p>
                     </div>
                 </div>
