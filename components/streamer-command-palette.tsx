@@ -54,6 +54,7 @@ export const StreamerCommandPalette = forwardRef<CommandPaletteRef, Props>(
     const [search, setSearch] = useState('');
     const [streamers, setStreamers] = useState<StreamerResult[]>([]);
     const [loading, setLoading] = useState(false);
+    const [platformFilter, setPlatformFilter] = useState<'kick' | 'youtube' | 'twitch' | null>(null);
 
     // Expose open method via ref
     useImperativeHandle(ref, () => ({
@@ -91,6 +92,44 @@ export const StreamerCommandPalette = forwardRef<CommandPaletteRef, Props>(
       const fetchStreamers = async () => {
         setLoading(true);
         try {
+          // Se o input está vazio e não tem filtro, carregar top streamers de todas as plataformas
+          if (search.length === 0 && !platformFilter) {
+            // Fazer requisição para buscar top streamers (sem query, sem filtro)
+            const response = await fetch('/api/streamers/search?q=');
+            const data = await response.json();
+
+            const filteredResults = (data.results || []).filter((streamer: StreamerResult) => {
+              return !existingStreams.some(
+                existing =>
+                  existing.channelName.toLowerCase() === streamer.username.toLowerCase() &&
+                  existing.platform === streamer.platform
+              );
+            });
+
+            setStreamers(filteredResults);
+            setLoading(false);
+            return;
+          }
+
+          // Se o input está vazio mas tem filtro, carregar top streamers da plataforma filtrada
+          if (search.length === 0 && platformFilter) {
+            const response = await fetch(`/api/streamers/search?q=&platform=${platformFilter}`);
+            const data = await response.json();
+
+            const filteredResults = (data.results || []).filter((streamer: StreamerResult) => {
+              return !existingStreams.some(
+                existing =>
+                  existing.channelName.toLowerCase() === streamer.username.toLowerCase() &&
+                  existing.platform === streamer.platform
+              );
+            });
+
+            setStreamers(filteredResults);
+            setLoading(false);
+            return;
+          }
+
+
           // Detectar se é uma URL do YouTube
           const youtubeMatch = search.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/live\/)([a-zA-Z0-9_-]+)/);
 
@@ -122,6 +161,7 @@ export const StreamerCommandPalette = forwardRef<CommandPaletteRef, Props>(
               // Fechar o Command Palette
               setOpen(false);
               setSearch('');
+              setPlatformFilter(null);
               setLoading(false);
 
               amplitude.track('YouTube Video Added from URL', {
@@ -144,7 +184,14 @@ export const StreamerCommandPalette = forwardRef<CommandPaletteRef, Props>(
             return;
           }
 
-          const query = search.length >= 2 ? `?q=${encodeURIComponent(search)}` : '';
+          // Fazer a busca - mesmo sem query, se tiver filtro de plataforma
+          let query = search.length >= 2 || platformFilter ? `?q=${encodeURIComponent(search)}` : '';
+
+          // Adicionar filtro de plataforma se ativo
+          if (platformFilter) {
+            query += query.includes('?') ? `&platform=${platformFilter}` : `?platform=${platformFilter}`;
+          }
+
           const response = await fetch(`/api/streamers/search${query}`);
           const data = await response.json();
 
@@ -159,12 +206,13 @@ export const StreamerCommandPalette = forwardRef<CommandPaletteRef, Props>(
 
           setStreamers(filteredResults);
 
-          if (search.length >= 2) {
+          if (search.length >= 2 || platformFilter) {
             amplitude.track('Streamer Search', {
               query: search,
               results_count: filteredResults.length,
               has_live_results: filteredResults.some((s: StreamerResult) => s.isLive) || false,
               filtered_count: (data.results?.length || 0) - filteredResults.length,
+              platform_filter: platformFilter,
             });
           }
         } catch (error) {
@@ -178,7 +226,7 @@ export const StreamerCommandPalette = forwardRef<CommandPaletteRef, Props>(
       // Debounce
       const timer = setTimeout(fetchStreamers, 300);
       return () => clearTimeout(timer);
-    }, [open, search, existingStreams]);
+    }, [open, search, existingStreams, platformFilter]);
 
     const handleSelect = (streamer: StreamerResult) => {
       amplitude.track('Streamer Selected from Command Palette', {
@@ -193,6 +241,7 @@ export const StreamerCommandPalette = forwardRef<CommandPaletteRef, Props>(
       onSelectStreamer(streamer);
       setOpen(false);
       setSearch('');
+      setPlatformFilter(null);
     };
 
     const liveStreamers = streamers.filter(s => s.isLive);
@@ -205,9 +254,11 @@ export const StreamerCommandPalette = forwardRef<CommandPaletteRef, Props>(
           setOpen(newOpen);
           if (!newOpen) {
             setSearch('');
+            setPlatformFilter(null);
             amplitude.track('Command Palette Closed', {
               search_query: search,
               streamers_shown: streamers.length,
+              platform_filter: platformFilter,
             });
           }
         }}
@@ -223,12 +274,54 @@ export const StreamerCommandPalette = forwardRef<CommandPaletteRef, Props>(
             <Command label="Buscar streamers" className="command-palette">
               <div className="command-palette-input-wrapper">
                 <Search className="command-palette-search-icon" />
+                {platformFilter && (
+                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ${platformFilter === 'twitch' ? 'bg-purple-500/20 text-purple-400' : platformFilter === 'youtube' ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
+                    {platformFilter === 'twitch' && <TwitchIcon className="w-3 h-3" />}
+                    {platformFilter === 'youtube' && <Youtube className="w-3 h-3" />}
+                    {platformFilter === 'kick' && <Video className="w-3 h-3" />}
+                    {platformFilter}
+                  </span>
+                )}
                 <Command.Input
-                  placeholder="Digite o nome do streamer..."
+                  placeholder={platformFilter ? `Buscar em ${platformFilter}...` : "Digite o nome do streamer..."}
                   value={search}
                   onValueChange={setSearch}
                   className="command-palette-input"
                 />
+              </div>
+
+              {/* Platform Filter Buttons */}
+              <div className="flex gap-2 px-3 pb-2 border-b border-[hsl(var(--border))]">
+                <button
+                  onClick={() => setPlatformFilter(platformFilter === 'kick' ? null : 'kick')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${platformFilter === 'kick'
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                    : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]/80'
+                    }`}
+                >
+                  <Video className="w-4 h-4" />
+                  Kick
+                </button>
+                <button
+                  onClick={() => setPlatformFilter(platformFilter === 'twitch' ? null : 'twitch')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${platformFilter === 'twitch'
+                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                    : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]/80'
+                    }`}
+                >
+                  <TwitchIcon className="w-4 h-4" />
+                  Twitch
+                </button>
+                <button
+                  onClick={() => setPlatformFilter(platformFilter === 'youtube' ? null : 'youtube')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${platformFilter === 'youtube'
+                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                    : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]/80'
+                    }`}
+                >
+                  <Youtube className="w-4 h-4" />
+                  YouTube
+                </button>
               </div>
 
               <Command.List className="command-palette-list">

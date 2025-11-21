@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchTwitchUsers, getTwitchStream, getTwitchUser, getTopLiveStreams } from '@/lib/services/twitch';
-import { searchYouTubeChannels, getYouTubeLiveStream } from '@/lib/services/youtube';
+import { searchYouTubeChannels, getYouTubeLiveStream, getYouTubeFeaturedStreams } from '@/lib/services/youtube';
 import { getKickChannel, searchKickUsers, getKickFeaturedStreams } from '@/lib/services/kick';
 
 interface StreamerResult {
@@ -16,12 +16,55 @@ interface StreamerResult {
 }
 
 export async function GET(request: NextRequest) {
+  console.log('[API] Search request received');
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get('q')?.toLowerCase() || '';
+  const platformParam = searchParams.get('platform') as 'kick' | 'youtube' | 'twitch' | null;
+
+  // Detectar prefixo de plataforma na query (para compatibilidade)
+  const platformPrefixes: Record<string, 'kick' | 'youtube' | 'twitch'> = {
+    'kick:': 'kick',
+    'youtube:': 'youtube',
+    'twitch:': 'twitch',
+  };
+
+  let platformFilter: 'kick' | 'youtube' | 'twitch' | null = platformParam; // Usar parâmetro da URL primeiro
+  let actualQuery = query;
+
+  // Se não tem parâmetro platform, verificar se tem prefixo na query
+  if (!platformFilter) {
+    for (const [prefix, platform] of Object.entries(platformPrefixes)) {
+      if (query.startsWith(prefix)) {
+        platformFilter = platform;
+        actualQuery = query.slice(prefix.length).trim();
+        break;
+      }
+    }
+  }
 
   // Se não tiver query, retornar top streamers ao vivo
-  if (!query || query.length < 2) {
+  if (!actualQuery || actualQuery.length < 2) {
     try {
+      // Se tem filtro de plataforma, buscar apenas dessa plataforma
+      if (platformFilter) {
+        let streamers: StreamerResult[] = [];
+
+        if (platformFilter === 'twitch') {
+          streamers = await getTopLiveStreamsFormatted();
+        } else if (platformFilter === 'kick') {
+          streamers = await getKickFeaturedStreamsFormatted();
+        } else if (platformFilter === 'youtube') {
+          streamers = await getYouTubeFeaturedStreamsFormatted();
+        }
+
+        return NextResponse.json({
+          results: streamers.slice(0, 15),
+          total: streamers.length,
+          query: '',
+          platformFilter,
+        });
+      }
+
       // Buscar em paralelo Twitch e Kick
       const [twitchStreamers, kickStreamers] = await Promise.allSettled([
         getTopLiveStreamsFormatted(),
@@ -41,22 +84,50 @@ export async function GET(request: NextRequest) {
         total: sorted.length,
         query: '',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching top streamers:', error);
       return NextResponse.json({
         results: [],
         total: 0,
         query: '',
+        error: error.message || 'Unknown error',
       });
     }
   }
 
   try {
+    // Se tem filtro de plataforma, buscar apenas nessa plataforma
+    if (platformFilter) {
+      let results: StreamerResult[] = [];
+
+      if (platformFilter === 'twitch') {
+        results = await searchTwitchFromAPI(actualQuery);
+      } else if (platformFilter === 'youtube') {
+        results = await searchYouTubeFromAPI(actualQuery);
+      } else if (platformFilter === 'kick') {
+        results = await searchKickFromAPI(actualQuery);
+      }
+
+      // Ordena por: Live primeiro, depois por viewers
+      const sorted = results.sort((a, b) => {
+        if (a.isLive && !b.isLive) return -1;
+        if (!a.isLive && b.isLive) return 1;
+        return b.currentViewers - a.currentViewers;
+      });
+
+      return NextResponse.json({
+        results: sorted,
+        total: sorted.length,
+        query: actualQuery,
+        platformFilter,
+      });
+    }
+
     // Buscar nas 3 plataformas em paralelo
     const [twitchResults, youtubeResults, kickResults] = await Promise.allSettled([
-      searchTwitchFromAPI(query),
-      searchYouTubeFromAPI(query),
-      searchKickFromAPI(query),
+      searchTwitchFromAPI(actualQuery),
+      searchYouTubeFromAPI(actualQuery),
+      searchKickFromAPI(actualQuery),
     ]);
 
     const allResults: StreamerResult[] = [
@@ -78,7 +149,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       results: sorted,
       total: sorted.length,
-      query,
+      query: actualQuery,
     });
   } catch (error) {
     console.error('Error searching streamers:', error);
@@ -86,7 +157,7 @@ export async function GET(request: NextRequest) {
       {
         results: [],
         total: 0,
-        query,
+        query: actualQuery,
         error: 'Failed to search streamers',
       },
       { status: 500 }
@@ -274,8 +345,43 @@ async function searchKickFromAPI(query: string): Promise<StreamerResult[]> {
         url: `https://kick.com/${channel.slug}`,
       },
     ];
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error searching Kick:', error);
-    return [];
+    // Retornar erro para debug
+    throw error;
+  }
+}
+
+/**
+ * Obtém streamers em destaque do YouTube formatados
+ */
+async function getYouTubeFeaturedStreamsFormatted(): Promise<StreamerResult[]> {
+  try {
+    const channels = await getYouTubeFeaturedStreams();
+
+    const results: StreamerResult[] = [];
+
+    for (const channel of channels) {
+      if (channel.liveStream) {
+        const username = channel.snippet.customUrl?.replace('@', '') || channel.id;
+
+        results.push({
+          id: `youtube-${channel.id}`,
+          username: username,
+          displayName: channel.snippet.title,
+          platform: 'youtube',
+          avatarUrl: channel.snippet.thumbnails.high.url,
+          isLive: true,
+          currentViewers: parseInt(channel.liveStream.liveStreamingDetails?.concurrentViewers || '0'),
+          currentTitle: channel.liveStream.snippet.title,
+          url: `https://youtube.com/${channel.snippet.customUrl || `channel/${channel.id}`}`,
+        });
+      }
+    }
+
+    return results;
+  } catch (error: any) {
+    console.error('Error getting YouTube featured streams:', error);
+    throw error; // Propagar erro para ser pego no handler principal
   }
 }

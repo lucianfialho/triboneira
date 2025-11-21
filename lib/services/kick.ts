@@ -164,17 +164,17 @@ export async function getKickChannel(username: string): Promise<KickChannel | nu
       },
       livestream: channel.stream
         ? {
-            id: 0,
-            slug: channel.slug,
-            channel_id: parseInt(channel.broadcaster_user_id),
-            created_at: new Date().toISOString(),
-            session_title: channel.stream_title || '',
-            is_live: channel.stream.is_live,
-            viewer_count: channel.stream.viewer_count,
-            thumbnail: {
-              src: channel.stream.thumbnail || '',
-            },
-          }
+          id: 0,
+          slug: channel.slug,
+          channel_id: parseInt(channel.broadcaster_user_id),
+          created_at: new Date().toISOString(),
+          session_title: channel.stream_title || '',
+          is_live: channel.stream.is_live,
+          viewer_count: channel.stream.viewer_count,
+          thumbnail: {
+            src: channel.stream.thumbnail || '',
+          },
+        }
         : null,
     };
   } catch (error) {
@@ -217,14 +217,45 @@ export async function getKickViewerCount(username: string): Promise<number> {
 /**
  * Obtém streamers em destaque/trending do Kick
  * Nota: A API oficial não tem endpoint público de featured streams ainda
- * Retorna array vazio por enquanto
+ * Workaround: Busca canais populares conhecidos
  */
 export async function getKickFeaturedStreams(): Promise<KickChannel[]> {
   try {
-    // API oficial não tem endpoint de featured streams ainda
-    // Quando estiver disponível, será algo como:
-    // https://api.kick.com/public/v1/livestreams?is_live=true&limit=10
-    return [];
+    // Lista de streamers populares do Kick (brasileiros e internacionais)
+    const popularStreamers = [
+      'gaules',
+      'loud_coringa',
+      'yayster',
+      'trainwreckstv',
+      'xqc',
+      'adin',
+      'stake',
+      'roshtein',
+    ];
+
+    const results: KickChannel[] = [];
+
+    // Buscar cada streamer em paralelo
+    const promises = popularStreamers.map(username => getKickChannel(username));
+    const channels = await Promise.allSettled(promises);
+
+    for (const result of channels) {
+      if (result.status === 'fulfilled' && result.value) {
+        // Apenas adicionar se estiver ao vivo
+        if (result.value.livestream?.is_live) {
+          results.push(result.value);
+        }
+      }
+    }
+
+    // Ordenar por viewers
+    results.sort((a, b) => {
+      const aViewers = a.livestream?.viewer_count || 0;
+      const bViewers = b.livestream?.viewer_count || 0;
+      return bViewers - aViewers;
+    });
+
+    return results;
   } catch (error) {
     console.error('Error fetching Kick featured streams:', error);
     return [];
