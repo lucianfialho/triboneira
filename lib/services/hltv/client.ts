@@ -69,7 +69,7 @@ export class HLTVClient {
   async getMatchStats(id: number): Promise<HLTVMatchStats> {
     return this.fetcher.fetch(async () => {
       const stats = await HLTV.getMatchStats({ id });
-      return stats as HLTVMatchStats;
+      return stats as unknown as HLTVMatchStats;
     }, { timeout: 45000 }); // Longer timeout for stats
   }
 
