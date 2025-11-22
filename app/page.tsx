@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { StreamerCommandPalette, type CommandPaletteRef } from '@/components/streamer-command-palette';
+import { ChatPanel } from '@/components/chat/chat-panel';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -53,6 +54,7 @@ import {
   Check,
   Play,
   Menu,
+  MessageCircle,
 } from 'lucide-react';
 
 // Types
@@ -185,6 +187,7 @@ export default function HomePage() {
   const [hoveringStream, setHoveringStream] = useState<string | null>(null);
   const [unmutingProgress, setUnmutingProgress] = useState<Record<string, number>>({});
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [chatPanelVisible, setChatPanelVisible] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [topStreamers, setTopStreamers] = useState<TopStreamer[]>([]);
@@ -1216,7 +1219,8 @@ export default function HomePage() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-6 overflow-y-auto transition-all duration-300">
+        <main className={`flex-1 p-4 lg:p-6 overflow-y-auto transition-all duration-300 ${chatPanelVisible ? (isMobile ? 'mr-80' : 'mr-96') : ''
+          }`}>
           <div className="max-w-[1800px] mx-auto">
             {/* Header */}
             <div className="mb-4 animate-slide-up">
@@ -1244,17 +1248,28 @@ export default function HomePage() {
                 </button>
                 {/* Share Setup Button */}
                 {streams.length > 0 && (
-                  <button
-                    onClick={shareSetup}
-                    className="ml-auto w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
-                    title="Compartilhar setup"
-                  >
-                    {copied ? (
-                      <Check className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Share2 className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
-                    )}
-                  </button>
+                  <>
+                    <button
+                      onClick={shareSetup}
+                      className="ml-auto w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
+                      title="Compartilhar setup"
+                    >
+                      {copied ? (
+                        <Check className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <Share2 className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
+                      )}
+                    </button>
+
+                    {/* Chat Button */}
+                    <button
+                      onClick={() => setChatPanelVisible(!chatPanelVisible)}
+                      className="ml-2 w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
+                      title="Toggle chat"
+                    >
+                      <MessageCircle className={`w-5 h-5 ${chatPanelVisible ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]'}`} />
+                    </button>
+                  </>
                 )}
                 {/* Download APK Link - Only on TV */}
                 {isTV && (
@@ -1508,6 +1523,18 @@ export default function HomePage() {
           </div>
         </footer >
       </div >
+
+      {/* Chat Panel */}
+      <ChatPanel
+        streams={streams.filter(s => s.platform !== 'custom') as Array<{
+          platform: 'twitch' | 'youtube' | 'kick';
+          channelName?: string;
+          videoId?: string;
+        }>}
+        isVisible={chatPanelVisible}
+        onToggle={() => setChatPanelVisible(!chatPanelVisible)}
+        compact={isMobile}
+      />
     </>
   );
 }

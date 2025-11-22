@@ -52,6 +52,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip SSE endpoints (Server-Sent Events cannot be cached)
+  if (event.request.url.includes('/api/chat')) {
+    return; // Let the browser handle SSE directly
+  }
+
   // API requests - network first
   if (event.request.url.includes('/api/')) {
     event.respondWith(
