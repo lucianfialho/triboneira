@@ -26,7 +26,7 @@ export class HLTVClient {
   async getEvents(): Promise<HLTVEvent[]> {
     return this.fetcher.fetch(async () => {
       const events = await HLTV.getEvents();
-      return events as HLTVEvent[];
+      return events as unknown as HLTVEvent[];
     });
   }
 
@@ -36,7 +36,7 @@ export class HLTVClient {
   async getEvent(id: number): Promise<HLTVEvent> {
     return this.fetcher.fetch(async () => {
       const event = await HLTV.getEvent({ id });
-      return event as HLTVEvent;
+      return event as unknown as HLTVEvent;
     });
   }
 
@@ -49,7 +49,7 @@ export class HLTVClient {
   }): Promise<HLTVMatch[]> {
     return this.fetcher.fetch(async () => {
       const matches = await HLTV.getMatches(options);
-      return matches as HLTVMatch[];
+      return matches as unknown as HLTVMatch[];
     });
   }
 
@@ -59,7 +59,7 @@ export class HLTVClient {
   async getMatch(id: number): Promise<HLTVMatch> {
     return this.fetcher.fetch(async () => {
       const match = await HLTV.getMatch({ id });
-      return match as HLTVMatch;
+      return match as unknown as HLTVMatch;
     });
   }
 
@@ -79,7 +79,7 @@ export class HLTVClient {
   async getTeam(id: number): Promise<HLTVTeam & { players?: HLTVPlayer[] }> {
     return this.fetcher.fetch(async () => {
       const team = await HLTV.getTeam({ id });
-      return team as HLTVTeam & { players?: HLTVPlayer[] };
+      return team as unknown as HLTVTeam & { players?: HLTVPlayer[] };
     });
   }
 
@@ -89,7 +89,7 @@ export class HLTVClient {
   async getTeamByName(name: string): Promise<HLTVTeam> {
     return this.fetcher.fetch(async () => {
       const team = await HLTV.getTeamByName({ name });
-      return team as HLTVTeam;
+      return team as unknown as HLTVTeam;
     });
   }
 
@@ -99,7 +99,7 @@ export class HLTVClient {
   async getPlayer(id: number): Promise<HLTVPlayer> {
     return this.fetcher.fetch(async () => {
       const player = await HLTV.getPlayer({ id });
-      return player as HLTVPlayer;
+      return player as unknown as HLTVPlayer;
     });
   }
 
@@ -119,7 +119,7 @@ export class HLTVClient {
   async getNews(): Promise<HLTVNews[]> {
     return this.fetcher.fetch(async () => {
       const news = await HLTV.getNews();
-      return news.slice(0, 50) as HLTVNews[]; // Limit to 50 most recent
+      return news.slice(0, 50) as unknown as HLTVNews[]; // Limit to 50 most recent
     });
   }
 
