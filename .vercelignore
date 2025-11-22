@@ -1,0 +1,5 @@
+cron-service
+scripts
+node_modules
+.env.local
+.DS_Store
