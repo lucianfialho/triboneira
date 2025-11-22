@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs-20_x"]
+
+[phases.install]
+cmds = ["cd cron-service && npm install"]
+
+[phases.build]
+cmds = ["cd cron-service && npm run build"]
+
+[start]
+cmd = "cd cron-service && npm start"
