@@ -2,11 +2,11 @@
   "name": "multistream-cron-service",
   "version": "1.0.0",
   "description": "Cron service for HLTV data synchronization",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/src/index.js",
     "sync:events": "tsx src/jobs/sync-events.ts",
     "sync:participants": "tsx src/jobs/sync-participants.ts",
     "sync:matches": "tsx src/jobs/sync-matches.ts",
