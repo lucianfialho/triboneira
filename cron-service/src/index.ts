@@ -1,14 +1,14 @@
 import express from 'express';
 import cron from 'node-cron';
 import dotenv from 'dotenv';
-import { syncEvents } from './jobs/sync-events';
-import { syncEventParticipants } from './jobs/sync-participants';
-import { syncMatches } from './jobs/sync-matches';
-import { syncNews } from './jobs/sync-news';
-import { calculateTeamStats } from './jobs/calculate-team-stats';
-import { calculateHeadToHead } from './jobs/calculate-head-to-head';
-import { fixEventStatus } from './jobs/fix-event-status';
-import { generateHourlyReport } from './jobs/hourly-report';
+import { syncEvents } from './jobs/sync/sync-events';
+import { syncEventParticipants } from './jobs/sync/sync-event-participants';
+import { syncMatches } from './jobs/sync/sync-matches';
+import { syncNews } from './jobs/sync/sync-news';
+import { calculateTeamStats } from './jobs/calculate/calculate-team-stats';
+import { calculateHeadToHead } from './jobs/calculate/calculate-head-to-head';
+import { fixEventStatus } from './jobs/maintenance/fix-event-status';
+import { generateHourlyReport } from './jobs/reports/hourly-report';
 
 dotenv.config();
 
