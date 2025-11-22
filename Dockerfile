@@ -21,6 +21,9 @@ COPY lib/services/discord ./src/services/discord
 COPY lib/services/core ./src/services/core
 COPY lib/db ./src/db
 
+# Copy types folder
+COPY types ./types
+
 # Copy tsconfig
 COPY cron-service/tsconfig.json ./tsconfig.json
 
