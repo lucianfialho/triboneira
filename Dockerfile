@@ -21,7 +21,7 @@ COPY lib/services/discord ./src/services/discord
 COPY lib/services/core ./src/services/core
 COPY lib/db ./src/db
 
-# Copy types folder
+# Copy types folder (outside src, will adjust tsconfig)
 COPY types ./types
 
 # Copy tsconfig
