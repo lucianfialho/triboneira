@@ -109,7 +109,7 @@ export class HLTVClient {
   async getTeamRanking(): Promise<HLTVTeam[]> {
     return this.fetcher.fetch(async () => {
       const ranking = await HLTV.getTeamRanking();
-      return ranking as HLTVTeam[];
+      return ranking as unknown as HLTVTeam[];
     });
   }
 
