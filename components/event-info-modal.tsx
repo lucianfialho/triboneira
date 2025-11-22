@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Trophy, Calendar, MapPin, DollarSign } from 'lucide-react';
+import { X, Trophy, Calendar, MapPin, DollarSign, Gamepad2, Award, Users, Newspaper } from 'lucide-react';
 import { DialogContent, Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEventInfo } from '@/hooks/use-event-info';
@@ -128,32 +128,36 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
                     <TabsList className="w-full justify-start border-b border-[hsl(var(--border))] rounded-none bg-transparent px-6 h-auto p-0">
                         <TabsTrigger
                             value="matches"
-                            className="data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--primary))] rounded-none px-4 py-3 data-[state=active]:bg-transparent"
+                            className="data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--primary))] rounded-none px-4 py-3 data-[state=active]:bg-transparent flex items-center gap-2"
                         >
-                            🎮 Matches
+                            <Gamepad2 className="w-4 h-4" />
+                            Matches
                             {matchesData.live.length > 0 && (
-                                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-red-500 text-white">
+                                <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-red-500 text-white">
                                     {matchesData.live.length} Live
                                 </span>
                             )}
                         </TabsTrigger>
                         <TabsTrigger
                             value="bracket"
-                            className="data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--primary))] rounded-none px-4 py-3 data-[state=active]:bg-transparent"
+                            className="data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--primary))] rounded-none px-4 py-3 data-[state=active]:bg-transparent flex items-center gap-2"
                         >
-                            🏅 Bracket
+                            <Award className="w-4 h-4" />
+                            Bracket
                         </TabsTrigger>
                         <TabsTrigger
                             value="teams"
-                            className="data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--primary))] rounded-none px-4 py-3 data-[state=active]:bg-transparent"
+                            className="data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--primary))] rounded-none px-4 py-3 data-[state=active]:bg-transparent flex items-center gap-2"
                         >
-                            🏆 Teams
+                            <Users className="w-4 h-4" />
+                            Teams
                         </TabsTrigger>
                         <TabsTrigger
                             value="news"
-                            className="data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--primary))] rounded-none px-4 py-3 data-[state=active]:bg-transparent"
+                            className="data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--primary))] rounded-none px-4 py-3 data-[state=active]:bg-transparent flex items-center gap-2"
                         >
-                            📰 News
+                            <Newspaper className="w-4 h-4" />
+                            News
                         </TabsTrigger>
                     </TabsList>
 

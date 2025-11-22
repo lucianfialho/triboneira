@@ -8,16 +8,17 @@ COPY cron-service/package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy the actual lib folders (not symlinks)
-COPY lib ./lib
+# Create src directory structure
+RUN mkdir -p src/jobs src/services/hltv src/services/discord src/services/core src/db
 
-# Create src directory and copy index.ts
+# Copy index.ts
 COPY cron-service/src/index.ts ./src/
 
-# Create the job folders by copying from lib
-RUN mkdir -p src/jobs src/services src/db
+# Copy only necessary lib folders (exclude chat-related services)
 COPY lib/jobs ./src/jobs
-COPY lib/services ./src/services
+COPY lib/services/hltv ./src/services/hltv
+COPY lib/services/discord ./src/services/discord
+COPY lib/services/core ./src/services/core
 COPY lib/db ./src/db
 
 # Copy tsconfig
