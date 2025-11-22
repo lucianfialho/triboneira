@@ -8,11 +8,19 @@ COPY cron-service/package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy shared lib folder (needed for symlinks)
+# Copy the actual lib folders (not symlinks)
 COPY lib ./lib
 
-# Copy cron-service source
-COPY cron-service/src ./src
+# Create src directory and copy index.ts
+COPY cron-service/src/index.ts ./src/
+
+# Create the job folders by copying from lib
+RUN mkdir -p src/jobs src/services src/db
+COPY lib/jobs ./src/jobs
+COPY lib/services ./src/services
+COPY lib/db ./src/db
+
+# Copy tsconfig
 COPY cron-service/tsconfig.json ./tsconfig.json
 
 # Build TypeScript
