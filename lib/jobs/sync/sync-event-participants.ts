@@ -68,8 +68,6 @@ export async function syncEventParticipants(logger: SyncLogger) {
               active: true,
               metadata: {
                 location: teamDetails.location,
-                twitter: teamDetails.twitter,
-                facebook: teamDetails.facebook,
               },
             })
             .onConflictDoUpdate({
@@ -81,8 +79,6 @@ export async function syncEventParticipants(logger: SyncLogger) {
                 rank: teamDetails.rank || null,
                 metadata: {
                   location: teamDetails.location,
-                  twitter: teamDetails.twitter,
-                  facebook: teamDetails.facebook,
                 },
                 updatedAt: new Date(),
               },
