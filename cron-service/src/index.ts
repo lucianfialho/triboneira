@@ -9,6 +9,7 @@ import { calculateTeamStats } from './jobs/calculate/calculate-team-stats';
 import { calculateHeadToHead } from './jobs/calculate/calculate-head-to-head';
 import { fixEventStatus } from './jobs/maintenance/fix-event-status';
 import { generateHourlyReport } from './jobs/reports/hourly-report';
+import { SyncLogger } from './jobs/utils/logger';
 
 dotenv.config();
 
@@ -29,7 +30,8 @@ app.get('/', (req, res) => {
 // Manual trigger endpoints (for testing)
 app.post('/trigger/sync-events', async (req, res) => {
   try {
-    await syncEvents();
+    const logger = new SyncLogger();
+    await syncEvents(logger);
     res.json({ success: true, message: 'Events synced successfully' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -38,7 +40,8 @@ app.post('/trigger/sync-events', async (req, res) => {
 
 app.post('/trigger/sync-participants', async (req, res) => {
   try {
-    await syncEventParticipants();
+    const logger = new SyncLogger();
+    await syncEventParticipants(logger);
     res.json({ success: true, message: 'Participants synced successfully' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -47,7 +50,8 @@ app.post('/trigger/sync-participants', async (req, res) => {
 
 app.post('/trigger/sync-matches', async (req, res) => {
   try {
-    await syncMatches();
+    const logger = new SyncLogger();
+    await syncMatches(logger);
     res.json({ success: true, message: 'Matches synced successfully' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -56,7 +60,8 @@ app.post('/trigger/sync-matches', async (req, res) => {
 
 app.post('/trigger/sync-news', async (req, res) => {
   try {
-    await syncNews();
+    const logger = new SyncLogger();
+    await syncNews(logger);
     res.json({ success: true, message: 'News synced successfully' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -65,7 +70,8 @@ app.post('/trigger/sync-news', async (req, res) => {
 
 app.post('/trigger/calculate-stats', async (req, res) => {
   try {
-    await calculateTeamStats();
+    const logger = new SyncLogger();
+    await calculateTeamStats(logger);
     res.json({ success: true, message: 'Stats calculated successfully' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -74,7 +80,8 @@ app.post('/trigger/calculate-stats', async (req, res) => {
 
 app.post('/trigger/calculate-h2h', async (req, res) => {
   try {
-    await calculateHeadToHead();
+    const logger = new SyncLogger();
+    await calculateHeadToHead(logger);
     res.json({ success: true, message: 'Head-to-head calculated successfully' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -83,7 +90,8 @@ app.post('/trigger/calculate-h2h', async (req, res) => {
 
 app.post('/trigger/fix-status', async (req, res) => {
   try {
-    await fixEventStatus();
+    const logger = new SyncLogger();
+    await fixEventStatus(logger);
     res.json({ success: true, message: 'Event status fixed successfully' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -105,7 +113,8 @@ console.log('🕐 Scheduling cron jobs...\n');
 // Daily at midnight - Sync events
 cron.schedule('0 0 * * *', async () => {
   console.log('⏰ Running sync-events cron...');
-  await syncEvents();
+  const logger = new SyncLogger();
+  await syncEvents(logger);
 }, {
   timezone: 'UTC'
 });
@@ -113,7 +122,8 @@ cron.schedule('0 0 * * *', async () => {
 // Daily at 00:30 - Sync event participants
 cron.schedule('30 0 * * *', async () => {
   console.log('⏰ Running sync-event-participants cron...');
-  await syncEventParticipants();
+  const logger = new SyncLogger();
+  await syncEventParticipants(logger);
 }, {
   timezone: 'UTC'
 });
@@ -121,7 +131,8 @@ cron.schedule('30 0 * * *', async () => {
 // Every 6 hours - Sync matches
 cron.schedule('0 */6 * * *', async () => {
   console.log('⏰ Running sync-matches cron...');
-  await syncMatches();
+  const logger = new SyncLogger();
+  await syncMatches(logger);
 }, {
   timezone: 'UTC'
 });
@@ -129,7 +140,8 @@ cron.schedule('0 */6 * * *', async () => {
 // Daily at 02:00 - Calculate team stats
 cron.schedule('0 2 * * *', async () => {
   console.log('⏰ Running calculate-team-stats cron...');
-  await calculateTeamStats();
+  const logger = new SyncLogger();
+  await calculateTeamStats(logger);
 }, {
   timezone: 'UTC'
 });
@@ -137,7 +149,8 @@ cron.schedule('0 2 * * *', async () => {
 // Daily at 03:00 - Calculate head-to-head
 cron.schedule('0 3 * * *', async () => {
   console.log('⏰ Running calculate-head-to-head cron...');
-  await calculateHeadToHead();
+  const logger = new SyncLogger();
+  await calculateHeadToHead(logger);
 }, {
   timezone: 'UTC'
 });
@@ -145,7 +158,8 @@ cron.schedule('0 3 * * *', async () => {
 // Every 6 hours - Sync news
 cron.schedule('0 */6 * * *', async () => {
   console.log('⏰ Running sync-news cron...');
-  await syncNews();
+  const logger = new SyncLogger();
+  await syncNews(logger);
 }, {
   timezone: 'UTC'
 });
@@ -161,7 +175,8 @@ cron.schedule('0 * * * *', async () => {
 // Every 6 hours - Fix event status
 cron.schedule('0 */6 * * *', async () => {
   console.log('⏰ Running fix-event-status cron...');
-  await fixEventStatus();
+  const logger = new SyncLogger();
+  await fixEventStatus(logger);
 }, {
   timezone: 'UTC'
 });
