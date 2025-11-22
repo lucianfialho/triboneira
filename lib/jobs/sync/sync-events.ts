@@ -89,7 +89,7 @@ export async function syncEvents(logger: SyncLogger) {
             (hltvEvent.prizePool &&
               parseInt(hltvEvent.prizePool.replace(/\D/g, '')) >= 1000000);
 
-          const championshipMode = status === 'ongoing' && isMajor;
+          const championshipMode = Boolean(status === 'ongoing' && isMajor);
 
         await db
           .insert(events)
