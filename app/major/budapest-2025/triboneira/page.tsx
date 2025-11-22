@@ -355,12 +355,13 @@ export default function HomePage() {
         // Clear URL params after loading
         window.history.replaceState({}, '', window.location.pathname);
       } else {
-        // Pre-load Major streams (gaules, gaulestv, mich, tacocs)
+        // Pre-load Major streams (gaules, gaulestv, michel, tacocs)
         const majorStreams: Stream[] = [
           {
             id: 'gaules',
             url: 'https://kick.com/gaules',
             platform: 'kick',
+            title: 'Gaules - Major Budapest 2025',
             isMuted: false,
             channelName: 'gaules',
           },
@@ -368,15 +369,17 @@ export default function HomePage() {
             id: 'gaulestv',
             url: 'https://kick.com/gaulestv',
             platform: 'kick',
-            isMuted: false,
+            title: 'GaulesTV - Major Budapest 2025',
+            isMuted: true,
             channelName: 'gaulestv',
           },
           {
-            id: 'mich',
-            url: 'https://kick.com/mich',
+            id: 'michel',
+            url: 'https://kick.com/michel',
             platform: 'kick',
-            isMuted: false,
-            channelName: 'mich',
+            title: 'Michel - Major Budapest 2025',
+            isMuted: true,
+            channelName: 'michel',
           },
           {
             id: 'tacocs',
