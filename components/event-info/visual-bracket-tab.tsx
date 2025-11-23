@@ -114,16 +114,48 @@ export default function VisualBracketTab({ externalId, enabled }: VisualBracketT
         );
     }
 
-    // If not in playoffs, show info message
+    // If not in playoffs, show matches grouped by status (vertical layout)
     if (bracketData.currentStage !== 'playoffs') {
         return (
             <div className="space-y-6">
-                <div className="glass-card p-6 border-l-4 border-blue-500">
-                    <h3 className="text-lg font-bold text-white mb-2">🎮 {bracketData.stageInfo.format}</h3>
-                    <p className="text-[hsl(var(--muted-foreground))]">
+                {/* Stage Info Banner */}
+                <div className="glass-card p-4 border-l-4 border-blue-500">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-bold text-white">{bracketData.stageInfo.format}</h3>
+                        <span className="px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold uppercase">
+                            {bracketData.currentStage}
+                        </span>
+                    </div>
+                    <p className="text-sm text-[hsl(var(--muted-foreground))]">
                         {bracketData.stageInfo.description}
                     </p>
                 </div>
+
+                {/* Matches by Status */}
+                {bracketData.bracket.length > 0 ? (
+                    <div className="space-y-6">
+                        {bracketData.bracket.map((round, idx) => (
+                            <div key={idx} className="space-y-3">
+                                <h4 className="text-sm font-bold text-white uppercase tracking-wide px-2">
+                                    {round.name}
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {round.matches.map((match) => (
+                                        <MatchCard
+                                            key={match.id}
+                                            match={match}
+                                            isFinal={false}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-12">
+                        <p className="text-[hsl(var(--muted-foreground))]">Nenhuma partida disponível</p>
+                    </div>
+                )}
             </div>
         );
     }
