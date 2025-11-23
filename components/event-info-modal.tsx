@@ -6,7 +6,6 @@ import { DialogContent, Dialog, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEventInfo } from '@/hooks/use-event-info';
 import { useEventMatches } from '@/hooks/use-event-matches';
-import TeamsTab from '@/components/event-info/teams-tab';
 import NewsTab from '@/components/event-info/news-tab';
 import VisualBracketTab from '@/components/event-info/visual-bracket-tab';
 
@@ -133,13 +132,6 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
                             Swiss
                         </TabsTrigger>
                         <TabsTrigger
-                            value="teams"
-                            className="data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--primary))] rounded-none px-4 py-3 data-[state=active]:bg-transparent flex items-center gap-2"
-                        >
-                            <Users className="w-4 h-4" />
-                            Teams
-                        </TabsTrigger>
-                        <TabsTrigger
                             value="news"
                             className="data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--primary))] rounded-none px-4 py-3 data-[state=active]:bg-transparent flex items-center gap-2"
                         >
@@ -155,9 +147,7 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
                         <TabsContent value="bracket" className="mt-0">
                             <VisualBracketTab externalId={externalId} enabled={activeTab === 'bracket'} />
                         </TabsContent>
-                        <TabsContent value="teams" className="mt-0">
-                            <TeamsTab externalId={externalId} enabled={activeTab === 'teams'} />
-                        </TabsContent>
+
                         <TabsContent value="news" className="mt-0">
                             <NewsTab externalId={externalId} enabled={activeTab === 'news'} />
                         </TabsContent>
@@ -168,55 +158,120 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
     );
 }
 
-// Placeholder components - will be created separately
+// Matches Tab with Two-Column Layout
 function MatchesTab({ matchesData, loading }: any) {
+    const [teams, setTeams] = useState<any[]>([]);
+    const [teamsLoading, setTeamsLoading] = useState(true);
+
+    // Get externalId from the URL or context (we'll use a workaround)
+    useEffect(() => {
+        // Extract externalId from matches if available
+        const firstMatch = matchesData.live[0] || matchesData.scheduled[0] || matchesData.finished[0];
+        if (!firstMatch?.event?.externalId) {
+            setTeamsLoading(false);
+            return;
+        }
+
+        const fetchTeams = async () => {
+            try {
+                const response = await fetch(`/api/events/${firstMatch.event.externalId}/teams`);
+                const data = await response.json();
+                setTeams(data.teams || []);
+            } catch (error) {
+                console.error('Error fetching teams:', error);
+            } finally {
+                setTeamsLoading(false);
+            }
+        };
+
+        fetchTeams();
+    }, [matchesData]);
+
     if (loading) {
         return <div className="text-center text-[hsl(var(--muted-foreground))] py-12">Loading matches...</div>;
     }
 
+    const upcomingMatches = [...matchesData.live, ...matchesData.scheduled];
+    const hasMatches = upcomingMatches.length > 0 || matchesData.finished.length > 0;
+
+    if (!hasMatches) {
+        return (
+            <div className="text-center text-[hsl(var(--muted-foreground))] py-12">
+                No matches available
+            </div>
+        );
+    }
+
     return (
-        <div className="space-y-6">
-            {matchesData.live.length > 0 && (
-                <div>
-                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                        Live Matches ({matchesData.live.length})
-                    </h3>
-                    <div className="space-y-2">
-                        {matchesData.live.map((match: any) => (
-                            <MatchCard key={match.id} match={match} isLive />
-                        ))}
+        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-6">
+            {/* Left Column: Upcoming Matches */}
+            <div className="space-y-6 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
+                {matchesData.live.length > 0 && (
+                    <div>
+                        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2 sticky top-0 bg-black/95 backdrop-blur-sm py-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                            Live Matches ({matchesData.live.length})
+                        </h3>
+                        <div className="space-y-2">
+                            {matchesData.live.map((match: any) => (
+                                <MatchCard key={match.id} match={match} isLive />
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {matchesData.scheduled.length > 0 && (
-                <div>
-                    <h3 className="text-lg font-semibold text-white mb-3">Upcoming Matches</h3>
-                    <div className="space-y-2">
-                        {matchesData.scheduled.map((match: any) => (
-                            <MatchCard key={match.id} match={match} />
-                        ))}
+                {matchesData.scheduled.length > 0 && (
+                    <div>
+                        <h3 className="text-lg font-semibold text-white mb-3 sticky top-0 bg-black/95 backdrop-blur-sm py-2">
+                            Upcoming Matches
+                        </h3>
+                        <div className="space-y-2">
+                            {matchesData.scheduled.slice(0, 10).map((match: any) => (
+                                <MatchCard key={match.id} match={match} />
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {matchesData.finished.length > 0 && (
-                <div>
-                    <h3 className="text-lg font-semibold text-white mb-3">Recent Results</h3>
-                    <div className="space-y-2">
-                        {matchesData.finished.map((match: any) => (
-                            <MatchCard key={match.id} match={match} />
-                        ))}
+                {matchesData.finished.length > 0 && (
+                    <div>
+                        <h3 className="text-lg font-semibold text-white mb-3 sticky top-0 bg-black/95 backdrop-blur-sm py-2">
+                            Recent Results
+                        </h3>
+                        <div className="space-y-2">
+                            {matchesData.finished.slice(0, 5).map((match: any) => (
+                                <MatchCard key={match.id} match={match} />
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
-            {matchesData.live.length === 0 && matchesData.scheduled.length === 0 && matchesData.finished.length === 0 && (
-                <div className="text-center text-[hsl(var(--muted-foreground))] py-12">
-                    No matches available
+            {/* Right Column: Participating Teams */}
+            <div className="glass-card p-4 max-h-[calc(100vh-280px)] overflow-y-auto">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2 sticky top-0 bg-[hsl(var(--surface-elevated))] backdrop-blur-sm py-2 -m-4 px-4">
+                    <Users className="w-5 h-5 text-[hsl(var(--primary))]" />
+                    Participating Teams
+                </h3>
+                <div className="space-y-2 mt-4">
+                    {teamsLoading ? (
+                        [...Array(8)].map((_, i) => (
+                            <div key={i} className="flex items-center gap-3 p-2 rounded animate-pulse">
+                                <div className="w-10 h-10 bg-[hsl(var(--border))] rounded" />
+                                <div className="flex-1 h-4 bg-[hsl(var(--border))] rounded" />
+                            </div>
+                        ))
+                    ) : teams.length > 0 ? (
+                        teams.map((team) => (
+                            <TeamListItem key={team.id} team={team} />
+                        ))
+                    ) : (
+                        <p className="text-sm text-[hsl(var(--muted-foreground))] text-center py-8">
+                            No teams data available
+                        </p>
+                    )}
                 </div>
-            )}
+            </div>
         </div>
     );
 }
@@ -269,6 +324,68 @@ function MatchCard({ match, isLive = false }: { match: any; isLive?: boolean }) 
                         <span className="text-xs px-2 py-1 rounded bg-red-500 text-white font-medium flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                             LIVE
+                        </span>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function TeamListItem({ team }: { team: any }) {
+    const isBrazilian = team.country === 'BR';
+    const getFlagEmoji = (countryCode: string): string => {
+        const codePoints = countryCode
+            .toUpperCase()
+            .split('')
+            .map(char => 127397 + char.charCodeAt(0));
+        return String.fromCodePoint(...codePoints);
+    };
+
+    return (
+        <div
+            className={`flex items-center gap-3 p-2 rounded hover:bg-[hsl(var(--surface))] transition-colors ${isBrazilian ? 'bg-gradient-to-r from-green-500/10 to-yellow-500/10 border border-green-500/20' : ''
+                }`}
+        >
+            {/* Team Logo */}
+            <div className="relative w-10 h-10 flex-shrink-0 rounded bg-[hsl(var(--surface))] overflow-hidden">
+                {team.logoUrl ? (
+                    <img
+                        src={team.logoUrl}
+                        alt={team.name}
+                        className="w-full h-full object-contain p-1"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-sm font-bold text-[hsl(var(--muted-foreground))]">
+                        {team.name.charAt(0)}
+                    </div>
+                )}
+                {/* Rank Badge */}
+                {team.rank && team.rank <= 30 && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-[10px] font-bold text-white border border-[hsl(var(--surface-elevated))]">
+                        #{team.rank}
+                    </div>
+                )}
+            </div>
+
+            {/* Team Info */}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-white truncate">
+                        {team.name}
+                    </h4>
+                    {isBrazilian && <span className="text-lg">🇧🇷</span>}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+                    {team.country && !isBrazilian && (
+                        <span className="flex items-center gap-1">
+                            <span>{getFlagEmoji(team.country)}</span>
+                            {team.country}
+                        </span>
+                    )}
+                    {team.seed && (
+                        <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--surface-elevated))]">
+                            Seed {team.seed}
                         </span>
                     )}
                 </div>
