@@ -383,4 +383,11 @@ function TeamListItem({ team }: { team: any }) {
                     )}
                     {team.seed && (
                         <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--surface-elevated))]">
+                            #{team.seed}
+                        </span>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 }
