@@ -318,14 +318,14 @@ export async function GET(
               bucketMatches.push({
                 id: match.id,
                 team1: {
-                  id: match.team1.id,
-                  name: match.team1.name,
+                  id: match.team1.id ?? 0,
+                  name: match.team1.name ?? 'TBD',
                   logoUrl: match.team1.logoUrl,
                   seed: match.team1.seed,
                 },
                 team2: {
-                  id: match.team2.id,
-                  name: match.team2.name,
+                  id: match.team2.id ?? 0,
+                  name: match.team2.name ?? 'TBD',
                   logoUrl: match.team2.logoUrl,
                   seed: match.team2.seed,
                 },
