@@ -177,9 +177,14 @@ export async function GET(
       })
       // Sort: Stage 1 -> Stage 2 -> Playoffs
       .sort((a, b) => {
-        const order = { swiss: 1, bracket: 2, other: 3 };
+        const order: Record<'swiss' | 'bracket' | 'qualifier' | 'other', number> = {
+          qualifier: 0,
+          swiss: 1,
+          bracket: 2,
+          other: 3
+        };
         if (a.type !== b.type) {
-          return (order[a.type] || 999) - (order[b.type] || 999);
+          return order[a.type] - order[b.type];
         }
         // If same type, sort by name
         return a.name.localeCompare(b.name);
