@@ -251,12 +251,12 @@ function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; lo
                     <Users className="w-5 h-5 text-[hsl(var(--primary))]" />
                     Participating Teams
                 </h3>
-                <div className="space-y-2 mt-4">
+                <div className="grid grid-cols-2 gap-2 mt-4">
                     {teamsLoading ? (
                         [...Array(8)].map((_, i) => (
-                            <div key={i} className="flex items-center gap-3 p-2 rounded animate-pulse">
-                                <div className="w-10 h-10 bg-[hsl(var(--border))] rounded" />
-                                <div className="flex-1 h-4 bg-[hsl(var(--border))] rounded" />
+                            <div key={i} className="flex flex-col items-center gap-2 p-2 rounded animate-pulse">
+                                <div className="w-12 h-12 bg-[hsl(var(--border))] rounded" />
+                                <div className="w-full h-3 bg-[hsl(var(--border))] rounded" />
                             </div>
                         ))
                     ) : teams.length > 0 ? (
@@ -264,7 +264,7 @@ function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; lo
                             <TeamListItem key={team.id} team={team} />
                         ))
                     ) : (
-                        <p className="text-sm text-[hsl(var(--muted-foreground))] text-center py-8">
+                        <p className="text-sm text-[hsl(var(--muted-foreground))] text-center py-8 col-span-2">
                             No teams data available
                         </p>
                     )}
@@ -342,11 +342,18 @@ function TeamListItem({ team }: { team: any }) {
 
     return (
         <div
-            className={`flex items-center gap-3 p-2 rounded hover:bg-[hsl(var(--surface))] transition-colors ${isBrazilian ? 'bg-gradient-to-r from-green-500/10 to-yellow-500/10 border border-green-500/20' : ''
+            className={`flex flex-col items-center gap-2 p-3 rounded hover:bg-[hsl(var(--surface))] transition-colors relative ${isBrazilian ? 'bg-gradient-to-br from-green-500/10 to-yellow-500/10 border border-green-500/20' : ''
                 }`}
         >
+            {/* Rank Badge - Top Right Corner */}
+            {team.rank && team.rank <= 30 && (
+                <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-[10px] font-bold text-white border border-[hsl(var(--surface-elevated))] shadow-lg">
+                    #{team.rank}
+                </div>
+            )}
+
             {/* Team Logo */}
-            <div className="relative w-10 h-10 flex-shrink-0 rounded bg-[hsl(var(--surface))] overflow-hidden">
+            <div className="w-12 h-12 flex-shrink-0 rounded bg-[hsl(var(--surface))] overflow-hidden">
                 {team.logoUrl ? (
                     <img
                         src={team.logoUrl}
@@ -358,36 +365,22 @@ function TeamListItem({ team }: { team: any }) {
                         {team.name.charAt(0)}
                     </div>
                 )}
-                {/* Rank Badge */}
-                {team.rank && team.rank <= 30 && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-[10px] font-bold text-white border border-[hsl(var(--surface-elevated))]">
-                        #{team.rank}
-                    </div>
-                )}
             </div>
 
             {/* Team Info */}
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-semibold text-white truncate">
+            <div className="w-full text-center space-y-1">
+                <div className="flex items-center justify-center gap-1">
+                    <h4 className="text-xs font-semibold text-white truncate">
                         {team.name}
                     </h4>
-                    {isBrazilian && <span className="text-lg">🇧🇷</span>}
+                    {isBrazilian && <span className="text-sm">🇧🇷</span>}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+                <div className="flex items-center justify-center gap-1 text-[10px] text-[hsl(var(--muted-foreground))]">
                     {team.country && !isBrazilian && (
-                        <span className="flex items-center gap-1">
-                            <span>{getFlagEmoji(team.country)}</span>
-                            {team.country}
+                        <span className="flex items-center gap-0.5">
+                            <span className="text-xs">{getFlagEmoji(team.country)}</span>
                         </span>
                     )}
                     {team.seed && (
                         <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--surface-elevated))]">
-                            Seed {team.seed}
-                        </span>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
 }
