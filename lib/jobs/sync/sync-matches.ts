@@ -46,8 +46,8 @@ export async function syncMatches(logger: SyncLogger, championshipMode: boolean 
 
       // Filter by year to avoid events too far in the future
       relevantEvents = allEvents.filter(event => {
-        if (!event.startDate) return true; // Include if no date
-        const eventYear = new Date(event.startDate).getFullYear();
+        if (!event.dateStart) return true; // Include if no date
+        const eventYear = new Date(event.dateStart).getFullYear();
         return eventYear <= nextYear;
       });
     }
