@@ -158,19 +158,19 @@ export default function SwissSystemView({ externalId, enabled }: SwissSystemView
 // Round Column Component
 function RoundColumn({ round }: { round: SwissRound }) {
     return (
-        <div className="flex flex-col gap-4 min-w-[320px]">
-            <div className="text-center glass-card p-3">
-                <h4 className="text-sm font-bold text-white">Round {round.roundNumber}</h4>
+        <div className="flex flex-col gap-2 min-w-[280px]">
+            <div className="text-center glass-card p-2">
+                <h4 className="text-xs font-bold text-white">Round {round.roundNumber}</h4>
             </div>
 
             {round.buckets.map((bucket) => (
-                <div key={bucket.bucket} className="space-y-2">
+                <div key={bucket.bucket} className="space-y-1.5">
                     <div className="text-center">
-                        <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] px-2 py-1 rounded bg-[hsl(var(--surface-elevated))]">
+                        <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded bg-[hsl(var(--surface-elevated))]">
                             {bucket.bucket}
                         </span>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                         {bucket.matches.map((match) => (
                             <SwissMatchCard key={match.id} match={match} />
                         ))}
@@ -187,43 +187,43 @@ function SwissMatchCard({ match }: { match: SwissMatch }) {
     const team2Won = match.winner?.id === match.team2.id;
 
     return (
-        <div className={`p-2.5 rounded-lg border bg-[hsl(var(--surface-elevated))]/80 ${match.status === 'live' ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-[hsl(var(--border))]/50'
+        <div className={`p-1.5 rounded border bg-[hsl(var(--surface-elevated))]/80 ${match.status === 'live' ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-[hsl(var(--border))]/50'
             }`}>
             {/* Single row with both teams */}
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-2">
                 {/* Team 1 */}
-                <div className={`flex items-center gap-3 p-2 rounded ${team1Won ? 'bg-green-500/15' : team2Won ? 'bg-red-500/10' : 'bg-[hsl(var(--surface))]/60'
+                <div className={`flex items-center gap-2 p-1.5 rounded ${team1Won ? 'bg-green-500/15' : team2Won ? 'bg-red-500/10' : 'bg-[hsl(var(--surface))]/60'
                     }`}>
-                    <div className="relative w-10 h-10 flex-shrink-0">
+                    <div className="relative w-7 h-7 flex-shrink-0">
                         {match.team1.logoUrl ? (
                             <Image src={match.team1.logoUrl} alt={match.team1.name} fill className="object-contain" unoptimized />
                         ) : (
-                            <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-base font-bold">
+                            <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs font-bold">
                                 {match.team1.name.charAt(0)}
                             </div>
                         )}
                     </div>
-                    <span className={`text-xl font-bold min-w-[24px] text-center ${team1Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'
+                    <span className={`text-base font-bold min-w-[20px] text-center ${team1Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'
                         }`}>
                         {match.score.team1 ?? '-'}
                     </span>
                 </div>
 
                 {/* VS separator */}
-                <span className="text-sm text-[hsl(var(--muted-foreground))] font-medium px-2">vs</span>
+                <span className="text-xs text-[hsl(var(--muted-foreground))] font-medium px-1">vs</span>
 
                 {/* Team 2 */}
-                <div className={`flex items-center gap-3 p-2 rounded ${team2Won ? 'bg-green-500/15' : team1Won ? 'bg-red-500/10' : 'bg-[hsl(var(--surface))]/60'
+                <div className={`flex items-center gap-2 p-1.5 rounded ${team2Won ? 'bg-green-500/15' : team1Won ? 'bg-red-500/10' : 'bg-[hsl(var(--surface))]/60'
                     }`}>
-                    <span className={`text-xl font-bold min-w-[24px] text-center ${team2Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'
+                    <span className={`text-base font-bold min-w-[20px] text-center ${team2Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'
                         }`}>
                         {match.score.team2 ?? '-'}
                     </span>
-                    <div className="relative w-10 h-10 flex-shrink-0">
+                    <div className="relative w-7 h-7 flex-shrink-0">
                         {match.team2.logoUrl ? (
                             <Image src={match.team2.logoUrl} alt={match.team2.name} fill className="object-contain" unoptimized />
                         ) : (
-                            <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-base font-bold">
+                            <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs font-bold">
                                 {match.team2.name.charAt(0)}
                             </div>
                         )}
