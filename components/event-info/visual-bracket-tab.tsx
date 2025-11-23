@@ -144,7 +144,19 @@ export default function VisualBracketTab({ externalId, enabled }: VisualBracketT
         return rounds;
     };
 
-    const rounds = organizeBracket(matches);
+    // Detect if we're in Swiss System or Playoffs
+    const detectTournamentStage = (matches: BracketMatch[]): 'swiss' | 'playoffs' => {
+        // If we have playoff structure (4 QF + 2 SF + 1 F = 7 matches in specific order)
+        // and they're all finished or in progress, we're in playoffs
+        if (matches.length >= 7) {
+            return 'playoffs';
+        }
+
+        // Otherwise, we're likely in Swiss System stages
+        return 'swiss';
+    };
+
+    const tournamentStage = detectTournamentStage(matches);
 
     if (loading) {
         return (
@@ -156,17 +168,68 @@ export default function VisualBracketTab({ externalId, enabled }: VisualBracketT
         );
     }
 
-    if (rounds.length === 0) {
+    // If in Swiss System, show message and playoff template
+    if (tournamentStage === 'swiss' || matches.length === 0) {
         return (
-            <div className="text-center py-12">
-                <Trophy className="w-16 h-16 text-[hsl(var(--muted-foreground))] mx-auto mb-4 opacity-50" />
-                <p className="text-[hsl(var(--muted-foreground))]">No playoff matches scheduled yet</p>
-                <p className="text-sm text-[hsl(var(--subtle-foreground))] mt-2">
-                    The playoff bracket will appear here once the Swiss stages are complete
-                </p>
+            <div className="space-y-8">
+                {/* Info Banner */}
+                <div className="glass-card p-6 border-l-4 border-blue-500">
+                    <h3 className="text-lg font-bold text-white mb-2">🎮 Tournament in Progress</h3>
+                    <p className="text-[hsl(var(--muted-foreground))] mb-3">
+                        The Major is currently in the <span className="text-white font-semibold">Swiss System Stages</span> (Opening Stage, Elimination Stage).
+                    </p>
+                    <p className="text-sm text-[hsl(var(--subtle-foreground))]">
+                        The Playoff Bracket will be revealed when the top 8 teams qualify from the Swiss stages.
+                        Check back after the stages are complete!
+                    </p>
+                </div>
+
+                {/* Playoff Template Preview */}
+                <div>
+                    <h3 className="text-xl font-bold text-white mb-4">Playoff Structure Preview</h3>
+                    <p className="text-sm text-[hsl(var(--muted-foreground))] mb-6">
+                        Single Elimination • Best of 3 • Top 8 Teams
+                    </p>
+
+                    <div className="flex gap-12 overflow-x-auto pb-4">
+                        {/* Quarterfinals */}
+                        <div className="flex flex-col gap-6 min-w-[300px]">
+                            <div className="text-center">
+                                <h4 className="text-lg font-bold text-white mb-2">Quarterfinals</h4>
+                                <div className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
+                            </div>
+                            <div className="flex flex-col gap-4">
+                                {[1, 2, 3, 4].map(i => <TBAMatchCard key={i} matchNumber={i} />)}
+                            </div>
+                        </div>
+
+                        {/* Semifinals */}
+                        <div className="flex flex-col gap-6 min-w-[300px]" style={{ paddingTop: '40px' }}>
+                            <div className="text-center">
+                                <h4 className="text-lg font-bold text-white mb-2">Semifinals</h4>
+                                <div className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
+                            </div>
+                            <div className="flex flex-col gap-4">
+                                {[1, 2].map(i => <TBAMatchCard key={i} matchNumber={i} />)}
+                            </div>
+                        </div>
+
+                        {/* Grand Final */}
+                        <div className="flex flex-col gap-6 min-w-[300px]" style={{ paddingTop: '80px' }}>
+                            <div className="text-center">
+                                <h4 className="text-lg font-bold text-white mb-2">Grand Final</h4>
+                                <div className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
+                            </div>
+                            <TBAMatchCard matchNumber={1} isFinal />
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
+
+    // If in Playoffs, show actual bracket
+    const rounds = organizeBracket(matches);
 
     return (
         <div className="overflow-x-auto pb-4">
@@ -204,6 +267,36 @@ export default function VisualBracketTab({ externalId, enabled }: VisualBracketT
                         </div>
                     </div>
                 ))}
+            </div>
+        </div>
+    );
+}
+
+// TBA Match Card Component
+function TBAMatchCard({ matchNumber, isFinal = false }: { matchNumber: number; isFinal?: boolean }) {
+    return (
+        <div className="glass-card p-3 border-2 border-dashed border-[hsl(var(--border))] opacity-60">
+            {isFinal && (
+                <div className="flex items-center justify-center gap-1 mb-2">
+                    <Trophy className="w-4 h-4 text-yellow-500" />
+                    <span className="text-xs text-yellow-500 font-bold">CHAMPIONSHIP</span>
+                </div>
+            )}
+            <div className="space-y-1">
+                <div className="flex items-center justify-between px-2 py-2 rounded bg-[hsl(var(--surface))]">
+                    <span className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">TBA</span>
+                </div>
+                <div className="flex items-center justify-center py-1">
+                    <span className="text-xs text-[hsl(var(--subtle-foreground))]">vs</span>
+                </div>
+                <div className="flex items-center justify-between px-2 py-2 rounded bg-[hsl(var(--surface))]">
+                    <span className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">TBA</span>
+                </div>
+            </div>
+            <div className="mt-2 text-center">
+                <span className="text-xs px-1.5 py-0.5 rounded bg-[hsl(var(--surface-elevated))] text-[hsl(var(--muted-foreground))] uppercase">
+                    BO3
+                </span>
             </div>
         </div>
     );

@@ -25,6 +25,7 @@ export async function GET(
                 location: events.location,
                 status: events.status,
                 championshipMode: events.championshipMode,
+                metadata: events.metadata,
                 totalTeams: sql<number>`COUNT(DISTINCT ${eventParticipants.teamId})`,
             })
             .from(events)
