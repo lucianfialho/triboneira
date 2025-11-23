@@ -139,7 +139,7 @@ export default function SwissSystemView({ externalId, enabled }: SwissSystemView
 
             {/* Rounds Grid - Horizontal Scroll */}
             <div className="overflow-x-auto pb-4">
-                <div className="flex gap-6 min-w-max">
+                <div className="flex gap-3 min-w-max">
                     {swissData.rounds.map((round) => (
                         <RoundColumn key={round.roundNumber} round={round} />
                     ))}
@@ -158,7 +158,7 @@ export default function SwissSystemView({ externalId, enabled }: SwissSystemView
 // Round Column Component
 function RoundColumn({ round }: { round: SwissRound }) {
     return (
-        <div className="flex flex-col gap-2 min-w-[280px]">
+        <div className="flex flex-col gap-2 min-w-[240px]">
             <div className="text-center glass-card p-2">
                 <h4 className="text-xs font-bold text-white">Round {round.roundNumber}</h4>
             </div>
