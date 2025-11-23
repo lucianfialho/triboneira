@@ -133,6 +133,9 @@ export async function GET(
     completedMatches.forEach(match => {
       const { team1Id, team2Id, winnerId, scoreTeam1, scoreTeam2, date } = match;
 
+      // Skip if either team is null
+      if (!team1Id || !team2Id) return;
+
       // Update team1 stats
       if (teamStatsMap.has(team1Id)) {
         const stats = teamStatsMap.get(team1Id)!;
