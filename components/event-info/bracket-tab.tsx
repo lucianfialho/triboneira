@@ -51,9 +51,18 @@ export default function BracketTab({ externalId, enabled }: BracketTabProps) {
 
         const fetchMatches = async () => {
             try {
-                const response = await fetch(`/api/events/${externalId}/matches?status=finished`);
+                // Fetch ALL matches (live, scheduled, finished) to build the bracket
+                const response = await fetch(`/api/events/${externalId}/matches`);
                 const data = await response.json();
-                setMatches(data.finished || []);
+
+                // Combine all matches and sort by date
+                const allMatches = [
+                    ...(data.live || []),
+                    ...(data.scheduled || []),
+                    ...(data.finished || [])
+                ];
+
+                setMatches(allMatches);
             } catch (error) {
                 console.error('Error fetching bracket matches:', error);
             } finally {
@@ -118,9 +127,9 @@ export default function BracketTab({ externalId, enabled }: BracketTabProps) {
         return (
             <div className="text-center py-12">
                 <Trophy className="w-16 h-16 text-[hsl(var(--muted-foreground))] mx-auto mb-4 opacity-50" />
-                <p className="text-[hsl(var(--muted-foreground))]">No playoff matches available</p>
+                <p className="text-[hsl(var(--muted-foreground))]">No matches scheduled yet</p>
                 <p className="text-sm text-[hsl(var(--subtle-foreground))] mt-2">
-                    Check back when the tournament playoffs begin
+                    The tournament bracket will appear here when matches are scheduled
                 </p>
             </div>
         );
@@ -258,14 +267,25 @@ function BracketMatchCard({ match, isFinal }: { match: BracketMatch; isFinal: bo
                 </div>
             </div>
 
-            {/* Match Format */}
-            {match.format && (
-                <div className="mt-3 text-center">
+            {/* Match Info - Format & Status */}
+            <div className="mt-3 flex items-center justify-center gap-2">
+                {match.format && (
                     <span className="text-xs px-2 py-1 rounded bg-[hsl(var(--surface-elevated))] text-[hsl(var(--muted-foreground))] uppercase">
                         {match.format}
                     </span>
-                </div>
-            )}
+                )}
+                {match.status === 'live' && (
+                    <span className="text-xs px-2 py-1 rounded bg-red-500 text-white font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        LIVE
+                    </span>
+                )}
+                {match.status === 'scheduled' && (
+                    <span className="text-xs px-2 py-1 rounded bg-blue-500/20 text-blue-400 font-medium border border-blue-500/30">
+                        SCHEDULED
+                    </span>
+                )}
+            </div>
         </div>
     );
 }
