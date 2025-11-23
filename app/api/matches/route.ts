@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const championshipMode = searchParams.get('championshipMode');
 
     // Build conditions
-    let conditions = [];
+    const conditions = [];
 
     if (eventId) {
       conditions.push(eq(matches.eventId, parseInt(eventId)));
@@ -23,38 +23,34 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(matches.status, status));
     }
 
-    // Get matches
-    let matchesQuery = db
+    // Get matches - build query correctly with where before orderBy
+    const matchesQuery = db
       .select()
       .from(matches)
-      .orderBy(desc(matches.date));
+      .$dynamic();
 
-    if (conditions.length > 0) {
-      matchesQuery = matchesQuery.where(and(...conditions));
-    }
+    const matchesData = await (conditions.length > 0
+      ? matchesQuery.where(and(...conditions)).orderBy(desc(matches.date))
+      : matchesQuery.orderBy(desc(matches.date)));
 
-    const matchesData = await matchesQuery;
-
-    // Get unique event IDs
-    const eventIds = [...new Set(matchesData.map(m => m.eventId))];
+    // Get unique event IDs (filter out nulls)
+    const eventIds = [...new Set(matchesData.map(m => m.eventId).filter((id): id is number => id !== null))];
 
     // Get events (filter by championship mode if needed)
-    let eventsQuery = db
-      .select()
-      .from(events)
-      .where(inArray(events.id, eventIds));
-
+    const eventsConditions = [inArray(events.id, eventIds)];
     if (championshipMode === 'true') {
-      eventsQuery = eventsQuery.where(eq(events.championshipMode, true));
+      eventsConditions.push(eq(events.championshipMode, true));
     }
 
-    const eventsData = await eventsQuery;
+    const eventsData = eventIds.length > 0
+      ? await db.select().from(events).where(and(...eventsConditions))
+      : [];
     const eventsMap = new Map(eventsData.map(e => [e.id, e]));
 
     // Filter matches by championship mode if needed
     let filteredMatches = matchesData;
     if (championshipMode === 'true') {
-      filteredMatches = matchesData.filter(m => eventsMap.has(m.eventId));
+      filteredMatches = matchesData.filter(m => m.eventId && eventsMap.has(m.eventId));
     }
 
     // Get unique team IDs (filter out nulls)
@@ -75,7 +71,7 @@ export async function GET(request: NextRequest) {
     // Build response
     const result = filteredMatches.map((match) => {
       const metadata = match.metadata as any;
-      const event = eventsMap.get(match.eventId);
+      const event = match.eventId ? eventsMap.get(match.eventId) : undefined;
 
       return {
         id: match.id,
@@ -91,17 +87,17 @@ export async function GET(request: NextRequest) {
         team1: match.team1Id && teamsMap.has(match.team1Id)
           ? teamsMap.get(match.team1Id)
           : {
-              id: null,
-              name: metadata?.team1Name || 'TBD',
-              logo: null,
-            },
+            id: null,
+            name: metadata?.team1Name || 'TBD',
+            logo: null,
+          },
         team2: match.team2Id && teamsMap.has(match.team2Id)
           ? teamsMap.get(match.team2Id)
           : {
-              id: null,
-              name: metadata?.team2Name || 'TBD',
-              logo: null,
-            },
+            id: null,
+            name: metadata?.team2Name || 'TBD',
+            logo: null,
+          },
         event,
         createdAt: match.createdAt,
         updatedAt: match.updatedAt,
