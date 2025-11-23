@@ -84,7 +84,7 @@ export class ProxyManager {
   /**
    * Get next proxy in rotation
    */
-  getNextProxy(): HttpsProxyAgent | null {
+  getNextProxy(): HttpsProxyAgent<string> | null {
     // Refresh if needed
     if (
       !this.lastRefresh ||
@@ -132,7 +132,7 @@ export class ProxyManager {
   /**
    * Test a proxy by making a request to HLTV
    */
-  async testProxy(proxy: HttpsProxyAgent): Promise<boolean> {
+  async testProxy(proxy: HttpsProxyAgent<string>): Promise<boolean> {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
