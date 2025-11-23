@@ -51,14 +51,11 @@ export default function BracketTab({ externalId, enabled }: BracketTabProps) {
 
         const fetchMatches = async () => {
             try {
-                console.log('🏅 Fetching bracket matches for:', externalId);
                 const response = await fetch(`/api/events/${externalId}/matches?status=finished`);
                 const data = await response.json();
-                console.log('🏅 Bracket API response:', data);
-                console.log('🏅 Finished matches:', data.finished);
                 setMatches(data.finished || []);
             } catch (error) {
-                console.error('❌ Error fetching bracket matches:', error);
+                console.error('Error fetching bracket matches:', error);
             } finally {
                 setLoading(false);
             }

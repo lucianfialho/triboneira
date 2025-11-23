@@ -25,11 +25,6 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
         activeTab === 'matches'
     );
 
-    useEffect(() => {
-        console.log('🎮 Matches data:', matchesData);
-        console.log('⏳ Matches loading:', matchesLoading);
-    }, [matchesData, matchesLoading]);
-
     // Fetch Brazilian teams
     useEffect(() => {
         if (!open || !externalId) return;
@@ -38,25 +33,17 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
             try {
                 const response = await fetch(`/api/events/${externalId}/teams`);
                 const data = await response.json();
-                console.log('🔍 Teams data:', data.teams);
                 const brTeams = data.teams
                     ?.filter((team: any) => team.country === 'BR')
                     .map((team: any) => team.name) || [];
-                console.log('🇧🇷 Brazilian teams:', brTeams);
                 setBrazilianTeams(brTeams);
             } catch (error) {
-                console.error('❌ Error fetching Brazilian teams:', error);
+                console.error('Error fetching Brazilian teams:', error);
             }
         };
 
         fetchBrazilianTeams();
     }, [externalId, open]);
-
-    useEffect(() => {
-        if (eventData) {
-            console.log('📊 Event data:', eventData);
-        }
-    }, [eventData]);
 
     const formatDate = (date: string | null) => {
         if (!date) return 'TBD';
