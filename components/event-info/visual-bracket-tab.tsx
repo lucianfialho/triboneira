@@ -2,36 +2,49 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Trophy, Calendar, Circle } from 'lucide-react';
+import { Trophy, Calendar } from 'lucide-react';
 
-interface Team {
+// Types based on backend API contract
+interface BracketTeam {
     id: number;
-    externalId: string;
     name: string;
     logoUrl: string | null;
-    rank: number | null;
-    country: string | null;
+    seed: number | null;
+    isTBA: boolean;
 }
 
 interface BracketMatch {
     id: number;
-    externalId: string;
-    date: string | null;
+    team1: BracketTeam;
+    team2: BracketTeam;
+    winner: BracketTeam | null;
+    score: {
+        team1: number | null;
+        team2: number | null;
+    };
     format: string | null;
+    date: string | null;
     status: string;
-    scoreTeam1: number | null;
-    scoreTeam2: number | null;
-    team1: Team;
-    team2: Team;
-    winner: {
-        id: number | null;
-        name: string | null;
+    feeds: {
+        team1From?: number;
+        team2From?: number;
+        feedsTo?: number;
     };
-    metadata?: {
-        bracket?: 'upper' | 'lower';
-        round?: string;
-        roundNumber?: number;
+}
+
+interface BracketRound {
+    name: string;
+    matches: BracketMatch[];
+}
+
+interface BracketResponse {
+    currentStage: 'opening' | 'elimination' | 'playoffs';
+    stageInfo: {
+        format: string;
+        description: string;
+        totalRounds: number;
     };
+    bracket: BracketRound[];
 }
 
 interface VisualBracketTabProps {
@@ -39,20 +52,10 @@ interface VisualBracketTabProps {
     enabled: boolean;
 }
 
-interface BracketSection {
-    type: 'upper' | 'lower';
-    rounds: BracketRound[];
-}
-
-interface BracketRound {
-    name: string;
-    roundNumber: number;
-    matches: BracketMatch[];
-}
-
 export default function VisualBracketTab({ externalId, enabled }: VisualBracketTabProps) {
-    const [matches, setMatches] = useState<BracketMatch[]>([]);
+    const [bracketData, setBracketData] = useState<BracketResponse | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!enabled || !externalId) {
@@ -60,103 +63,28 @@ export default function VisualBracketTab({ externalId, enabled }: VisualBracketT
             return;
         }
 
-        const fetchMatches = async () => {
+        const fetchBracket = async () => {
             try {
-                const response = await fetch(`/api/events/${externalId}/matches`);
-                const data = await response.json();
-
-                const allMatches = [
-                    ...(data.live || []),
-                    ...(data.scheduled || []),
-                    ...(data.finished || [])
-                ];
-
-                setMatches(allMatches);
-            } catch (error) {
-                console.error('Error fetching bracket matches:', error);
+                const res = await fetch(`/api/events/${externalId}/bracket`);
+                if (!res.ok) {
+                    throw new Error('Failed to load bracket');
+                }
+                const data = await res.json();
+                setBracketData(data);
+            } catch (err) {
+                console.error('Error fetching bracket:', err);
+                setError(err instanceof Error ? err.message : 'Unknown error');
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchMatches();
+        fetchBracket();
+
+        // Poll every 30 seconds for updates
+        const interval = setInterval(fetchBracket, 30000);
+        return () => clearInterval(interval);
     }, [externalId, enabled]);
-
-    // Organize matches into single elimination playoff bracket
-    const organizeBracket = (matches: BracketMatch[]): BracketRound[] => {
-        if (matches.length === 0) return [];
-
-        // Sort by date
-        const sorted = [...matches].sort((a, b) => {
-            if (!a.date || !b.date) return 0;
-            return new Date(a.date).getTime() - new Date(b.date).getTime();
-        });
-
-        const rounds: BracketRound[] = [];
-        const totalMatches = sorted.length;
-
-        // CS:GO Major Playoffs format: 8 teams = 4 QF + 2 SF + 1 Final
-        if (totalMatches >= 7) {
-            // Full 8-team bracket
-            rounds.push({
-                name: 'Quarterfinals',
-                roundNumber: 1,
-                matches: sorted.slice(0, 4)
-            });
-            rounds.push({
-                name: 'Semifinals',
-                roundNumber: 2,
-                matches: sorted.slice(4, 6)
-            });
-            rounds.push({
-                name: 'Grand Final',
-                roundNumber: 3,
-                matches: sorted.slice(6, 7)
-            });
-        } else if (totalMatches >= 3) {
-            // Semifinals + Final
-            rounds.push({
-                name: 'Semifinals',
-                roundNumber: 1,
-                matches: sorted.slice(0, 2)
-            });
-            rounds.push({
-                name: 'Grand Final',
-                roundNumber: 2,
-                matches: sorted.slice(2, 3)
-            });
-        } else if (totalMatches === 1) {
-            // Just final
-            rounds.push({
-                name: 'Grand Final',
-                roundNumber: 1,
-                matches: sorted
-            });
-        } else {
-            // Generic playoff matches
-            rounds.push({
-                name: 'Playoffs',
-                roundNumber: 1,
-                matches: sorted
-            });
-        }
-
-        return rounds;
-    };
-
-    // Detect if we're in Swiss System or Playoffs
-    const detectTournamentStage = (matches: BracketMatch[]): 'swiss' | 'playoffs' => {
-        // If we have playoff structure (4 QF + 2 SF + 1 F = 7 matches in specific order)
-        // and they're all finished or in progress, we're in playoffs
-        if (matches.length >= 7) {
-            return 'playoffs';
-        }
-
-        // Otherwise, we're likely in Swiss System stages
-        return 'swiss';
-    };
-
-    const tournamentStage = detectTournamentStage(matches);
 
     if (loading) {
         return (
@@ -168,135 +96,80 @@ export default function VisualBracketTab({ externalId, enabled }: VisualBracketT
         );
     }
 
-    // If in Swiss System, show message and playoff template
-    if (tournamentStage === 'swiss' || matches.length === 0) {
+    if (error) {
         return (
-            <div className="space-y-8">
-                {/* Info Banner */}
+            <div className="text-center py-12">
+                <p className="text-red-500 mb-2">Failed to load bracket</p>
+                <p className="text-sm text-[hsl(var(--muted-foreground))]">{error}</p>
+            </div>
+        );
+    }
+
+    if (!bracketData) {
+        return (
+            <div className="text-center py-12">
+                <Trophy className="w-16 h-16 text-[hsl(var(--muted-foreground))] mx-auto mb-4 opacity-50" />
+                <p className="text-[hsl(var(--muted-foreground))]">No bracket data available</p>
+            </div>
+        );
+    }
+
+    // If not in playoffs, show info message
+    if (bracketData.currentStage !== 'playoffs') {
+        return (
+            <div className="space-y-6">
                 <div className="glass-card p-6 border-l-4 border-blue-500">
-                    <h3 className="text-lg font-bold text-white mb-2">🎮 Tournament in Progress</h3>
-                    <p className="text-[hsl(var(--muted-foreground))] mb-3">
-                        The Major is currently in the <span className="text-white font-semibold">Swiss System Stages</span> (Opening Stage, Elimination Stage).
+                    <h3 className="text-lg font-bold text-white mb-2">🎮 {bracketData.stageInfo.format}</h3>
+                    <p className="text-[hsl(var(--muted-foreground))]">
+                        {bracketData.stageInfo.description}
                     </p>
-                    <p className="text-sm text-[hsl(var(--subtle-foreground))]">
-                        The Playoff Bracket will be revealed when the top 8 teams qualify from the Swiss stages.
-                        Check back after the stages are complete!
-                    </p>
-                </div>
-
-                {/* Playoff Template Preview */}
-                <div>
-                    <h3 className="text-xl font-bold text-white mb-4">Playoff Structure Preview</h3>
-                    <p className="text-sm text-[hsl(var(--muted-foreground))] mb-6">
-                        Single Elimination • Best of 3 • Top 8 Teams
-                    </p>
-
-                    <div className="flex gap-12 overflow-x-auto pb-4">
-                        {/* Quarterfinals */}
-                        <div className="flex flex-col gap-6 min-w-[300px]">
-                            <div className="text-center">
-                                <h4 className="text-lg font-bold text-white mb-2">Quarterfinals</h4>
-                                <div className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
-                            </div>
-                            <div className="flex flex-col gap-4">
-                                {[1, 2, 3, 4].map(i => <TBAMatchCard key={i} matchNumber={i} />)}
-                            </div>
-                        </div>
-
-                        {/* Semifinals */}
-                        <div className="flex flex-col gap-6 min-w-[300px]" style={{ paddingTop: '40px' }}>
-                            <div className="text-center">
-                                <h4 className="text-lg font-bold text-white mb-2">Semifinals</h4>
-                                <div className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
-                            </div>
-                            <div className="flex flex-col gap-4">
-                                {[1, 2].map(i => <TBAMatchCard key={i} matchNumber={i} />)}
-                            </div>
-                        </div>
-
-                        {/* Grand Final */}
-                        <div className="flex flex-col gap-6 min-w-[300px]" style={{ paddingTop: '80px' }}>
-                            <div className="text-center">
-                                <h4 className="text-lg font-bold text-white mb-2">Grand Final</h4>
-                                <div className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
-                            </div>
-                            <TBAMatchCard matchNumber={1} isFinal />
-                        </div>
-                    </div>
                 </div>
             </div>
         );
     }
 
-    // If in Playoffs, show actual bracket
-    const rounds = organizeBracket(matches);
-
     return (
-        <div className="overflow-x-auto pb-4">
-            {/* Playoff Bracket Header */}
-            <div className="mb-6">
-                <h3 className="text-xl font-bold text-white mb-1">Playoff Bracket</h3>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                    Single Elimination • Best of 3
-                </p>
+        <div className="space-y-6">
+            {/* Bracket Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="text-xl font-bold text-white mb-1">{bracketData.stageInfo.format}</h3>
+                    <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                        {bracketData.stageInfo.description}
+                    </p>
+                </div>
+                <div className="px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-500 text-xs font-bold">
+                    PLAYOFFS
+                </div>
             </div>
 
-            {/* Horizontal Bracket */}
-            <div className="flex gap-12 min-w-max">
-                {rounds.map((round, roundIdx) => (
-                    <div key={roundIdx} className="flex flex-col gap-6 min-w-[300px]">
-                        {/* Round Header */}
-                        <div className="text-center">
-                            <h4 className="text-lg font-bold text-white mb-2">
-                                {round.name}
-                            </h4>
-                            <div className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
+            {/* Rounds Grid */}
+            <div className="overflow-x-auto pb-4">
+                <div className="flex gap-12 min-w-max">
+                    {bracketData.bracket.map((round, roundIdx) => (
+                        <div key={roundIdx} className="flex flex-col gap-6 min-w-[320px]">
+                            {/* Round Header */}
+                            <div className="text-center">
+                                <h4 className="text-lg font-bold text-white mb-2">{round.name}</h4>
+                                <div className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
+                            </div>
+
+                            {/* Matches with visual spacing */}
+                            <div
+                                className="flex flex-col gap-6"
+                                style={{ paddingTop: roundIdx > 0 ? `${roundIdx * 40}px` : '0' }}
+                            >
+                                {round.matches.map((match) => (
+                                    <MatchCard
+                                        key={match.id}
+                                        match={match}
+                                        isFinal={round.name === 'Grand Final'}
+                                    />
+                                ))}
+                            </div>
                         </div>
-
-                        {/* Matches with spacing for visual balance */}
-                        <div className="flex flex-col gap-6" style={{
-                            paddingTop: roundIdx > 0 ? `${roundIdx * 40}px` : '0'
-                        }}>
-                            {round.matches.map((match) => (
-                                <MatchCard
-                                    key={match.id}
-                                    match={match}
-                                    isFinal={round.name === 'Grand Final'}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-// TBA Match Card Component
-function TBAMatchCard({ matchNumber, isFinal = false }: { matchNumber: number; isFinal?: boolean }) {
-    return (
-        <div className="glass-card p-3 border-2 border-dashed border-[hsl(var(--border))] opacity-60">
-            {isFinal && (
-                <div className="flex items-center justify-center gap-1 mb-2">
-                    <Trophy className="w-4 h-4 text-yellow-500" />
-                    <span className="text-xs text-yellow-500 font-bold">CHAMPIONSHIP</span>
+                    ))}
                 </div>
-            )}
-            <div className="space-y-1">
-                <div className="flex items-center justify-between px-2 py-2 rounded bg-[hsl(var(--surface))]">
-                    <span className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">TBA</span>
-                </div>
-                <div className="flex items-center justify-center py-1">
-                    <span className="text-xs text-[hsl(var(--subtle-foreground))]">vs</span>
-                </div>
-                <div className="flex items-center justify-between px-2 py-2 rounded bg-[hsl(var(--surface))]">
-                    <span className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">TBA</span>
-                </div>
-            </div>
-            <div className="mt-2 text-center">
-                <span className="text-xs px-1.5 py-0.5 rounded bg-[hsl(var(--surface-elevated))] text-[hsl(var(--muted-foreground))] uppercase">
-                    BO3
-                </span>
             </div>
         </div>
     );
@@ -338,8 +211,11 @@ function MatchCard({ match, isFinal }: MatchCardProps) {
 
             {/* Teams */}
             <div className="space-y-1">
-                <TeamRow team={match.team1} score={match.scoreTeam1} isWinner={team1Won} isLoser={team2Won} />
-                <TeamRow team={match.team2} score={match.scoreTeam2} isWinner={team2Won} isLoser={team1Won} />
+                <TeamRow team={match.team1} score={match.score.team1} isWinner={team1Won} isLoser={team2Won} />
+                <div className="flex items-center justify-center py-0.5">
+                    <span className="text-xs text-[hsl(var(--subtle-foreground))]">vs</span>
+                </div>
+                <TeamRow team={match.team2} score={match.score.team2} isWinner={team2Won} isLoser={team1Won} />
             </div>
 
             {/* Status Badges */}
@@ -366,7 +242,7 @@ function MatchCard({ match, isFinal }: MatchCardProps) {
 }
 
 interface TeamRowProps {
-    team: Team;
+    team: BracketTeam;
     score: number | null;
     isWinner: boolean;
     isLoser: boolean;
@@ -377,19 +253,43 @@ function TeamRow({ team, score, isWinner, isLoser }: TeamRowProps) {
         <div className={`flex items-center justify-between px-2 py-1.5 rounded ${isWinner ? 'bg-green-500/10' : isLoser ? 'bg-red-500/5' : 'bg-[hsl(var(--surface))]'
             }`}>
             <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="relative w-6 h-6 rounded overflow-hidden bg-[hsl(var(--surface-elevated))] flex-shrink-0">
-                    {team.logoUrl ? (
-                        <Image src={team.logoUrl} alt={team.name} fill className="object-contain p-0.5" unoptimized />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[hsl(var(--muted-foreground))]">
-                            {team.name.charAt(0)}
+                {team.isTBA ? (
+                    <>
+                        <div className="w-6 h-6 rounded bg-[hsl(var(--surface-elevated))] flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs text-[hsl(var(--muted-foreground))]">?</span>
                         </div>
-                    )}
-                </div>
-                <span className={`text-sm font-semibold truncate ${isWinner ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'
-                    }`}>
-                    {team.name}
-                </span>
+                        <span className="text-sm font-semibold text-[hsl(var(--muted-foreground))] italic">
+                            TBA
+                        </span>
+                    </>
+                ) : (
+                    <>
+                        <div className="relative w-6 h-6 rounded overflow-hidden bg-[hsl(var(--surface-elevated))] flex-shrink-0">
+                            {team.logoUrl ? (
+                                <Image
+                                    src={team.logoUrl}
+                                    alt={team.name}
+                                    fill
+                                    className="object-contain p-0.5"
+                                    unoptimized
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[hsl(var(--muted-foreground))]">
+                                    {team.name.charAt(0)}
+                                </div>
+                            )}
+                        </div>
+                        <span className={`text-sm font-semibold truncate ${isWinner ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'
+                            }`}>
+                            {team.name}
+                        </span>
+                        {team.seed && (
+                            <span className="text-xs px-1 py-0.5 rounded bg-[hsl(var(--surface-elevated))] text-[hsl(var(--muted-foreground))]">
+                                #{team.seed}
+                            </span>
+                        )}
+                    </>
+                )}
             </div>
             {score !== null && (
                 <span className={`text-lg font-bold tabular-nums ml-2 ${isWinner ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'
