@@ -159,8 +159,10 @@ export default function SwissSystemView({ externalId, enabled }: SwissSystemView
 function RoundColumn({ round }: { round: SwissRound }) {
     return (
         <div className="flex flex-col gap-2 min-w-[240px]">
-            <div className="text-center glass-card p-2">
-                <h4 className="text-xs font-bold text-white">Round {round.roundNumber}</h4>
+            {/* Round Header */}
+            <div className="text-center mb-2">
+                <h4 className="text-sm font-bold text-white mb-1">Round {round.roundNumber}</h4>
+                <div className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
             </div>
 
             {round.buckets.map((bucket) => (

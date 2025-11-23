@@ -174,57 +174,47 @@ function MatchesTab({ matchesData, loading }: any) {
         return <div className="text-center text-[hsl(var(--muted-foreground))] py-12">Loading matches...</div>;
     }
 
-    // Filter out TBD matches - only show confirmed matchups
-    const isTBD = (match: any) => {
-        return !match.team1?.id || match.team1?.name === 'TBD' ||
-            !match.team2?.id || match.team2?.name === 'TBD';
-    };
-
-    const liveMatches = matchesData.live.filter((m: any) => !isTBD(m));
-    const scheduledMatches = matchesData.scheduled.filter((m: any) => !isTBD(m));
-    const finishedMatches = matchesData.finished.filter((m: any) => !isTBD(m));
-
     return (
         <div className="space-y-6">
-            {liveMatches.length > 0 && (
+            {matchesData.live.length > 0 && (
                 <div>
                     <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                        Live Matches ({liveMatches.length})
+                        Live Matches ({matchesData.live.length})
                     </h3>
                     <div className="space-y-2">
-                        {liveMatches.map((match: any) => (
+                        {matchesData.live.map((match: any) => (
                             <MatchCard key={match.id} match={match} isLive />
                         ))}
                     </div>
                 </div>
             )}
 
-            {scheduledMatches.length > 0 && (
+            {matchesData.scheduled.length > 0 && (
                 <div>
                     <h3 className="text-lg font-semibold text-white mb-3">Upcoming Matches</h3>
                     <div className="space-y-2">
-                        {scheduledMatches.map((match: any) => (
+                        {matchesData.scheduled.map((match: any) => (
                             <MatchCard key={match.id} match={match} />
                         ))}
                     </div>
                 </div>
             )}
 
-            {finishedMatches.length > 0 && (
+            {matchesData.finished.length > 0 && (
                 <div>
                     <h3 className="text-lg font-semibold text-white mb-3">Recent Results</h3>
                     <div className="space-y-2">
-                        {finishedMatches.map((match: any) => (
+                        {matchesData.finished.map((match: any) => (
                             <MatchCard key={match.id} match={match} />
                         ))}
                     </div>
                 </div>
             )}
 
-            {liveMatches.length === 0 && scheduledMatches.length === 0 && finishedMatches.length === 0 && (
+            {matchesData.live.length === 0 && matchesData.scheduled.length === 0 && matchesData.finished.length === 0 && (
                 <div className="text-center text-[hsl(var(--muted-foreground))] py-12">
-                    No confirmed matches available
+                    No matches available
                 </div>
             )}
         </div>
