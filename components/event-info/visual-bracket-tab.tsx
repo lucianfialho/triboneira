@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Trophy, Calendar } from 'lucide-react';
+import SwissSystemView from './swiss-system-view';
 
 // Types based on backend API contract
 interface BracketTeam {
@@ -54,6 +55,7 @@ interface VisualBracketTabProps {
 
 export default function VisualBracketTab({ externalId, enabled }: VisualBracketTabProps) {
     const [bracketData, setBracketData] = useState<BracketResponse | null>(null);
+    const [useSwiss, setUseSwiss] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -63,14 +65,24 @@ export default function VisualBracketTab({ externalId, enabled }: VisualBracketT
             return;
         }
 
-        const fetchBracket = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch(`/api/events/${externalId}/bracket`);
-                if (!res.ok) {
+                // Try Swiss API first
+                const swissRes = await fetch(`/api/events/${externalId}/swiss`);
+                if (swissRes.ok) {
+                    setUseSwiss(true);
+                    setLoading(false);
+                    return;
+                }
+
+                // Fallback to bracket API
+                const bracketRes = await fetch(`/api/events/${externalId}/bracket`);
+                if (!bracketRes.ok) {
                     throw new Error('Failed to load bracket');
                 }
-                const data = await res.json();
+                const data = await bracketRes.json();
                 setBracketData(data);
+                setUseSwiss(false);
             } catch (err) {
                 console.error('Error fetching bracket:', err);
                 setError(err instanceof Error ? err.message : 'Unknown error');
@@ -79,12 +91,17 @@ export default function VisualBracketTab({ externalId, enabled }: VisualBracketT
             }
         };
 
-        fetchBracket();
+        fetchData();
 
-        // Poll every 30 seconds for updates
-        const interval = setInterval(fetchBracket, 30000);
+        // Poll every 30 seconds
+        const interval = setInterval(fetchData, 30000);
         return () => clearInterval(interval);
     }, [externalId, enabled]);
+
+    // If detected Swiss system, use SwissSystemView
+    if (useSwiss === true) {
+        return <SwissSystemView externalId={externalId} enabled={enabled} />;
+    }
 
     if (loading) {
         return (
