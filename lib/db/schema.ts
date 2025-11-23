@@ -98,8 +98,8 @@ export const matches = pgTable('matches', {
   eventId: integer('event_id').references(() => events.id),
   externalId: varchar('external_id', { length: 100 }).notNull(),
   source: varchar('source', { length: 50 }).notNull(),
-  team1Id: integer('team1_id').references(() => teams.id).notNull(),
-  team2Id: integer('team2_id').references(() => teams.id).notNull(),
+  team1Id: integer('team1_id').references(() => teams.id), // nullable for TBD matches
+  team2Id: integer('team2_id').references(() => teams.id), // nullable for TBD matches
   date: timestamp('date'),
   format: varchar('format', { length: 20 }), // bo1, bo3, bo5
   status: varchar('status', { length: 50 }).notNull().default('scheduled'), // scheduled, live, finished, cancelled

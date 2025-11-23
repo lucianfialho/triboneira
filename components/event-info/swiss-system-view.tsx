@@ -137,19 +137,22 @@ export default function SwissSystemView({ externalId, enabled }: SwissSystemView
             {/* Live Matches */}
             <LiveMatches rounds={swissData.rounds} />
 
-            {/* Rounds Grid - Horizontal Scroll */}
-            <div className="overflow-x-auto pb-4">
-                <div className="flex gap-3 min-w-max">
-                    {swissData.rounds.map((round) => (
-                        <RoundColumn key={round.roundNumber} round={round} />
-                    ))}
+            {/* Main Layout: Rounds Grid + Qualified/Eliminated Sections */}
+            <div className="flex gap-6">
+                {/* Rounds Grid - Horizontal Scroll */}
+                <div className="flex-1 overflow-x-auto pb-4">
+                    <div className="flex gap-3 min-w-max">
+                        {swissData.rounds.map((round) => (
+                            <RoundColumn key={round.roundNumber} round={round} />
+                        ))}
+                    </div>
                 </div>
-            </div>
 
-            {/* Qualified & Eliminated Teams */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <QualifiedSection teams={swissData.qualified} />
-                <EliminatedSection teams={swissData.eliminated} />
+                {/* Right Side: Qualified & Eliminated */}
+                <div className="flex-shrink-0 space-y-4 min-w-[280px]">
+                    <QualifiedSection teams={swissData.qualified} />
+                    <EliminatedSection teams={swissData.eliminated} />
+                </div>
             </div>
         </div>
     );
@@ -157,6 +160,37 @@ export default function SwissSystemView({ externalId, enabled }: SwissSystemView
 
 // Round Column Component
 function RoundColumn({ round }: { round: SwissRound }) {
+    // Helper to determine bucket status (qualified, eliminated, or playing)
+    const getBucketStyle = (bucketName: string) => {
+        // Qualification buckets (green)
+        if (['3:0', '3:1', '3:2'].includes(bucketName)) {
+            return {
+                bg: 'bg-green-500/10',
+                border: 'border-green-500/30',
+                text: 'text-green-400',
+                label: '✓ Qualified'
+            };
+        }
+
+        // Elimination buckets (red)
+        if (['0:3', '1:3', '2:3'].includes(bucketName)) {
+            return {
+                bg: 'bg-red-500/10',
+                border: 'border-red-500/30',
+                text: 'text-red-400',
+                label: '✗ Eliminated'
+            };
+        }
+
+        // Playing buckets (default)
+        return {
+            bg: 'bg-[hsl(var(--surface-elevated))]',
+            border: 'border-[hsl(var(--border))]',
+            text: 'text-[hsl(var(--muted-foreground))]',
+            label: null
+        };
+    };
+
     return (
         <div className="flex flex-col gap-2 min-w-[240px]">
             {/* Round Header */}
@@ -165,20 +199,29 @@ function RoundColumn({ round }: { round: SwissRound }) {
                 <div className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
             </div>
 
-            {round.buckets.map((bucket) => (
-                <div key={bucket.bucket} className="space-y-1.5">
-                    <div className="text-center">
-                        <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded bg-[hsl(var(--surface-elevated))]">
-                            {bucket.bucket}
-                        </span>
+            {round.buckets.map((bucket) => {
+                const style = getBucketStyle(bucket.bucket);
+
+                return (
+                    <div key={bucket.bucket} className={`space-y-1.5 p-2 rounded border ${style.bg} ${style.border}`}>
+                        <div className="text-center space-y-0.5">
+                            <span className={`text-xs font-bold ${style.text} px-2 py-0.5 rounded bg-black/20`}>
+                                {bucket.bucket}
+                            </span>
+                            {style.label && (
+                                <div className={`text-[10px] font-semibold ${style.text} uppercase tracking-wide`}>
+                                    {style.label}
+                                </div>
+                            )}
+                        </div>
+                        <div className="space-y-1.5">
+                            {bucket.matches.map((match) => (
+                                <SwissMatchCard key={match.id} match={match} />
+                            ))}
+                        </div>
                     </div>
-                    <div className="space-y-1.5">
-                        {bucket.matches.map((match) => (
-                            <SwissMatchCard key={match.id} match={match} />
-                        ))}
-                    </div>
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 }
@@ -279,66 +322,183 @@ function LiveMatches({ rounds }: { rounds: SwissRound[] }) {
     );
 }
 
-// Qualified Section
+// Qualified Section with sub-groups
 function QualifiedSection({ teams }: { teams: QualifiedTeam[] }) {
     if (teams.length === 0) return null;
 
+    // Group by final record
+    const teams30 = teams.filter(t => t.finalRecord === '3-0').sort((a, b) => a.placement - b.placement);
+    const teams31 = teams.filter(t => t.finalRecord === '3-1').sort((a, b) => a.placement - b.placement);
+    const teams32 = teams.filter(t => t.finalRecord === '3-2').sort((a, b) => a.placement - b.placement);
+
     return (
-        <div className="glass-card p-4 border-l-4 border-green-500">
-            <h4 className="text-sm font-bold text-white mb-3">
-                ✅ Qualificados ({teams.length}/8)
-            </h4>
-            <div className="space-y-2">
-                {teams
-                    .sort((a, b) => a.placement - b.placement)
-                    .map(team => (
-                        <div key={team.id} className="flex items-center gap-3 p-2 rounded bg-green-500/10">
-                            <span className="text-xs font-bold text-yellow-500 w-6">#{team.placement}</span>
-                            <div className="relative w-6 h-6 flex-shrink-0">
-                                {team.logoUrl ? (
-                                    <Image src={team.logoUrl} alt={team.name} fill className="object-contain" unoptimized />
-                                ) : (
-                                    <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs">
-                                        {team.name.charAt(0)}
-                                    </div>
-                                )}
+        <div className="space-y-3">
+            {/* 3-0 Teams */}
+            {teams30.length > 0 && (
+                <div className="glass-card p-3 border-l-4 border-green-500 bg-green-500/5">
+                    <h4 className="text-xs font-bold text-green-500 mb-2 uppercase">
+                        Advancing (3-0)
+                    </h4>
+                    <div className="space-y-1">
+                        {teams30.map(team => (
+                            <div key={team.id} className="flex items-center gap-2 p-2 rounded bg-green-500/10">
+                                <span className="text-xs font-bold text-yellow-500 w-5">#{team.placement}</span>
+                                <div className="relative w-5 h-5 flex-shrink-0">
+                                    {team.logoUrl ? (
+                                        <Image src={team.logoUrl} alt={team.name} fill className="object-contain" unoptimized />
+                                    ) : (
+                                        <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs">
+                                            {team.name.charAt(0)}
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="text-xs font-semibold text-white flex-1 truncate">{team.name}</span>
                             </div>
-                            <span className="text-sm font-semibold text-white flex-1">{team.name}</span>
-                            <span className="text-xs font-bold text-green-500">{team.finalRecord}</span>
-                        </div>
-                    ))
-                }
-            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* 3-1 Teams */}
+            {teams31.length > 0 && (
+                <div className="glass-card p-3 border-l-4 border-green-400 bg-green-500/5">
+                    <h4 className="text-xs font-bold text-green-400 mb-2 uppercase">
+                        Advancing (3-1)
+                    </h4>
+                    <div className="space-y-1">
+                        {teams31.map(team => (
+                            <div key={team.id} className="flex items-center gap-2 p-2 rounded bg-green-500/10">
+                                <span className="text-xs font-bold text-yellow-500 w-5">#{team.placement}</span>
+                                <div className="relative w-5 h-5 flex-shrink-0">
+                                    {team.logoUrl ? (
+                                        <Image src={team.logoUrl} alt={team.name} fill className="object-contain" unoptimized />
+                                    ) : (
+                                        <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs">
+                                            {team.name.charAt(0)}
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="text-xs font-semibold text-white flex-1 truncate">{team.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* 3-2 Teams */}
+            {teams32.length > 0 && (
+                <div className="glass-card p-3 border-l-4 border-green-300 bg-green-500/5">
+                    <h4 className="text-xs font-bold text-green-300 mb-2 uppercase">
+                        Advancing (3-2)
+                    </h4>
+                    <div className="space-y-1">
+                        {teams32.map(team => (
+                            <div key={team.id} className="flex items-center gap-2 p-2 rounded bg-green-500/10">
+                                <span className="text-xs font-bold text-yellow-500 w-5">#{team.placement}</span>
+                                <div className="relative w-5 h-5 flex-shrink-0">
+                                    {team.logoUrl ? (
+                                        <Image src={team.logoUrl} alt={team.name} fill className="object-contain" unoptimized />
+                                    ) : (
+                                        <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs">
+                                            {team.name.charAt(0)}
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="text-xs font-semibold text-white flex-1 truncate">{team.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
-// Eliminated Section
+// Eliminated Section with sub-groups
 function EliminatedSection({ teams }: { teams: EliminatedTeam[] }) {
     if (teams.length === 0) return null;
 
+    // Group by final record
+    const teams03 = teams.filter(t => t.finalRecord === '0-3');
+    const teams13 = teams.filter(t => t.finalRecord === '1-3');
+    const teams23 = teams.filter(t => t.finalRecord === '2-3');
+
     return (
-        <div className="glass-card p-4 border-l-4 border-red-500">
-            <h4 className="text-sm font-bold text-white mb-3">
-                ❌ Eliminados ({teams.length}/8)
-            </h4>
-            <div className="space-y-2">
-                {teams.map(team => (
-                    <div key={team.id} className="flex items-center gap-3 p-2 rounded bg-red-500/10">
-                        <div className="relative w-6 h-6 flex-shrink-0">
-                            {team.logoUrl ? (
-                                <Image src={team.logoUrl} alt={team.name} fill className="object-contain" unoptimized />
-                            ) : (
-                                <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs">
-                                    {team.name.charAt(0)}
+        <div className="space-y-3">
+            {/* 0-3 Teams */}
+            {teams03.length > 0 && (
+                <div className="glass-card p-3 border-l-4 border-red-500 bg-red-500/5">
+                    <h4 className="text-xs font-bold text-red-500 mb-2 uppercase">
+                        Eliminated (0-3)
+                    </h4>
+                    <div className="space-y-1">
+                        {teams03.map(team => (
+                            <div key={team.id} className="flex items-center gap-2 p-2 rounded bg-red-500/10">
+                                <div className="relative w-5 h-5 flex-shrink-0">
+                                    {team.logoUrl ? (
+                                        <Image src={team.logoUrl} alt={team.name} fill className="object-contain" unoptimized />
+                                    ) : (
+                                        <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs">
+                                            {team.name.charAt(0)}
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                        <span className="text-sm font-semibold text-white flex-1">{team.name}</span>
-                        <span className="text-xs font-bold text-red-500">{team.finalRecord}</span>
+                                <span className="text-xs font-semibold text-white flex-1 truncate">{team.name}</span>
+                            </div>
+                        ))}
                     </div>
-                ))}
-            </div>
+                </div>
+            )}
+
+            {/* 1-3 Teams */}
+            {teams13.length > 0 && (
+                <div className="glass-card p-3 border-l-4 border-red-400 bg-red-500/5">
+                    <h4 className="text-xs font-bold text-red-400 mb-2 uppercase">
+                        Eliminated (1-3)
+                    </h4>
+                    <div className="space-y-1">
+                        {teams13.map(team => (
+                            <div key={team.id} className="flex items-center gap-2 p-2 rounded bg-red-500/10">
+                                <div className="relative w-5 h-5 flex-shrink-0">
+                                    {team.logoUrl ? (
+                                        <Image src={team.logoUrl} alt={team.name} fill className="object-contain" unoptimized />
+                                    ) : (
+                                        <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs">
+                                            {team.name.charAt(0)}
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="text-xs font-semibold text-white flex-1 truncate">{team.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* 2-3 Teams */}
+            {teams23.length > 0 && (
+                <div className="glass-card p-3 border-l-4 border-red-300 bg-red-500/5">
+                    <h4 className="text-xs font-bold text-red-300 mb-2 uppercase">
+                        Eliminated (2-3)
+                    </h4>
+                    <div className="space-y-1">
+                        {teams23.map(team => (
+                            <div key={team.id} className="flex items-center gap-2 p-2 rounded bg-red-500/10">
+                                <div className="relative w-5 h-5 flex-shrink-0">
+                                    {team.logoUrl ? (
+                                        <Image src={team.logoUrl} alt={team.name} fill className="object-contain" unoptimized />
+                                    ) : (
+                                        <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs">
+                                            {team.name.charAt(0)}
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="text-xs font-semibold text-white flex-1 truncate">{team.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

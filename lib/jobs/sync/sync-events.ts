@@ -36,11 +36,20 @@ export async function syncEvents(logger: SyncLogger) {
 
       const now = Date.now();
       const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+      const currentYear = new Date().getFullYear();
+      const nextYear = currentYear + 1;
 
       // Filter events: ongoing, upcoming, or recently finished (last 7 days)
+      // Only events from current year and next year
       const relevantEvents = hltvEvents.filter((event) => {
         const eventStart = event.dateStart;
         const eventEnd = event.dateEnd || eventStart;
+        const eventYear = new Date(eventStart).getFullYear();
+
+        // Skip events too far in the future (more than 1 year ahead)
+        if (eventYear > nextYear) {
+          return false;
+        }
 
         // Ongoing
         if (now >= eventStart && now <= eventEnd) {

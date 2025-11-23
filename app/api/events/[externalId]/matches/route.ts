@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { matches, teams, events } from '@/lib/db/schema';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, asc, sql, gte, lte, isNotNull } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,9 +31,31 @@ export async function GET(
 
         const eventId = event[0].id;
 
-        // Helper function to fetch matches by status
+        // Helper function to fetch matches by status with proper filters
         const fetchMatchesByStatus = async (status: string) => {
-            return await db
+            // Build base conditions
+            const conditions = [
+                eq(matches.eventId, eventId),
+                eq(matches.status, status),
+                // Ensure both teams have IDs (no TBD matches)
+                isNotNull(matches.team1Id),
+                isNotNull(matches.team2Id),
+            ];
+
+            // Add date filters for scheduled matches (next 7 days)
+            if (status === 'scheduled') {
+                const now = new Date();
+                const sevenDaysFromNow = new Date();
+                sevenDaysFromNow.setDate(now.getDate() + 7);
+
+                conditions.push(
+                    isNotNull(matches.date),
+                    gte(matches.date, now),
+                    lte(matches.date, sevenDaysFromNow)
+                );
+            }
+
+            const rawMatches = await db
                 .select({
                     id: matches.id,
                     externalId: matches.externalId,
@@ -67,14 +89,19 @@ export async function GET(
                 .innerJoin(teams, eq(matches.team1Id, teams.id))
                 .innerJoin(sql`teams AS t2`, sql`${matches.team2Id} = t2.id`)
                 .leftJoin(sql`teams AS w`, sql`${matches.winnerId} = w.id`)
-                .where(
-                    and(
-                        eq(matches.eventId, eventId),
-                        eq(matches.status, status)
-                    )
+                .where(and(...conditions))
+                .orderBy(
+                    status === 'finished'
+                        ? desc(matches.date)  // Most recent first for finished
+                        : asc(matches.date)   // Soonest first for scheduled/live
                 )
-                .orderBy(desc(matches.date))
-                .limit(status === 'live' ? 10 : 5);
+                .limit(
+                    status === 'scheduled' ? 10 :
+                    status === 'finished' ? 5 :
+                    100 // No limit for live (or very high)
+                );
+
+            return rawMatches;
         };
 
         // If specific status requested, return only that

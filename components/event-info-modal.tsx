@@ -130,7 +130,7 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
                             className="data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--primary))] rounded-none px-4 py-3 data-[state=active]:bg-transparent flex items-center gap-2"
                         >
                             <Award className="w-4 h-4" />
-                            Bracket
+                            Swiss
                         </TabsTrigger>
                         <TabsTrigger
                             value="teams"

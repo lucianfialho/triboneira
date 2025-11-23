@@ -1,5 +1,6 @@
 import { HLTV } from 'hltv';
 import { BaseFetcher } from '../core/base-fetcher';
+import { getPlaywrightScraper, closePlaywrightScraper } from './playwright-scraper';
 import type {
   HLTVEvent,
   HLTVMatch,
@@ -42,14 +43,60 @@ export class HLTVClient {
 
   /**
    * Get matches with optional filters
+   * Using Playwright scraper to bypass Cloudflare
    */
   async getMatches(options?: {
     eventIds?: number[];
     teamIds?: number[];
   }): Promise<HLTVMatch[]> {
     return this.fetcher.fetch(async () => {
-      const matches = await HLTV.getMatches(options);
-      return matches as unknown as HLTVMatch[];
+      console.log('🎭 Using Playwright scraper to fetch matches...');
+
+      const scraper = await getPlaywrightScraper();
+      const scrapedMatches = await scraper.scrapeMatches();
+
+      // Convert scraped matches to HLTV format
+      const matches: HLTVMatch[] = scrapedMatches.map(match => ({
+        id: match.id,
+        team1: {
+          id: match.team1.id,
+          name: match.team1.name,
+        },
+        team2: {
+          id: match.team2.id,
+          name: match.team2.name,
+        },
+        date: match.date ? match.date.getTime() : undefined,
+        format: match.format || undefined,
+        event: match.event ? {
+          id: match.event.id,
+          name: match.event.name,
+        } : undefined,
+        live: match.live,
+        stars: 0,
+        result: undefined,
+        stats: undefined,
+      }));
+
+      // Filter by eventIds if provided
+      let filteredMatches = matches;
+      if (options?.eventIds && options.eventIds.length > 0) {
+        filteredMatches = matches.filter(match =>
+          match.event && options.eventIds!.includes(match.event.id)
+        );
+      }
+
+      // Filter by teamIds if provided
+      if (options?.teamIds && options.teamIds.length > 0) {
+        filteredMatches = filteredMatches.filter(match =>
+          options.teamIds!.includes(match.team1.id) ||
+          options.teamIds!.includes(match.team2.id)
+        );
+      }
+
+      console.log(`✅ Playwright scraper returned ${filteredMatches.length} matches (filtered from ${matches.length})`);
+
+      return filteredMatches as unknown as HLTVMatch[];
     });
   }
 
