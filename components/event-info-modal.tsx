@@ -142,7 +142,7 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
 
                     <div className="flex-1 overflow-y-auto p-6">
                         <TabsContent value="matches" className="mt-0">
-                            <MatchesTab matchesData={matchesData} loading={matchesLoading} />
+                            <MatchesTab matchesData={matchesData} loading={matchesLoading} externalId={externalId} />
                         </TabsContent>
                         <TabsContent value="bracket" className="mt-0">
                             <VisualBracketTab externalId={externalId} enabled={activeTab === 'bracket'} />
@@ -159,22 +159,20 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
 }
 
 // Matches Tab with Two-Column Layout
-function MatchesTab({ matchesData, loading }: any) {
+function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; loading: boolean; externalId: string }) {
     const [teams, setTeams] = useState<any[]>([]);
     const [teamsLoading, setTeamsLoading] = useState(true);
 
-    // Get externalId from the URL or context (we'll use a workaround)
+    // Fetch teams when externalId is available
     useEffect(() => {
-        // Extract externalId from matches if available
-        const firstMatch = matchesData.live[0] || matchesData.scheduled[0] || matchesData.finished[0];
-        if (!firstMatch?.event?.externalId) {
+        if (!externalId) {
             setTeamsLoading(false);
             return;
         }
 
         const fetchTeams = async () => {
             try {
-                const response = await fetch(`/api/events/${firstMatch.event.externalId}/teams`);
+                const response = await fetch(`/api/events/${externalId}/teams`);
                 const data = await response.json();
                 setTeams(data.teams || []);
             } catch (error) {
@@ -185,7 +183,7 @@ function MatchesTab({ matchesData, loading }: any) {
         };
 
         fetchTeams();
-    }, [matchesData]);
+    }, [externalId]);
 
     if (loading) {
         return <div className="text-center text-[hsl(var(--muted-foreground))] py-12">Loading matches...</div>;
