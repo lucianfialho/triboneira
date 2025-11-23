@@ -187,12 +187,12 @@ function SwissMatchCard({ match }: { match: SwissMatch }) {
     const team2Won = match.winner?.id === match.team2.id;
 
     return (
-        <div className={`p-3 rounded-lg border bg-[hsl(var(--surface-elevated))]/80 ${match.status === 'live' ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-[hsl(var(--border))]/50'
+        <div className={`p-2.5 rounded-lg border bg-[hsl(var(--surface-elevated))]/80 ${match.status === 'live' ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-[hsl(var(--border))]/50'
             }`}>
             {/* Single row with both teams */}
             <div className="flex items-center justify-center gap-3">
                 {/* Team 1 */}
-                <div className={`flex items-center gap-3 p-2.5 rounded ${team1Won ? 'bg-green-500/15' : team2Won ? 'bg-red-500/10' : 'bg-[hsl(var(--surface))]/60'
+                <div className={`flex items-center gap-3 p-2 rounded ${team1Won ? 'bg-green-500/15' : team2Won ? 'bg-red-500/10' : 'bg-[hsl(var(--surface))]/60'
                     }`}>
                     <div className="relative w-10 h-10 flex-shrink-0">
                         {match.team1.logoUrl ? (
@@ -213,7 +213,7 @@ function SwissMatchCard({ match }: { match: SwissMatch }) {
                 <span className="text-sm text-[hsl(var(--muted-foreground))] font-medium px-2">vs</span>
 
                 {/* Team 2 */}
-                <div className={`flex items-center gap-3 p-2.5 rounded ${team2Won ? 'bg-green-500/15' : team1Won ? 'bg-red-500/10' : 'bg-[hsl(var(--surface))]/60'
+                <div className={`flex items-center gap-3 p-2 rounded ${team2Won ? 'bg-green-500/15' : team1Won ? 'bg-red-500/10' : 'bg-[hsl(var(--surface))]/60'
                     }`}>
                     <span className={`text-xl font-bold min-w-[24px] text-center ${team2Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'
                         }`}>
@@ -230,23 +230,6 @@ function SwissMatchCard({ match }: { match: SwissMatch }) {
                     </div>
                 </div>
             </div>
-
-            {/* Status row */}
-            {(match.status === 'live' || (match.date && match.status === 'scheduled')) && (
-                <div className="flex items-center justify-center gap-2 mt-2">
-                    {match.status === 'live' && (
-                        <span className="text-xs px-2 py-1 rounded bg-red-500 text-white font-medium flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                            LIVE
-                        </span>
-                    )}
-                    {match.date && match.status === 'scheduled' && (
-                        <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                            {new Date(match.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                    )}
-                </div>
-            )}
         </div>
     );
 }
