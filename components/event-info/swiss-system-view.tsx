@@ -187,57 +187,57 @@ function SwissMatchCard({ match }: { match: SwissMatch }) {
     const team2Won = match.winner?.id === match.team2.id;
 
     return (
-        <div className={`glass-card p-2 border ${match.status === 'live' ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-[hsl(var(--border))]'
+        <div className={`p-3 rounded-lg border bg-[hsl(var(--surface-elevated))]/80 ${match.status === 'live' ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-[hsl(var(--border))]/50'
             }`}>
             {/* Single row with both teams */}
             <div className="flex items-center gap-2">
                 {/* Team 1 */}
-                <div className={`flex items-center gap-1.5 flex-1 p-1.5 rounded ${team1Won ? 'bg-green-500/10' : team2Won ? 'bg-red-500/5' : 'bg-[hsl(var(--surface))]'
+                <div className={`flex items-center gap-2 flex-1 p-2 rounded ${team1Won ? 'bg-green-500/15' : team2Won ? 'bg-red-500/10' : 'bg-[hsl(var(--surface))]/60'
                     }`}>
-                    <div className="relative w-5 h-5 flex-shrink-0">
+                    <div className="relative w-8 h-8 flex-shrink-0">
                         {match.team1.logoUrl ? (
                             <Image src={match.team1.logoUrl} alt={match.team1.name} fill className="object-contain" unoptimized />
                         ) : (
-                            <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs">
+                            <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-sm font-bold">
                                 {match.team1.name.charAt(0)}
                             </div>
                         )}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className={`text-xs font-semibold truncate ${team1Won ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                        <div className={`text-sm font-semibold truncate ${team1Won ? 'text-white' : 'text-[hsl(var(--foreground))]/80'}`}>
                             {match.team1.name}
                         </div>
                         <div className="text-xs text-[hsl(var(--muted-foreground))]">
                             {match.team1Record.wins}-{match.team1Record.losses}
                         </div>
                     </div>
-                    <span className={`text-sm font-bold ${team1Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                    <span className={`text-lg font-bold ${team1Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'}`}>
                         {match.score.team1 ?? '-'}
                     </span>
                 </div>
 
                 {/* VS separator */}
-                <span className="text-xs text-[hsl(var(--muted-foreground))] px-1">vs</span>
+                <span className="text-sm text-[hsl(var(--muted-foreground))] px-1 font-medium">vs</span>
 
                 {/* Team 2 */}
-                <div className={`flex items-center gap-1.5 flex-1 p-1.5 rounded ${team2Won ? 'bg-green-500/10' : team1Won ? 'bg-red-500/5' : 'bg-[hsl(var(--surface))]'
+                <div className={`flex items-center gap-2 flex-1 p-2 rounded ${team2Won ? 'bg-green-500/15' : team1Won ? 'bg-red-500/10' : 'bg-[hsl(var(--surface))]/60'
                     }`}>
-                    <span className={`text-sm font-bold ${team2Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                    <span className={`text-lg font-bold ${team2Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'}`}>
                         {match.score.team2 ?? '-'}
                     </span>
                     <div className="flex-1 min-w-0">
-                        <div className={`text-xs font-semibold truncate ${team2Won ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                        <div className={`text-sm font-semibold truncate ${team2Won ? 'text-white' : 'text-[hsl(var(--foreground))]/80'}`}>
                             {match.team2.name}
                         </div>
                         <div className="text-xs text-[hsl(var(--muted-foreground))]">
                             {match.team2Record.wins}-{match.team2Record.losses}
                         </div>
                     </div>
-                    <div className="relative w-5 h-5 flex-shrink-0">
+                    <div className="relative w-8 h-8 flex-shrink-0">
                         {match.team2.logoUrl ? (
                             <Image src={match.team2.logoUrl} alt={match.team2.name} fill className="object-contain" unoptimized />
                         ) : (
-                            <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs">
+                            <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-sm font-bold">
                                 {match.team2.name.charAt(0)}
                             </div>
                         )}
@@ -246,10 +246,10 @@ function SwissMatchCard({ match }: { match: SwissMatch }) {
             </div>
 
             {/* Status row */}
-            <div className="flex items-center justify-center gap-2 mt-1">
+            <div className="flex items-center justify-center gap-2 mt-2">
                 {match.status === 'live' && (
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-red-500 text-white font-medium flex items-center gap-1">
-                        <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                    <span className="text-xs px-2 py-1 rounded bg-red-500 text-white font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                         LIVE
                     </span>
                 )}
