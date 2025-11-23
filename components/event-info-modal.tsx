@@ -8,7 +8,7 @@ import { useEventInfo } from '@/hooks/use-event-info';
 import { useEventMatches } from '@/hooks/use-event-matches';
 import TeamsTab from '@/components/event-info/teams-tab';
 import NewsTab from '@/components/event-info/news-tab';
-import BracketTab from '@/components/event-info/bracket-tab';
+import VisualBracketTab from '@/components/event-info/visual-bracket-tab';
 
 interface EventInfoModalProps {
     externalId: string;
@@ -153,7 +153,7 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
                             <MatchesTab matchesData={matchesData} loading={matchesLoading} />
                         </TabsContent>
                         <TabsContent value="bracket" className="mt-0">
-                            <BracketTab externalId={externalId} enabled={activeTab === 'bracket'} />
+                            <VisualBracketTab externalId={externalId} enabled={activeTab === 'bracket'} />
                         </TabsContent>
                         <TabsContent value="teams" className="mt-0">
                             <TeamsTab externalId={externalId} enabled={activeTab === 'teams'} />
