@@ -89,8 +89,8 @@ export class HLTVClient {
       // Filter by teamIds if provided
       if (options?.teamIds && options.teamIds.length > 0) {
         filteredMatches = filteredMatches.filter(match =>
-          options.teamIds!.includes(match.team1.id) ||
-          options.teamIds!.includes(match.team2.id)
+          (match.team1 && options.teamIds!.includes(match.team1.id)) ||
+          (match.team2 && options.teamIds!.includes(match.team2.id))
         );
       }
 
