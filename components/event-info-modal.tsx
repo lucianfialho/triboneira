@@ -6,7 +6,6 @@ import { DialogContent, Dialog, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEventInfo } from '@/hooks/use-event-info';
 import { useEventMatches } from '@/hooks/use-event-matches';
-import NewsTab from '@/components/event-info/news-tab';
 import VisualBracketTab from '@/components/event-info/visual-bracket-tab';
 
 interface EventInfoModalProps {
@@ -131,16 +130,9 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
                             <Award className="w-4 h-4" />
                             Swiss
                         </TabsTrigger>
-                        <TabsTrigger
-                            value="news"
-                            className="data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--primary))] rounded-none px-4 py-3 data-[state=active]:bg-transparent flex items-center gap-2"
-                        >
-                            <Newspaper className="w-4 h-4" />
-                            News
-                        </TabsTrigger>
                     </TabsList>
 
-                    <div className="flex-1 overflow-y-auto p-6">
+                    <div className="flex-1 overflow-y-auto p-6 min-h-[679px]">
                         <TabsContent value="matches" className="mt-0">
                             <MatchesTab matchesData={matchesData} loading={matchesLoading} externalId={externalId} />
                         </TabsContent>
@@ -148,9 +140,6 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
                             <VisualBracketTab externalId={externalId} enabled={activeTab === 'bracket'} />
                         </TabsContent>
 
-                        <TabsContent value="news" className="mt-0">
-                            <NewsTab externalId={externalId} enabled={activeTab === 'news'} />
-                        </TabsContent>
                     </div>
                 </Tabs>
             </DialogContent>
@@ -158,10 +147,48 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
     );
 }
 
-// Matches Tab with Two-Column Layout
+// News Card Component
+function NewsCard({ news }: { news: any }) {
+    const formatRelativeTime = (date: string | null) => {
+        if (!date) return '';
+        const now = new Date();
+        const published = new Date(date);
+        const diffInHours = Math.floor((now.getTime() - published.getTime()) / (1000 * 60 * 60));
+
+        if (diffInHours < 1) return 'Agora';
+        if (diffInHours < 24) return `${diffInHours}h`;
+        const diffInDays = Math.floor(diffInHours / 24);
+        if (diffInDays === 1) return '1d';
+        if (diffInDays < 7) return `${diffInDays}d`;
+        return `${Math.floor(diffInDays / 7)}sem`;
+    };
+
+    return (
+        <a
+            href={news.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="glass-card p-3 hover:bg-[hsl(var(--surface-elevated))] transition-all block group"
+        >
+            <h4 className="text-sm font-semibold text-white mb-1 group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-2">
+                {news.title}
+            </h4>
+            {news.publishedAt && (
+                <p className="text-xs text-[hsl(var(--subtle-foreground))]">
+                    {formatRelativeTime(news.publishedAt)}
+                </p>
+            )}
+        </a>
+    );
+}
+
+// Matches Tab with Three Sections Layout
 function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; loading: boolean; externalId: string }) {
     const [teams, setTeams] = useState<any[]>([]);
     const [teamsLoading, setTeamsLoading] = useState(true);
+    const [news, setNews] = useState<any[]>([]);
+    const [newsLoading, setNewsLoading] = useState(true);
+    const [showOnlyBrazilian, setShowOnlyBrazilian] = useState(true);
 
     // Fetch teams when externalId is available
     useEffect(() => {
@@ -185,6 +212,28 @@ function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; lo
         fetchTeams();
     }, [externalId]);
 
+    // Fetch news when externalId is available
+    useEffect(() => {
+        if (!externalId) {
+            setNewsLoading(false);
+            return;
+        }
+
+        const fetchNews = async () => {
+            try {
+                const response = await fetch(`/api/events/${externalId}/news?limit=10`);
+                const data = await response.json();
+                setNews(data.news || []);
+            } catch (error) {
+                console.error('Error fetching news:', error);
+            } finally {
+                setNewsLoading(false);
+            }
+        };
+
+        fetchNews();
+    }, [externalId]);
+
     if (loading) {
         return <div className="text-center text-[hsl(var(--muted-foreground))] py-12">Loading matches...</div>;
     }
@@ -200,10 +249,17 @@ function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; lo
         );
     }
 
+    // Filter teams based on showOnlyBrazilian
+    const filteredTeams = showOnlyBrazilian
+        ? teams.filter(team => team.country === 'BR')
+        : teams;
+
+    const brazilianTeamsCount = teams.filter(team => team.country === 'BR').length;
+
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-6">
-            {/* Left Column: Upcoming Matches */}
-            <div className="space-y-6 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-6">
+            {/* Left Column: Upcoming Matches - More Compact */}
+            <div className="space-y-6">
                 {matchesData.live.length > 0 && (
                     <div>
                         <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2 sticky top-0 bg-black/95 backdrop-blur-sm py-2">
@@ -212,7 +268,7 @@ function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; lo
                         </h3>
                         <div className="space-y-2">
                             {matchesData.live.map((match: any) => (
-                                <MatchCard key={match.id} match={match} isLive />
+                                <MatchCard key={match.id} match={match} isLive compact />
                             ))}
                         </div>
                     </div>
@@ -225,7 +281,7 @@ function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; lo
                         </h3>
                         <div className="space-y-2">
                             {matchesData.scheduled.slice(0, 10).map((match: any) => (
-                                <MatchCard key={match.id} match={match} />
+                                <MatchCard key={match.id} match={match} compact />
                             ))}
                         </div>
                     </div>
@@ -238,52 +294,96 @@ function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; lo
                         </h3>
                         <div className="space-y-2">
                             {matchesData.finished.slice(0, 5).map((match: any) => (
-                                <MatchCard key={match.id} match={match} />
+                                <MatchCard key={match.id} match={match} compact />
                             ))}
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Right Column: Participating Teams */}
-            <div className="glass-card p-4 max-h-[calc(100vh-280px)] overflow-y-auto">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2 sticky top-0 bg-[hsl(var(--surface-elevated))] backdrop-blur-sm py-2 -m-4 px-4">
-                    <Users className="w-5 h-5 text-[hsl(var(--primary))]" />
-                    Participating Teams
-                </h3>
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                    {teamsLoading ? (
-                        [...Array(8)].map((_, i) => (
-                            <div key={i} className="flex flex-col items-center gap-2 p-2 rounded animate-pulse">
-                                <div className="w-12 h-12 bg-[hsl(var(--border))] rounded" />
-                                <div className="w-full h-3 bg-[hsl(var(--border))] rounded" />
-                            </div>
-                        ))
-                    ) : teams.length > 0 ? (
-                        teams.map((team) => (
-                            <TeamListItem key={team.id} team={team} />
-                        ))
-                    ) : (
-                        <p className="text-sm text-[hsl(var(--muted-foreground))] text-center py-8 col-span-3">
-                            No teams data available
-                        </p>
-                    )}
+            {/* Right Column: Participating Teams + News */}
+            <div className="space-y-6">
+                {/* Teams Section */}
+                <div>
+                    <div className="flex items-center justify-between mb-3 sticky top-0 bg-black/95 backdrop-blur-sm py-2 z-10">
+                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                            <Users className="w-5 h-5 text-[hsl(var(--primary))]" />
+                            Participating Teams
+                        </h3>
+                        {teams.length > 0 && (
+                            <button
+                                onClick={() => setShowOnlyBrazilian(!showOnlyBrazilian)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${showOnlyBrazilian
+                                    ? 'bg-gradient-to-r from-green-500/20 to-yellow-500/20 border border-green-500/30 text-green-400'
+                                    : 'bg-[hsl(var(--surface-elevated))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface))]'
+                                    }`}
+                            >
+                                <span>🇧🇷</span>
+                                {showOnlyBrazilian ? `${brazilianTeamsCount} BR` : `Filtrar BR ${brazilianTeamsCount > 0 ? `(${brazilianTeamsCount})` : ''}`}
+                            </button>
+                        )}
+                    </div>
+                    <div className="grid grid-cols-4 gap-1">
+                        {teamsLoading ? (
+                            [...Array(8)].map((_, i) => (
+                                <div key={i} className="flex flex-col items-center gap-2 p-2 rounded animate-pulse">
+                                    <div className="w-12 h-12 bg-[hsl(var(--border))] rounded" />
+                                    <div className="w-full h-3 bg-[hsl(var(--border))] rounded" />
+                                </div>
+                            ))
+                        ) : filteredTeams.length > 0 ? (
+                            filteredTeams.map((team) => (
+                                <TeamListItem key={team.id} team={team} />
+                            ))
+                        ) : (
+                            <p className="text-sm text-[hsl(var(--muted-foreground))] text-center py-8 col-span-4">
+                                {showOnlyBrazilian ? 'Nenhum time brasileiro neste evento' : 'No teams data available'}
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* News Section */}
+                <div>
+                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2 sticky top-0 bg-black/95 backdrop-blur-sm py-2 z-10">
+                        <Newspaper className="w-5 h-5 text-[hsl(var(--primary))]" />
+                        Latest News
+                    </h3>
+                    <div className="space-y-2">
+                        {newsLoading ? (
+                            [...Array(3)].map((_, i) => (
+                                <div key={i} className="glass-card p-3 animate-pulse">
+                                    <div className="h-4 bg-[hsl(var(--border))] rounded w-3/4 mb-2" />
+                                    <div className="h-3 bg-[hsl(var(--border))] rounded w-full mb-2" />
+                                    <div className="h-2 bg-[hsl(var(--border))] rounded w-1/4" />
+                                </div>
+                            ))
+                        ) : news.length > 0 ? (
+                            news.map((item) => (
+                                <NewsCard key={item.id} news={item} />
+                            ))
+                        ) : (
+                            <p className="text-sm text-[hsl(var(--muted-foreground))] text-center py-8">
+                                No news available
+                            </p>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
 
-function MatchCard({ match, isLive = false }: { match: any; isLive?: boolean }) {
+function MatchCard({ match, isLive = false, compact = false }: { match: any; isLive?: boolean; compact?: boolean }) {
     return (
         <div className="glass-card p-4 hover:bg-[hsl(var(--surface-elevated))] transition-all">
             <div className="flex items-center justify-between">
-                <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+                <div className={`flex-1 grid ${compact ? 'grid-cols-[1fr_auto_1fr]' : 'grid-cols-[1fr_auto_1fr]'} items-center gap-3`}>
                     {/* Team 1 */}
-                    <div className="flex items-center gap-3 justify-end">
+                    <div className="flex items-center gap-2 justify-end">
                         <span className="text-sm font-semibold text-white truncate">{match.team1.name}</span>
                         {match.team1.logoUrl && (
-                            <img src={match.team1.logoUrl} alt={match.team1.name} className="w-8 h-8 rounded" />
+                            <img src={match.team1.logoUrl} alt={match.team1.name} className="w-7 h-7 rounded" />
                         )}
                         {match.scoreTeam1 !== null && (
                             <span className="text-xl font-bold text-white tabular-nums w-8 text-center">
@@ -294,37 +394,42 @@ function MatchCard({ match, isLive = false }: { match: any; isLive?: boolean }) 
 
                     {/* VS / Score */}
                     <div className="text-center">
-                        <span className="text-xs text-[hsl(var(--muted-foreground))] px-3">vs</span>
+                        <span className="text-xs text-[hsl(var(--muted-foreground))] px-2">vs</span>
                     </div>
 
                     {/* Team 2 */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                         {match.scoreTeam2 !== null && (
                             <span className="text-xl font-bold text-white tabular-nums w-8 text-center">
                                 {match.scoreTeam2}
                             </span>
                         )}
                         {match.team2.logoUrl && (
-                            <img src={match.team2.logoUrl} alt={match.team2.name} className="w-8 h-8 rounded" />
+                            <img src={match.team2.logoUrl} alt={match.team2.name} className="w-7 h-7 rounded" />
                         )}
                         <span className="text-sm font-semibold text-white truncate">{match.team2.name}</span>
                     </div>
                 </div>
 
-                {/* Match Info */}
-                <div className="flex items-center gap-3 ml-6">
-                    {match.format && (
-                        <span className="text-xs px-2 py-1 rounded bg-[hsl(var(--surface-elevated))] text-[hsl(var(--muted-foreground))] uppercase">
-                            {match.format}
-                        </span>
-                    )}
-                    {isLive && (
-                        <span className="text-xs px-2 py-1 rounded bg-red-500 text-white font-medium flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                            LIVE
-                        </span>
-                    )}
-                </div>
+                {/* Match Info - Only show if not compact */}
+                {!compact && (
+                    <div className="flex items-center gap-3 ml-6">
+                        {match.format && (
+                            <span className="text-xs px-2 py-1 rounded bg-[hsl(var(--surface-elevated))] text-[hsl(var(--muted-foreground))] uppercase">
+                                {match.format}
+                            </span>
+                        )}
+                        {isLive && (
+                            <span className="text-xs px-2 py-1 rounded bg-red-500 text-white font-medium flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                LIVE
+                            </span>
+                        )}
+                    </div>
+                )}
+                {compact && isLive && (
+                    <span className="ml-2 w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
+                )}
             </div>
         </div>
     );
@@ -342,18 +447,11 @@ function TeamListItem({ team }: { team: any }) {
 
     return (
         <div
-            className={`flex flex-col items-center gap-2 p-3 rounded hover:bg-[hsl(var(--surface))] transition-colors relative ${isBrazilian ? 'bg-gradient-to-br from-green-500/10 to-yellow-500/10 border border-green-500/20' : ''
+            className={`flex flex-col items-center gap-1 p-1.5 rounded hover:bg-[hsl(var(--surface))] transition-colors ${isBrazilian ? 'bg-gradient-to-br from-green-500/10 to-yellow-500/10 border border-green-500/20' : ''
                 }`}
         >
-            {/* Rank Badge - Top Right Corner */}
-            {team.rank && team.rank <= 30 && (
-                <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-[10px] font-bold text-white border border-[hsl(var(--surface-elevated))] shadow-lg">
-                    #{team.rank}
-                </div>
-            )}
-
-            {/* Team Logo */}
-            <div className="w-12 h-12 flex-shrink-0 rounded bg-[hsl(var(--surface))] overflow-hidden">
+            {/* Team Logo with Badge */}
+            <div className="w-12 h-12 flex-shrink-0 rounded bg-[hsl(var(--surface))] overflow-hidden relative">
                 {team.logoUrl ? (
                     <img
                         src={team.logoUrl}
@@ -365,24 +463,31 @@ function TeamListItem({ team }: { team: any }) {
                         {team.name.charAt(0)}
                     </div>
                 )}
+
+                {/* Rank Badge - Positioned OVER the logo */}
+                {team.rank && team.rank <= 30 && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-[10px] font-bold text-white border-2 border-black shadow-lg z-10">
+                        #{team.rank}
+                    </div>
+                )}
             </div>
 
             {/* Team Info */}
-            <div className="w-full text-center space-y-1">
-                <div className="flex items-center justify-center gap-1">
+            <div className="w-full text-center space-y-0">
+                <div className="flex items-center justify-center gap-0.5">
                     <h4 className="text-xs font-semibold text-white truncate">
                         {team.name}
                     </h4>
-                    {isBrazilian && <span className="text-sm">🇧🇷</span>}
+                    {isBrazilian && <span className="text-xs">🇧🇷</span>}
                 </div>
-                <div className="flex items-center justify-center gap-1 text-[10px] text-[hsl(var(--muted-foreground))]">
+                <div className="flex items-center justify-center gap-1 text-[9px] text-[hsl(var(--muted-foreground))]">
                     {team.country && !isBrazilian && (
-                        <span className="flex items-center gap-0.5">
-                            <span className="text-xs">{getFlagEmoji(team.country)}</span>
+                        <span className="flex items-center">
+                            <span className="text-[10px]">{getFlagEmoji(team.country)}</span>
                         </span>
                     )}
                     {team.seed && (
-                        <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--surface-elevated))]">
+                        <span className="px-1 py-0.5 rounded bg-[hsl(var(--surface-elevated))] text-[9px]">
                             #{team.seed}
                         </span>
                     )}
