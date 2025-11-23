@@ -134,17 +134,6 @@ export default function SwissSystemView({ externalId, enabled }: SwissSystemView
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h3 className="text-xl font-bold text-white mb-1">Sistema Suíço</h3>
-                    <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                        Round {swissData.currentRound} de {swissData.totalRounds}
-                    </p>
-                </div>
-                <Progress data={swissData} />
-            </div>
-
             {/* Live Matches */}
             <LiveMatches rounds={swissData.rounds} />
 
@@ -200,10 +189,11 @@ function SwissMatchCard({ match }: { match: SwissMatch }) {
     return (
         <div className={`glass-card p-2 border ${match.status === 'live' ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-[hsl(var(--border))]'
             }`}>
-            {/* Team 1 */}
-            <div className={`flex items-center justify-between p-2 rounded ${team1Won ? 'bg-green-500/10' : team2Won ? 'bg-red-500/5' : 'bg-[hsl(var(--surface))]'
-                }`}>
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+            {/* Single row with both teams */}
+            <div className="flex items-center gap-2">
+                {/* Team 1 */}
+                <div className={`flex items-center gap-1.5 flex-1 p-1.5 rounded ${team1Won ? 'bg-green-500/10' : team2Won ? 'bg-red-500/5' : 'bg-[hsl(var(--surface))]'
+                    }`}>
                     <div className="relative w-5 h-5 flex-shrink-0">
                         {match.team1.logoUrl ? (
                             <Image src={match.team1.logoUrl} alt={match.team1.name} fill className="object-contain" unoptimized />
@@ -213,22 +203,36 @@ function SwissMatchCard({ match }: { match: SwissMatch }) {
                             </div>
                         )}
                     </div>
-                    <span className={`text-xs font-semibold truncate ${team1Won ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`}>
-                        {match.team1.name}
-                    </span>
-                    <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                        ({match.team1Record.wins}-{match.team1Record.losses})
+                    <div className="flex-1 min-w-0">
+                        <div className={`text-xs font-semibold truncate ${team1Won ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                            {match.team1.name}
+                        </div>
+                        <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                            {match.team1Record.wins}-{match.team1Record.losses}
+                        </div>
+                    </div>
+                    <span className={`text-sm font-bold ${team1Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                        {match.score.team1 ?? '-'}
                     </span>
                 </div>
-                <span className={`text-sm font-bold ml-2 ${team1Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'}`}>
-                    {match.score.team1 ?? '-'}
-                </span>
-            </div>
 
-            {/* Team 2 */}
-            <div className={`flex items-center justify-between p-2 rounded mt-1 ${team2Won ? 'bg-green-500/10' : team1Won ? 'bg-red-500/5' : 'bg-[hsl(var(--surface))]'
-                }`}>
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+                {/* VS separator */}
+                <span className="text-xs text-[hsl(var(--muted-foreground))] px-1">vs</span>
+
+                {/* Team 2 */}
+                <div className={`flex items-center gap-1.5 flex-1 p-1.5 rounded ${team2Won ? 'bg-green-500/10' : team1Won ? 'bg-red-500/5' : 'bg-[hsl(var(--surface))]'
+                    }`}>
+                    <span className={`text-sm font-bold ${team2Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                        {match.score.team2 ?? '-'}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                        <div className={`text-xs font-semibold truncate ${team2Won ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                            {match.team2.name}
+                        </div>
+                        <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                            {match.team2Record.wins}-{match.team2Record.losses}
+                        </div>
+                    </div>
                     <div className="relative w-5 h-5 flex-shrink-0">
                         {match.team2.logoUrl ? (
                             <Image src={match.team2.logoUrl} alt={match.team2.name} fill className="object-contain" unoptimized />
@@ -238,34 +242,23 @@ function SwissMatchCard({ match }: { match: SwissMatch }) {
                             </div>
                         )}
                     </div>
-                    <span className={`text-xs font-semibold truncate ${team2Won ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`}>
-                        {match.team2.name}
-                    </span>
-                    <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                        ({match.team2Record.wins}-{match.team2Record.losses})
-                    </span>
                 </div>
-                <span className={`text-sm font-bold ml-2 ${team2Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'}`}>
-                    {match.score.team2 ?? '-'}
-                </span>
             </div>
 
-            {/* Status */}
-            {match.status === 'live' && (
-                <div className="text-center mt-1">
-                    <span className="text-xs px-2 py-0.5 rounded bg-red-500 text-white font-medium flex items-center justify-center gap-1">
+            {/* Status row */}
+            <div className="flex items-center justify-center gap-2 mt-1">
+                {match.status === 'live' && (
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-red-500 text-white font-medium flex items-center gap-1">
                         <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                        AO VIVO
+                        LIVE
                     </span>
-                </div>
-            )}
-            {match.date && match.status === 'scheduled' && (
-                <div className="text-center mt-1">
+                )}
+                {match.date && match.status === 'scheduled' && (
                     <span className="text-xs text-[hsl(var(--muted-foreground))]">
                         {new Date(match.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }
