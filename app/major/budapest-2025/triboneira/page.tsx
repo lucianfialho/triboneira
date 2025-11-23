@@ -1487,7 +1487,7 @@ export default function HomePage() {
 
       {/* Event Info Modal */}
       <EventInfoModal
-        externalId="8841"
+        externalId="8504"
         open={eventInfoModalOpen}
         onClose={() => setEventInfoModalOpen(false)}
       />
