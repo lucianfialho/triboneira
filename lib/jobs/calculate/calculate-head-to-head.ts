@@ -35,6 +35,11 @@ export async function calculateHeadToHead(logger: SyncLogger, eventId?: number) 
   }>();
 
   for (const match of finishedMatches) {
+    // Skip matches with null team IDs
+    if (!match.team1Id || !match.team2Id) {
+      continue;
+    }
+
     // Create a consistent key for team pairs (smaller ID first)
     const [teamA, teamB] = [match.team1Id, match.team2Id].sort((a, b) => a - b);
     const pairKey = `${teamA}-${teamB}`;
