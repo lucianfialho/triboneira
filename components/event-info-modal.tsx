@@ -251,7 +251,7 @@ function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; lo
                     <Users className="w-5 h-5 text-[hsl(var(--primary))]" />
                     Participating Teams
                 </h3>
-                <div className="grid grid-cols-2 gap-2 mt-4">
+                <div className="grid grid-cols-3 gap-2 mt-4">
                     {teamsLoading ? (
                         [...Array(8)].map((_, i) => (
                             <div key={i} className="flex flex-col items-center gap-2 p-2 rounded animate-pulse">
@@ -264,7 +264,7 @@ function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; lo
                             <TeamListItem key={team.id} team={team} />
                         ))
                     ) : (
-                        <p className="text-sm text-[hsl(var(--muted-foreground))] text-center py-8 col-span-2">
+                        <p className="text-sm text-[hsl(var(--muted-foreground))] text-center py-8 col-span-3">
                             No teams data available
                         </p>
                     )}
