@@ -199,11 +199,11 @@ function RoundColumn({ round }: { round: SwissRound }) {
                 <div className="h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
             </div>
 
-            {round.buckets.map((bucket) => {
+            {round.buckets.map((bucket, bucketIndex) => {
                 const style = getBucketStyle(bucket.bucket);
 
                 return (
-                    <div key={bucket.bucket} className={`space-y-1.5 p-2 rounded border ${style.bg} ${style.border}`}>
+                    <div key={`${round.roundNumber}-${bucket.bucket}-${bucketIndex}`} className={`space-y-1.5 p-2 rounded border ${style.bg} ${style.border}`}>
                         <div className="text-center space-y-0.5">
                             <span className={`text-xs font-bold ${style.text} px-2 py-0.5 rounded bg-black/20`}>
                                 {bucket.bucket}
@@ -215,8 +215,8 @@ function RoundColumn({ round }: { round: SwissRound }) {
                             )}
                         </div>
                         <div className="space-y-1.5">
-                            {bucket.matches.map((match) => (
-                                <SwissMatchCard key={match.id} match={match} />
+                            {bucket.matches.map((match, matchIndex) => (
+                                <SwissMatchCard key={`${round.roundNumber}-${bucketIndex}-${match.id ?? matchIndex}`} match={match} />
                             ))}
                         </div>
                     </div>
