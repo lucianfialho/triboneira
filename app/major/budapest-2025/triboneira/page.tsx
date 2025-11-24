@@ -199,6 +199,7 @@ export default function HomePage() {
   const [loadingTopStreamers, setLoadingTopStreamers] = useState(false);
   const [selectedStreamers, setSelectedStreamers] = useState<Set<string>>(new Set());
   const [eventInfoModalOpen, setEventInfoModalOpen] = useState(false);
+  const [pipThumbnailSize, setPipThumbnailSize] = useState<'small' | 'medium' | 'large'>('medium');
 
   // Drag and drop states
   const [draggedStreamIndex, setDraggedStreamIndex] = useState<number | null>(null);
@@ -815,7 +816,7 @@ export default function HomePage() {
             </div>
 
             <iframe
-              key={`${stream.id}-${stream.isMuted}`}
+              key={stream.id}
               src={getPlatformEmbed(stream.url, stream.platform, stream.isMuted)}
               width="100%"
               height="100%"
