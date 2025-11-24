@@ -1271,8 +1271,9 @@ export default function HomePage() {
                   )}
                 </button>
 
-                {/* Triboneira Button - Mobile only, when sidebar is hidden */}
-                {isMobile && !sidebarVisible && (
+
+                {/* Triboneira Button - Mobile only, when sidebar is hidden or no streams */}
+                {isMobile && (!sidebarVisible || streams.length === 0) && (
                   <Link
                     href="/major/budapest-2025/triboneira"
                     className="fixed top-4 right-4 z-30 px-4 h-12 rounded-xl bg-gradient-to-r from-red-600 to-red-700 shadow-lg flex items-center gap-2 hover:scale-105 transition-all border border-white/10"
@@ -1281,6 +1282,8 @@ export default function HomePage() {
                     <span className="text-white font-bold text-sm">TRIBONEIRA</span>
                   </Link>
                 )}
+
+
 
                 {/* Share Setup Button */}
                 {streams.length > 0 && (
