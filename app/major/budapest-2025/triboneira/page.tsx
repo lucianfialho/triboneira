@@ -413,16 +413,9 @@ export default function HomePage() {
             id: 'tacocs',
             url: 'https://kick.com/tacocs',
             platform: 'kick',
+            title: 'TacoCS - Major Budapest 2025',
             isMuted: false,
             channelName: 'tacocs',
-          },
-          {
-            id: 'velhovamp',
-            url: 'https://kick.com/velhovamp',
-            platform: 'kick',
-            title: 'Velhovamp - Major Budapest 2025',
-            isMuted: true,
-            channelName: 'velhovamp',
           },
         ];
 
@@ -1184,8 +1177,8 @@ export default function HomePage() {
                     size="sm"
                     onClick={() => setPipThumbnailSize(size)}
                     className={`h-10 text-xs capitalize transition-all ${pipThumbnailSize === size
-                        ? 'bg-[hsl(217_91%_60%)] text-white border-0'
-                        : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
+                      ? 'bg-[hsl(217_91%_60%)] text-white border-0'
+                      : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
                       }`}
                   >
                     {size}
