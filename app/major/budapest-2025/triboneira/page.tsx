@@ -871,46 +871,25 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Hold to Unmute Overlay */}
+
+            {/* Mute/Unmute Toggle Button */}
             {stream.isMuted && isHovering && (
               <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-4 animate-fade-in z-10"
+                className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
               >
-                <div className="relative w-24 h-24">
-                  <svg className="w-24 h-24 transform -rotate-90">
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="45"
-                      fill="none"
-                      stroke="hsl(var(--border))"
-                      strokeWidth="4"
-                    />
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="45"
-                      fill="none"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="4"
-                      strokeDasharray={`${2 * Math.PI * 45}`}
-                      strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
-                      className="transition-all duration-100"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <VolumeX className="w-10 h-10 text-white" />
-                  </div>
-                </div>
-
-                <div className="absolute bottom-8 left-0 right-0 text-center">
-                  <p className="text-sm font-medium text-white drop-shadow-lg">
-                    Hold to unmute
-                  </p>
-                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleMute(stream.id);
+                  }}
+                  className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center shadow-lg hover:scale-110 hover:bg-red-500 transition-transform cursor-pointer"
+                >
+                  <VolumeX className="w-5 h-5 text-white" />
+                </button>
               </div>
             )}
+
 
             {/* Unmuted indicator */}
             {!stream.isMuted && (
