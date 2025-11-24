@@ -1199,7 +1199,12 @@ export default function HomePage() {
           }`}>
           <div className="max-w-[1800px] mx-auto">
             {/* Header */}
-            <div className="mb-4 animate-slide-up relative z-20">
+            <div className={`
+              mb-4 animate-slide-up relative z-20 transition-all duration-300
+              ${!sidebarVisible && !isMobile
+                ? 'fixed top-0 left-0 right-0 p-4 opacity-0 hover:opacity-100 bg-gradient-to-b from-black/90 via-black/60 to-transparent z-50'
+                : ''}
+            `}>
               <div className="flex items-center gap-3">
                 {/* Toggle Sidebar Button - Hamburger on mobile, chevron on desktop */}
                 <button
