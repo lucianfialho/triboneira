@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { MessageCircle, X, Wifi, WifiOff, Loader2, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useChatWebSocket, ChatMessage, StreamConfig } from '@/hooks/use-chat-websocket';
+import { useKickChat, KickStreamConfig } from '@/hooks/use-kick-chat';
 import { ChatMessageComponent } from './chat-message';
 import { ChatFilters } from './chat-filters';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -30,18 +31,49 @@ export function ChatPanel({ streams, isVisible, onToggle, compact = false }: Cha
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const prevMessagesLengthRef = useRef(0);
 
-    // Convert streams to StreamConfig format
-    const streamConfigs: StreamConfig[] = useMemo(() => {
-        return streams.map(stream => ({
-            platform: stream.platform,
-            identifier: stream.platform === 'youtube'
-                ? (stream.videoId || '')
-                : (stream.channelName || ''),
-        })).filter(s => s.identifier); // Filter out invalid streams
+    // Split streams into Server-side (Twitch/YouTube) and Client-side (Kick)
+    const { serverStreams, kickStreams } = useMemo(() => {
+        const server: StreamConfig[] = [];
+        const kick: KickStreamConfig[] = [];
+
+        streams.forEach(stream => {
+            if (stream.platform === 'kick' && stream.channelName) {
+                kick.push({
+                    platform: 'kick',
+                    channelName: stream.channelName
+                });
+            } else if (stream.platform !== 'kick') {
+                server.push({
+                    platform: stream.platform as 'twitch' | 'youtube',
+                    identifier: stream.platform === 'youtube'
+                        ? (stream.videoId || '')
+                        : (stream.channelName || ''),
+                });
+            }
+        });
+
+        return { serverStreams: server, kickStreams: kick };
     }, [streams]);
 
-    // Use WebSocket hook
-    const { messages, connectionStatus } = useChatWebSocket(streamConfigs);
+    // Server-side Chat (Twitch/YouTube)
+    const { messages: serverMessages, connectionStatus: serverStatus } = useChatWebSocket(serverStreams);
+
+    // Client-side Chat (Kick)
+    const { messages: kickMessages, connectionStatus: kickStatus } = useKickChat(kickStreams);
+
+    // Merge and Sort Messages
+    const messages = useMemo(() => {
+        const all = [...serverMessages, ...kickMessages];
+        return all.sort((a, b) => a.timestamp - b.timestamp);
+    }, [serverMessages, kickMessages]);
+
+    // Unified Connection Status
+    const connectionStatus = useMemo(() => {
+        if (serverStatus === 'error' && kickStatus === 'error') return 'error';
+        if (serverStatus === 'connected' || kickStatus === 'connected') return 'connected';
+        if (serverStatus === 'connecting' || kickStatus === 'connecting') return 'connecting';
+        return 'disconnected';
+    }, [serverStatus, kickStatus]);
 
     // Filter messages
     const filteredMessages = useMemo(() => {

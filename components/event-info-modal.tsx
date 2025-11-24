@@ -1,4 +1,5 @@
 'use client';
+// Event Info Modal Component
 
 import { useState, useEffect } from 'react';
 import { X, Trophy, Calendar, MapPin, DollarSign, Gamepad2, Award, Users, Newspaper } from 'lucide-react';

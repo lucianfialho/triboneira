@@ -62,23 +62,23 @@ export async function syncEventParticipants(logger: SyncLogger) {
               externalId: hltvTeam.id.toString(),
               source: 'hltv',
               name: teamDetails.name,
-              country: teamDetails.location?.code || null,
+              country: (teamDetails as any).country?.code || null,
               logoUrl: teamDetails.logo || null,
               rank: teamDetails.rank || null,
               active: true,
               metadata: {
-                location: teamDetails.location,
+                country: (teamDetails as any).country,
               },
             })
             .onConflictDoUpdate({
               target: [teams.externalId, teams.source],
               set: {
                 name: teamDetails.name,
-                country: teamDetails.location?.code || null,
+                country: (teamDetails as any).country?.code || null,
                 logoUrl: teamDetails.logo || null,
                 rank: teamDetails.rank || null,
                 metadata: {
-                  location: teamDetails.location,
+                  country: (teamDetails as any).country,
                 },
                 updatedAt: new Date(),
               },

@@ -85,23 +85,15 @@ export function ChatFilters({
                         return (
                             <button
                                 key={platform}
-                                onClick={() => !isKick && onPlatformToggle(platform)}
-                                disabled={isKick}
-                                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all border ${isKick
-                                        ? 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border-transparent opacity-40 cursor-not-allowed'
-                                        : isActive
-                                            ? platformColors[platform]
-                                            : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border-transparent opacity-40 hover:opacity-70'
+                                onClick={() => onPlatformToggle(platform)}
+                                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all border ${isActive
+                                    ? platformColors[platform]
+                                    : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border-transparent opacity-40 hover:opacity-70'
                                     }`}
-                                title={isKick ? 'Em breve' : `${isActive ? 'Hide' : 'Show'} ${platform} messages`}
+                                title={`${isActive ? 'Hide' : 'Show'} ${platform} messages`}
                             >
                                 <Icon className="w-3 h-3" />
                                 <span className="capitalize hidden sm:inline">{platform}</span>
-                                {isKick && (
-                                    <span className="text-[10px] bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-1 rounded">
-                                        Em breve
-                                    </span>
-                                )}
                             </button>
                         );
                     })}

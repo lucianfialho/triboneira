@@ -200,7 +200,37 @@ export const news = pgTable('news', {
   uniqueNewsIdx: uniqueIndex('unique_news_idx').on(table.externalId, table.source),
 }));
 
-// 13. SYNC_LOG (Audit Trail)
+// 13. SWISS_ROUNDS (Swiss System Tournament Rounds)
+export const swissRounds = pgTable('swiss_rounds', {
+  id: serial('id').primaryKey(),
+  eventId: integer('event_id').references(() => events.id).notNull(),
+  roundNumber: integer('round_number').notNull(), // 1-5 in swiss
+  matchId: integer('match_id').references(() => matches.id),
+  team1Id: integer('team1_id').references(() => teams.id),
+  team2Id: integer('team2_id').references(() => teams.id),
+  team1Record: varchar('team1_record', { length: 10 }), // "2-0", "2-1"
+  team2Record: varchar('team2_record', { length: 10 }),
+  bucket: varchar('bucket', { length: 10 }), // "2-0", "2-1", "2-2", etc
+  stakes: varchar('stakes', { length: 50 }), // "elimination", "qualification", "seeding"
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, completed
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueSwissRoundIdx: uniqueIndex('unique_swiss_round_idx').on(table.eventId, table.roundNumber, table.matchId),
+}));
+
+// 14. EVENT_NEWS (Many-to-Many relationship between events and news)
+export const eventNews = pgTable('event_news', {
+  id: serial('id').primaryKey(),
+  eventId: integer('event_id').references(() => events.id).notNull(),
+  newsId: integer('news_id').references(() => news.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueEventNewsIdx: uniqueIndex('unique_event_news_idx').on(table.eventId, table.newsId),
+}));
+
+// 15. SYNC_LOG (Audit Trail)
 export const syncLogs = pgTable('sync_logs', {
   id: serial('id').primaryKey(),
   jobName: varchar('job_name', { length: 100 }).notNull(),
@@ -227,6 +257,8 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
   matches: many(matches),
   teamStats: many(teamStats),
   headToHeads: many(headToHead),
+  swissRounds: many(swissRounds),
+  eventNews: many(eventNews),
 }));
 
 export const teamsRelations = relations(teams, ({ one, many }) => ({
@@ -253,4 +285,22 @@ export const matchesRelations = relations(matches, ({ one, many }) => ({
   winner: one(teams, { fields: [matches.winnerId], references: [teams.id] }),
   maps: many(matchMaps),
   playerStats: many(playerMatchStats),
+  swissRounds: many(swissRounds),
+}));
+
+export const swissRoundsRelations = relations(swissRounds, ({ one }) => ({
+  event: one(events, { fields: [swissRounds.eventId], references: [events.id] }),
+  match: one(matches, { fields: [swissRounds.matchId], references: [matches.id] }),
+  team1: one(teams, { fields: [swissRounds.team1Id], references: [teams.id], relationName: 'swissTeam1' }),
+  team2: one(teams, { fields: [swissRounds.team2Id], references: [teams.id], relationName: 'swissTeam2' }),
+}));
+
+export const eventNewsRelations = relations(eventNews, ({ one }) => ({
+  event: one(events, { fields: [eventNews.eventId], references: [events.id] }),
+  news: one(news, { fields: [eventNews.newsId], references: [news.id] }),
+}));
+
+export const newsRelations = relations(news, ({ one, many }) => ({
+  game: one(games, { fields: [news.gameId], references: [games.id] }),
+  eventNews: many(eventNews),
 }));

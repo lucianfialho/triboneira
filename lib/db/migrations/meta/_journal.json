@@ -15,6 +15,13 @@
       "when": 1763896793497,
       "tag": "0001_daily_junta",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763927304791,
+      "tag": "0002_real_rhino",
+      "breakpoints": true
     }
   ]
 }

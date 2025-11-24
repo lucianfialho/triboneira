@@ -24,9 +24,13 @@ export interface HLTVTeam {
   name: string;
   rank?: number;
   logo?: string;
-  location?: {
+  country?: {
     name: string;
     code: string;
+  };
+  location?: {
+    name: string;
+    code?: string;
   };
 }
 

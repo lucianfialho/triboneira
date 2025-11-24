@@ -133,10 +133,10 @@ export class ChatAggregator extends EventEmitter {
         }
 
         if (kickChannels.length > 0) {
-            // TODO: Kick chat temporarily disabled due to Cloudflare blocking server requests
-            // Will be re-enabled with client-side chatroom ID fetching
-            console.log('[Kick] Chat coming soon for channels:', kickChannels.map(c => c.channelName));
-            // promises.push(this.kickConnector.connect(kickChannels));
+            if (kickChannels.length > 0) {
+                // Kick chat is handled client-side to bypass Cloudflare protection
+                console.log('[Kick] Chat handled client-side for channels:', kickChannels.map(c => c.channelName));
+            }
         }
 
         await Promise.allSettled(promises);
