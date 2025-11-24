@@ -1198,11 +1198,16 @@ export default function HomePage() {
         <main className={`flex-1 p-4 lg:p-6 overflow-y-auto transition-all duration-300 relative z-10 ${chatPanelVisible ? (isMobile ? 'mr-80' : 'mr-96') : ''
           }`}>
           <div className="max-w-[1800px] mx-auto">
+            {/* Hover Trigger Area for Auto-Hide Header */}
+            {!sidebarVisible && !isMobile && (
+              <div className="fixed top-0 left-0 right-0 h-4 z-50 peer" />
+            )}
+
             {/* Header */}
             <div className={`
-              mb-4 animate-slide-up relative z-20 transition-all duration-300
+              mb-4 animate-slide-up relative z-20 transition-all duration-300 ease-out
               ${!sidebarVisible && !isMobile
-                ? 'fixed top-0 left-0 right-0 p-4 opacity-0 hover:opacity-100 bg-gradient-to-b from-black/90 via-black/60 to-transparent z-50'
+                ? 'fixed top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/90 via-black/60 to-transparent z-50 transform -translate-y-full hover:translate-y-0 peer-hover:translate-y-0'
                 : ''}
             `}>
               <div className="flex items-center gap-3">
