@@ -4,7 +4,7 @@ import { matches, teams, events } from '@/lib/db/schema';
 import { eq, and, desc, asc, sql, gte, lte, isNotNull } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const revalidate = 600; // Cache for 10 minutes
 
 export async function GET(
     request: Request,
@@ -97,8 +97,8 @@ export async function GET(
                 )
                 .limit(
                     status === 'scheduled' ? 10 :
-                    status === 'finished' ? 5 :
-                    100 // No limit for live (or very high)
+                        status === 'finished' ? 5 :
+                            100 // No limit for live (or very high)
                 );
 
             return rawMatches;

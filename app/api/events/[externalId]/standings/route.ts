@@ -4,7 +4,7 @@ import { events, matches, teams, eventParticipants } from '@/lib/db/schema';
 import { eq, sql } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const revalidate = 600; // Cache for 10 minutes
 
 interface TeamStanding {
   position: number;
