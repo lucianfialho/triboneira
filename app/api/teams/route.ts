@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { teams } from '@/lib/db/schema';
-import { eq, asc, isNotNull } from 'drizzle-orm';
+import { eq, asc, isNotNull, and } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 
         // Fetch teams
         const teamsList = await db.query.teams.findMany({
-            where: conditions.length > 0 ? conditions.reduce((a, b) => ({ ...a, ...b })) : undefined,
+            where: conditions.length > 0 ? (conditions.length === 1 ? conditions[0] : and(...conditions)) : undefined,
             with: {
                 game: {
                     columns: {
