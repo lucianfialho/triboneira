@@ -388,6 +388,14 @@ export default function HomePage() {
             isMuted: false,
             channelName: 'tacocs',
           },
+          {
+            id: 'velhovamp',
+            url: 'https://kick.com/velhovamp',
+            platform: 'kick',
+            title: 'Velhovamp - Major Budapest 2025',
+            isMuted: true,
+            channelName: 'velhovamp',
+          },
         ];
         setStreams(majorStreams);
         setLayout('grid');

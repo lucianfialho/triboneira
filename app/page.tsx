@@ -355,40 +355,13 @@ export default function HomePage() {
         // Clear URL params after loading
         window.history.replaceState({}, '', window.location.pathname);
       } else {
-        // Fallback to localStorage or default streams
+        // Fallback to localStorage
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const data = JSON.parse(saved);
-          if (data.streams && data.streams.length > 0) {
-            setStreams(data.streams);
-            setLayout(data.layout || 'grid');
-            return;
-          }
+          setStreams(data.streams || []);
+          setLayout(data.layout || 'grid');
         }
-
-        // Default streams if nothing saved
-        const defaultStreams: Stream[] = [
-          {
-            id: 'default-gaules',
-            url: 'https://twitch.tv/gaules',
-            platform: 'twitch',
-            channelName: 'gaules',
-            isMuted: false,
-            viewerCount: 0,
-            isLive: false,
-          },
-          {
-            id: 'default-velhovamp',
-            url: 'https://kick.com/velhovamp',
-            platform: 'kick',
-            channelName: 'velhovamp',
-            isMuted: true,
-            viewerCount: 0,
-            isLive: false,
-          }
-        ];
-        setStreams(defaultStreams);
-        setLayout('grid');
       }
     } catch (error) {
       console.error('Error loading streams:', error);
