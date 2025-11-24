@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upset Feed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 1080px;
+            height: 1080px;
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Dynamic Background based on intensity */
+        .bg-base {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+
+            background: {
+                    {
+                    backgroundColor
+                }
+            }
+
+            ;
+            /* e.g., linear-gradient(135deg, #7c2d12 0%, #450a0a 100%) */
+            z-index: 0;
+        }
+
+        .noise-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E");
+            opacity: 0.4;
+            z-index: 1;
+            mix-blend-mode: overlay;
+        }
+
+        .shockwave {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            animation: ripple 2s infinite;
+            z-index: 0;
+        }
+
+        .shockwave:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .shockwave:nth-child(3) {
+            animation-delay: 1s;
+        }
+
+        @keyframes ripple {
+            0% {
+                width: 400px;
+                height: 400px;
+                opacity: 1;
+                border-width: 4px;
+            }
+
+            100% {
+                width: 1200px;
+                height: 1200px;
+                opacity: 0;
+                border-width: 0px;
+            }
+        }
+
+        /* Content Container */
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px;
+        }
+
+        /* Upset Badge */
+        .upset-badge-container {
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        .upset-badge {
+            background: #dc2626;
+            color: white;
+            font-size: 48px;
+            font-weight: 900;
+            text-transform: uppercase;
+            padding: 16px 48px;
+            transform: skew(-10deg);
+            border: 4px solid white;
+            box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: skew(-10deg) scale(1);
+            }
+
+            100% {
+                transform: skew(-10deg) scale(1.05);
+            }
+        }
+
+        .upset-level {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: black;
+            color: #fbbf24;
+            padding: 4px 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 18px;
+            border: 2px solid #fbbf24;
+        }
+
+        /* Main Content */
+        .match-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .teams-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            width: 100%;
+            margin-bottom: 60px;
+        }
+
+        .team {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .team.underdog {
+            z-index: 2;
+        }
+
+        .team.favorite {
+            opacity: 0.8;
+            transform: scale(0.9);
+            filter: grayscale(0.5);
+        }
+
+        .team-logo-container {
+            width: 240px;
+            height: 240px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .underdog .team-logo-container {
+            border-color: #fbbf24;
+            box-shadow: 0 0 50px rgba(251, 191, 36, 0.4);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .team-logo {
+            width: 160px;
+            height: 160px;
+            object-fit: contain;
+        }
+
+        .winner-badge {
+            position: absolute;
+            bottom: 0;
+            background: #10b981;
+            color: white;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 18px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .team-name {
+            font-size: 40px;
+            font-weight: 800;
+            text-align: center;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+            margin-bottom: 4px;
+        }
+
+        .team-rank {
+            font-size: 24px;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 4px 12px;
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .vs-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .vs-text {
+            font-size: 48px;
+            font-weight: 900;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Score */
+        .score-display {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 24px 60px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 40px;
+        }
+
+        .score-text {
+            font-size: 64px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: white;
+        }
+
+        /* Rank Diff Badge */
+        .rank-diff-container {
+            background: white;
+            color: black;
+            padding: 16px 32px;
+            border-radius: 100px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: rotate(-2deg);
+        }
+
+        .rank-diff-icon {
+            font-size: 24px;
+        }
+
+        .rank-diff-text {
+            font-size: 24px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .rank-diff-value {
+            color: #dc2626;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-base"></div>
+    <div class="noise-overlay"></div>
+    <div class="shockwave"></div>
+    <div class="shockwave"></div>
+    <div class="shockwave"></div>
+
+    <div class="container">
+        <!-- Upset Badge -->
+        <div class="upset-badge-container">
+            <div class="upset-level">{{upsetLevel}}</div>
+            <div class="upset-badge">
+                <span>🚨</span>
+                UPSET ALERT
+                <span>🚨</span>
+            </div>
+        </div>
+
+        <!-- Match Content -->
+        <div class="match-content">
+            <div class="teams-row">
+                <!-- Underdog (Winner) -->
+                <div class="team underdog">
+                    <div class="team-logo-container">
+                        <img src="{{underdogLogo}}" alt="{{underdogName}}" class="team-logo">
+                        <div class="winner-badge">WINNER</div>
+                    </div>
+                    <div class="team-name">{{underdogName}}</div>
+                    <div class="team-rank">#{{underdogRank}}</div>
+                </div>
+
+                <div class="vs-container">
+                    <div class="vs-text">VS</div>
+                </div>
+
+                <!-- Favorite (Loser) -->
+                <div class="team favorite">
+                    <div class="team-logo-container">
+                        <img src="{{favoriteLogo}}" alt="{{favoriteName}}" class="team-logo">
+                    </div>
+                    <div class="team-name">{{favoriteName}}</div>
+                    <div class="team-rank">#{{favoriteRank}}</div>
+                </div>
+            </div>
+
+            <!-- Score -->
+            <div class="score-display">
+                <div class="score-text">{{score}}</div>
+            </div>
+
+            <!-- Rank Difference -->
+            <div class="rank-diff-container">
+                <span class="rank-diff-icon">📈</span>
+                <span class="rank-diff-text">
+                    <span class="rank-diff-value">{{rankDifference}}</span> SPOTS DIFFERENCE
+                </span>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

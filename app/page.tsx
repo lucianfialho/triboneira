@@ -944,6 +944,30 @@ export default function HomePage() {
             </div>
           )}
 
+          {/* Triboneira Link */}
+          {streams.length > 0 && (
+            <Link
+              href="/major/budapest-2025/triboneira"
+              className="glass-card p-3 mt-2 animate-scale-in flex items-center justify-center hover:bg-[hsl(var(--surface-elevated))] transition-all duration-300 group relative overflow-hidden border-red-500/30 hover:border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.15)] ring-1 ring-red-500/30 animate-pulse"
+              style={{ animationDuration: '2s' }}
+            >
+              <div className="absolute top-1.5 right-1.5 flex items-center gap-1.5 bg-red-600 px-2 py-0.5 rounded-full text-[9px] font-bold text-white shadow-lg z-10 border border-white/10 animate-pulse">
+                <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
+                AO VIVO
+              </div>
+
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
+              <div className="relative w-full h-12 transform group-hover:scale-105 transition-transform duration-300">
+                <Image
+                  src="/tribo-gaules.png"
+                  alt="Triboneira"
+                  fill
+                  className="object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+                />
+              </div>
+            </Link>
+          )}
+
           <Separator className="bg-[hsl(var(--border))]" />
 
           {/* Add Stream Section */}

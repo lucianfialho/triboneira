@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Result Story</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 1080px;
+            height: 1920px;
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Background Effects */
+        .bg-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            z-index: 0;
+        }
+
+        .bg-glow {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+
+            background: {
+                    {
+                    winnerColor
+                }
+            }
+
+            ;
+            filter: blur(150px);
+            border-radius: 50%;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            opacity: 0.25;
+        }
+
+        .grid-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 1;
+            opacity: 0.4;
+        }
+
+        /* Content Container */
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 120px 60px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 80px;
+        }
+
+        .event-badge {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 32px;
+            border-radius: 100px;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .match-meta {
+            font-size: 28px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+
+        /* Match Content */
+        .match-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* Vertical Teams Layout */
+        .teams-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            width: 100%;
+            margin-bottom: 80px;
+        }
+
+        .team {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .team-logo-container {
+            width: 280px;
+            height: 280px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .team-logo {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
+        }
+
+        .team-logo-fallback {
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            font-weight: 900;
+            color: #ffffff;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 30px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .winner-crown {
+            position: absolute;
+            top: -40px;
+            right: -20px;
+            font-size: 80px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+            animation: float 3s ease-in-out infinite;
+            transform: rotate(15deg);
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(15deg);
+            }
+
+            50% {
+                transform: translateY(-15px) rotate(15deg);
+            }
+        }
+
+        .team-name {
+            font-size: 48px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .team-rank {
+            font-size: 28px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+        }
+
+        /* VS Badge */
+        .vs-badge {
+            font-size: 32px;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 2px;
+            margin: 20px 0;
+        }
+
+        /* Score Display */
+        .score-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 80px;
+            width: 100%;
+        }
+
+        .score-box {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 30px 80px;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .score {
+            font-size: 100px;
+            font-weight: 900;
+            line-height: 1;
+            color: white;
+        }
+
+        .score.winner {
+            color: #34d399;
+            text-shadow: 0 0 30px rgba(52, 211, 153, 0.4);
+        }
+
+        .score.loser {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .score-divider {
+            font-size: 60px;
+            color: rgba(255, 255, 255, 0.2);
+            font-weight: 300;
+        }
+
+        /* Maps List */
+        .maps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .map-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 24px 40px;
+            border-radius: 20px;
+        }
+
+        .map-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .map-score {
+            font-size: 32px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            display: flex;
+            gap: 20px;
+        }
+
+        .map-score .won {
+            color: #34d399;
+        }
+
+        .map-score .lost {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            opacity: 0.8;
+            padding-bottom: 40px;
+        }
+
+        .swipe-up {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            animation: bounce 2s infinite;
+        }
+
+        .arrow-up {
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 20px solid white;
+        }
+
+        .footer-text {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-gradient"></div>
+    <div class="bg-glow"></div>
+    <div class="grid-pattern"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="event-badge">
+                <span>🏆</span>
+                {{eventName}}
+            </div>
+            <div class="match-meta">{{matchFormat}} • {{matchDate}}</div>
+        </div>
+
+        <!-- Teams -->
+        <div class="teams-container">
+            <!-- Team 1 -->
+            <div class="team">
+                <div class="team-logo-container">
+                    {{#if team1Winner}}
+                    <div class="winner-crown">👑</div>
+                    {{/if}}
+                    <img src="{{team1Logo}}" alt="{{team1Name}}" class="team-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="team-logo-fallback" style="display: none;">
+                        {{team1Initials}}
+                    </div>
+                </div>
+                <div class="team-name">{{team1Name}}</div>
+                <div class="team-rank">#{{team1Rank}}</div>
+            </div>
+
+            <div class="vs-badge">VS</div>
+
+            <!-- Team 2 -->
+            <div class="team">
+                <div class="team-logo-container">
+                    {{#if team2Winner}}
+                    <div class="winner-crown">👑</div>
+                    {{/if}}
+                    <img src="{{team2Logo}}" alt="{{team2Name}}" class="team-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="team-logo-fallback" style="display: none;">
+                        {{team2Initials}}
+                    </div>
+                </div>
+                <div class="team-name">{{team2Name}}</div>
+                <div class="team-rank">#{{team2Rank}}</div>
+            </div>
+        </div>
+
+        <!-- Score -->
+        <div class="score-container">
+            <div class="score-box">
+                <div class="score {{#if team1Winner}}winner{{else}}loser{{/if}}">{{team1Score}}</div>
+                <div class="score-divider">-</div>
+                <div class="score {{#if team2Winner}}winner{{else}}loser{{/if}}">{{team2Score}}</div>
+            </div>
+        </div>
+
+        <!-- Maps -->
+        <div class="maps-container">
+            {{#each maps}}
+            <div class="map-row">
+                <div class="map-name">{{name}}</div>
+                <div class="map-score">
+                    <span class="{{#if team1Won}}won{{else}}lost{{/if}}">{{team1Score}}</span>
+                    <span class="{{#if team2Won}}won{{else}}lost{{/if}}">{{team2Score}}</span>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="swipe-up">
+                <div class="arrow-up"></div>
+                <div class="footer-text">SWIPE UP FOR DETAILS</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
