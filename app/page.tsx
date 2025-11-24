@@ -945,10 +945,10 @@ export default function HomePage() {
           )}
 
 
-          {/* Triboneira Link - Always visible */}
+          {/* Budapest Major Link - Always visible */}
           <Link
             href="/major/budapest-2025/triboneira"
-            className="glass-card p-3 mt-2 animate-scale-in flex items-center justify-center hover:bg-[hsl(var(--surface-elevated))] transition-all duration-300 group relative overflow-hidden border-red-500/30 hover:border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.15)] ring-1 ring-red-500/30 animate-pulse"
+            className="glass-card p-3 mt-2 animate-scale-in flex items-center justify-center hover:bg-[hsl(var(--surface-elevated))] transition-all duration-300 group relative overflow-hidden border-yellow-500/40 hover:border-yellow-500/60 shadow-[0_0_20px_rgba(234,179,8,0.2)] ring-1 ring-yellow-500/30 animate-pulse"
             style={{ animationDuration: '2s' }}
           >
             <div className="absolute top-1.5 right-1.5 flex items-center gap-1.5 bg-red-600 px-2 py-0.5 rounded-full text-[9px] font-bold text-white shadow-lg z-10 border border-white/10 animate-pulse">
@@ -956,13 +956,14 @@ export default function HomePage() {
               AO VIVO
             </div>
 
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-500/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
             <div className="relative w-full h-12 transform group-hover:scale-105 transition-transform duration-300">
               <Image
-                src="/tribo-gaules.png"
-                alt="Triboneira"
+                src="/budapest-major-banner.png"
+                alt="StarLadder Budapest Major 2025 - Assista ao Vivo"
                 fill
-                className="object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+                className="object-cover rounded drop-shadow-[0_0_20px_rgba(234,179,8,0.4)]"
+                priority
               />
             </div>
           </Link>
