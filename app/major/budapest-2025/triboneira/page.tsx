@@ -765,7 +765,7 @@ export default function HomePage() {
   const totalViewers = streams.reduce((total, stream) => total + (stream.viewerCount || 0), 0);
 
   const renderGrid = () => (
-    <div className={`layout-${layout} ${layout === 'pip' ? `pip-${pipThumbnailSize}` : ''} animate-fade-in ${!sidebarVisible && !isMobile ? 'h-[100vh]' : ''}`}>
+    <div className={`layout-${layout} ${layout === 'pip' ? `pip-${pipThumbnailSize}` : ''} animate-fade-in ${!sidebarVisible && !isMobile ? 'h-[100vh] gap-0' : ''}`}>
       {streams.map((stream, index) => {
         const progress = unmutingProgress[stream.id] || 0;
         const isHovering = hoveringStream === stream.id;
@@ -1199,7 +1199,7 @@ export default function HomePage() {
           ${chatPanelVisible ? (isMobile ? 'mr-80' : 'mr-96') : ''}
           ${!sidebarVisible && !isMobile ? 'p-0' : 'p-4 lg:p-6'}
         `}>
-          <div className="max-w-[1800px] mx-auto">
+          <div className={`${!sidebarVisible && !isMobile ? 'h-full w-full' : 'max-w-[1800px] mx-auto'}`}>
             {/* Hover Trigger Area for Auto-Hide Header */}
             {!sidebarVisible && !isMobile && (
               <div className="fixed top-0 left-0 right-0 h-4 z-50 peer" />
