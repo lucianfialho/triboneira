@@ -861,7 +861,7 @@ export default function HomePage() {
             {/* Mute/Unmute Toggle Button */}
             {stream.isMuted && isHovering && (
               <div
-                className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                className="absolute top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
               >
                 <button
@@ -880,7 +880,7 @@ export default function HomePage() {
             {/* Unmuted indicator */}
             {!stream.isMuted && (
               <div
-                className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                className="absolute top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
               >
                 <button
