@@ -409,14 +409,6 @@ export default function HomePage() {
             isMuted: true,
             channelName: 'michel',
           },
-          {
-            id: 'tacocs',
-            url: 'https://kick.com/tacocs',
-            platform: 'kick',
-            title: 'TacoCS - Major Budapest 2025',
-            isMuted: false,
-            channelName: 'tacocs',
-          },
         ];
 
         setStreams(majorStreams);
