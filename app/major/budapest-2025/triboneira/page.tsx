@@ -355,8 +355,29 @@ export default function HomePage() {
         // Clear URL params after loading
         window.history.replaceState({}, '', window.location.pathname);
       } else {
-        // Pre-load Major streams (gaules, gaulestv, michel, tacocs)
-        const majorStreams: Stream[] = [
+        // Pre-load Major streams
+        // On mobile: 2 streams with Grid layout for better usability
+        // On desktop: 5 streams with PIP layout for immersive experience
+        const isMobileDevice = window.innerWidth < 768;
+
+        const majorStreams: Stream[] = isMobileDevice ? [
+          {
+            id: 'gaules',
+            url: 'https://kick.com/gaules',
+            platform: 'kick',
+            title: 'Gaules - Major Budapest 2025',
+            isMuted: false,
+            channelName: 'gaules',
+          },
+          {
+            id: 'gaulestv',
+            url: 'https://kick.com/gaulestv',
+            platform: 'kick',
+            title: 'GaulesTV - Major Budapest 2025',
+            isMuted: true,
+            channelName: 'gaulestv',
+          },
+        ] : [
           {
             id: 'gaules',
             url: 'https://kick.com/gaules',
@@ -397,8 +418,9 @@ export default function HomePage() {
             channelName: 'velhovamp',
           },
         ];
+
         setStreams(majorStreams);
-        setLayout('pip');
+        setLayout(isMobileDevice ? 'grid' : 'pip');
       }
     } catch (error) {
       console.error('Error loading streams:', error);
