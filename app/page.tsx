@@ -1270,6 +1270,18 @@ export default function HomePage() {
                     <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
                   )}
                 </button>
+
+                {/* Triboneira Button - Mobile only, when sidebar is hidden */}
+                {isMobile && !sidebarVisible && (
+                  <Link
+                    href="/major/budapest-2025/triboneira"
+                    className="fixed top-4 right-4 z-30 px-4 h-12 rounded-xl bg-gradient-to-r from-red-600 to-red-700 shadow-lg flex items-center gap-2 hover:scale-105 transition-all border border-white/10"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-white shadow-[0_0_5px_rgba(255,255,255,0.8)] animate-pulse" />
+                    <span className="text-white font-bold text-sm">TRIBONEIRA</span>
+                  </Link>
+                )}
+
                 {/* Share Setup Button */}
                 {streams.length > 0 && (
                   <>
