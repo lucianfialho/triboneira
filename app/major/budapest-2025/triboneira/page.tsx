@@ -765,7 +765,7 @@ export default function HomePage() {
   const totalViewers = streams.reduce((total, stream) => total + (stream.viewerCount || 0), 0);
 
   const renderGrid = () => (
-    <div className={`layout-${layout} ${layout === 'pip' ? `pip-${pipThumbnailSize}` : ''} animate-fade-in`}>
+    <div className={`layout-${layout} ${layout === 'pip' ? `pip-${pipThumbnailSize}` : ''} animate-fade-in ${!sidebarVisible && !isMobile ? 'h-[100vh]' : ''}`}>
       {streams.map((stream, index) => {
         const progress = unmutingProgress[stream.id] || 0;
         const isHovering = hoveringStream === stream.id;
@@ -1195,8 +1195,10 @@ export default function HomePage() {
         </aside>
 
         {/* Main Content */}
-        <main className={`flex-1 p-4 lg:p-6 overflow-y-auto transition-all duration-300 relative z-10 ${chatPanelVisible ? (isMobile ? 'mr-80' : 'mr-96') : ''
-          }`}>
+        <main className={`flex-1 overflow-y-auto transition-all duration-300 relative z-10 
+          ${chatPanelVisible ? (isMobile ? 'mr-80' : 'mr-96') : ''}
+          ${!sidebarVisible && !isMobile ? 'p-0' : 'p-4 lg:p-6'}
+        `}>
           <div className="max-w-[1800px] mx-auto">
             {/* Hover Trigger Area for Auto-Hide Header */}
             {!sidebarVisible && !isMobile && (
@@ -1205,10 +1207,10 @@ export default function HomePage() {
 
             {/* Header */}
             <div className={`
-              mb-4 animate-slide-up relative z-20 transition-all duration-300 ease-out
+              animate-slide-up relative z-20 transition-all duration-300 ease-out
               ${!sidebarVisible && !isMobile
                 ? 'fixed top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/90 via-black/60 to-transparent z-50 transform -translate-y-full hover:translate-y-0 peer-hover:translate-y-0'
-                : ''}
+                : 'mb-4'}
             `}>
               <div className="flex items-center gap-3">
                 {/* Toggle Sidebar Button - Hamburger on mobile, chevron on desktop */}
