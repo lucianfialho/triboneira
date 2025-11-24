@@ -4,7 +4,7 @@ import { news, events, eventParticipants, teams } from '@/lib/db/schema';
 import { eq, desc, or, and, sql, ilike } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const revalidate = 600; // Cache for 10 minutes
 
 export async function GET(
     request: Request,

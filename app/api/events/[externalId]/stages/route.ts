@@ -4,7 +4,7 @@ import { events } from '@/lib/db/schema';
 import { eq, inArray } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const revalidate = 600; // Cache for 10 minutes
 
 interface StageInfo {
   id: number;
