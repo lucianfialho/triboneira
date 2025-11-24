@@ -133,7 +133,7 @@ export const playerMatchStats = pgTable('player_match_stats', {
   id: serial('id').primaryKey(),
   matchId: integer('match_id').references(() => matches.id).notNull(),
   playerId: integer('player_id').references(() => players.id).notNull(),
-  teamId: integer('team_id').references(() => teams.id).notNull(),
+  teamId: integer('team_id').references(() => teams.id),
   kills: integer('kills'),
   deaths: integer('deaths'),
   assists: integer('assists'),

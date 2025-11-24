@@ -78,13 +78,24 @@ export async function syncPlayerMatchStats(logger: SyncLogger, matchId?: number)
       // Get match details with stats
       const matchDetails = await hltvClient.getMatchStats(matchExternalId);
 
-      if (!matchDetails || !matchDetails.playerStats || matchDetails.playerStats.length === 0) {
+      if (!matchDetails || (!matchDetails.team1 && !matchDetails.team2)) {
+        console.log(`   ⚠️  No player stats available for match ${matchExternalId}`);
+        continue;
+      }
+
+      // Combine player stats from both teams
+      const allPlayerStats = [
+        ...(matchDetails.team1?.players || []),
+        ...(matchDetails.team2?.players || [])
+      ];
+
+      if (allPlayerStats.length === 0) {
         console.log(`   ⚠️  No player stats available for match ${matchExternalId}`);
         continue;
       }
 
       // Process each player's stats
-      for (const playerStat of matchDetails.playerStats) {
+      for (const playerStat of allPlayerStats) {
         try {
           // Find or create player
           let [player] = await db
@@ -92,22 +103,22 @@ export async function syncPlayerMatchStats(logger: SyncLogger, matchId?: number)
             .from(players)
             .where(
               and(
-                eq(players.externalId, playerStat.player.id.toString()),
+                eq(players.externalId, playerStat.id.toString()),
                 eq(players.source, 'hltv')
               )
             );
 
           if (!player) {
             // Create player if doesn't exist
-            console.log(`   👤 Creating player ${playerStat.player.name} (${playerStat.player.id})`);
+            console.log(`   👤 Creating player ${playerStat.name} (${playerStat.id})`);
 
             [player] = await db
               .insert(players)
               .values({
                 gameId: 1, // CS2 game ID
-                externalId: playerStat.player.id.toString(),
+                externalId: playerStat.id.toString(),
                 source: 'hltv',
-                nickname: playerStat.player.name,
+                nickname: playerStat.name,
                 realName: null,
                 country: null,
                 age: null,
@@ -117,7 +128,7 @@ export async function syncPlayerMatchStats(logger: SyncLogger, matchId?: number)
               .onConflictDoUpdate({
                 target: [players.externalId, players.source],
                 set: {
-                  nickname: playerStat.player.name,
+                  nickname: playerStat.name,
                   updatedAt: new Date(),
                 },
               })
@@ -148,12 +159,9 @@ export async function syncPlayerMatchStats(logger: SyncLogger, matchId?: number)
               adr: playerStat.adr ? playerStat.adr.toString() : null,
               rating: playerStat.rating ? playerStat.rating.toString() : null,
               kast: playerStat.kast ? playerStat.kast.toString() : null,
-              hsPercentage: playerStat.hsPercentage ? playerStat.hsPercentage.toString() : null,
+              hsPercentage: playerStat.hsPercent ? playerStat.hsPercent.toString() : null,
               metadata: {
-                killDeathsDiff: playerStat.killDeathsDiff,
-                flashAssists: playerStat.flashAssists,
-                firstKills: playerStat.firstKills,
-                firstDeaths: playerStat.firstDeaths,
+                // Store any additional metadata if available
               },
             })
             .onConflictDoUpdate({
@@ -165,19 +173,19 @@ export async function syncPlayerMatchStats(logger: SyncLogger, matchId?: number)
                 adr: playerStat.adr ? playerStat.adr.toString() : null,
                 rating: playerStat.rating ? playerStat.rating.toString() : null,
                 kast: playerStat.kast ? playerStat.kast.toString() : null,
-                hsPercentage: playerStat.hsPercentage ? playerStat.hsPercentage.toString() : null,
+                hsPercentage: playerStat.hsPercent ? playerStat.hsPercent.toString() : null,
               },
             });
 
           totalStatsAdded++;
 
         } catch (error: any) {
-          console.error(`   ❌ Error processing player ${playerStat.player.name}:`, error.message);
+          console.error(`   ❌ Error processing player ${playerStat.name}:`, error.message);
         }
       }
 
       matchesProcessed++;
-      console.log(`   ✅ Processed ${matchDetails.playerStats.length} player stats`);
+      console.log(`   ✅ Processed ${allPlayerStats.length} player stats`);
 
       // Add delay between matches to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 2000));
