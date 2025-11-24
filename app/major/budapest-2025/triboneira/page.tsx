@@ -185,7 +185,13 @@ export default function HomePage() {
   const [layout, setLayout] = useState<LayoutType>('grid');
   const [hoveringStream, setHoveringStream] = useState<string | null>(null);
   const [unmutingProgress, setUnmutingProgress] = useState<Record<string, number>>({});
-  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [sidebarVisible, setSidebarVisible] = useState(() => {
+    // Initialize sidebar as hidden on mobile devices
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768;
+    }
+    return true; // Default to visible for SSR
+  });
   const [chatPanelVisible, setChatPanelVisible] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
