@@ -398,7 +398,7 @@ export default function HomePage() {
           },
         ];
         setStreams(majorStreams);
-        setLayout('grid');
+        setLayout('pip');
       }
     } catch (error) {
       console.error('Error loading streams:', error);
