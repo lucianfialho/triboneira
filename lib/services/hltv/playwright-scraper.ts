@@ -359,9 +359,25 @@ export class HLTVPlaywrightScraper {
     await this.page.waitForTimeout(20000);
 
     try {
+      // Click on "Detailed view" toggle to load full data
+      console.log('🖱️  Looking for "Detailed view" toggle...');
+      const detailToggle = this.page.locator('.toggle-swiss-group-display, [data-swiss-toggle-display]');
+      const toggleExists = await detailToggle.count();
+
+      if (toggleExists > 0) {
+        console.log('✅ Found "Detailed view" toggle, clicking...');
+        await detailToggle.first().click();
+        // Wait longer for data to load after toggle (increased from 3s to 8s)
+        console.log('⏳ Waiting 8 seconds for detailed data to load...');
+        await this.page.waitForTimeout(8000);
+      } else {
+        console.log('⚠️  "Detailed view" toggle not found, continuing with default view');
+      }
+
       // Extract BOTH data-group-json attributes:
       // 1. Bracket data (matches/rounds)
       // 2. Standings data (qualificados/eliminados)
+      // Also check .group-details-class-id for detailed records
 
       const groupContainers = this.page.locator('[data-group-json]');
       const count = await groupContainers.count();
@@ -396,6 +412,57 @@ export class HLTVPlaywrightScraper {
           standingsData = groupData;
           console.log(`✅ Found standings data with ${groupData.slotIdToTeamInfo?.length || 0} teams`);
         }
+      }
+
+      // Extract detailed standings from .group-details-class-id table
+      console.log('🔍 Looking for .group-details-class-id table...');
+      const detailsTable = this.page.locator('.group-details-class-id table.standard-box tbody tr');
+      const rowCount = await detailsTable.count();
+      console.log(`📊 Found ${rowCount} rows in standings table`);
+
+      if (rowCount > 0 && standingsData) {
+        // Parse table rows to extract currentStanding, matches, roundsWon, roundsLost, roundDiff
+        console.log('🔍 Parsing table data...');
+
+        for (let i = 0; i < rowCount; i++) {
+          const row = detailsTable.nth(i);
+
+          // Skip header row and empty rows
+          const isHeaderOrEmpty = await row.locator('.table-header').count();
+          if (isHeaderOrEmpty > 0) continue;
+
+          // Get team name from link
+          const teamNameEl = await row.locator('.group-name .text-ellipsis a').textContent();
+          const teamName = teamNameEl?.trim();
+
+          if (!teamName) continue;
+
+          // Extract stats from the cells
+          const matchesEl = await row.locator('.cell-width-m').first().textContent();
+          const rwEl = await row.locator('.cell-width-rw').textContent();
+          const rlEl = await row.locator('.cell-width-rl').textContent();
+          const rdEl = await row.locator('.cell-width-rd').textContent();
+          const recordEl = await row.locator('.cell-width-record').textContent();
+
+          const matches = parseInt(matchesEl?.trim() || '0');
+          const roundsWon = parseInt(rwEl?.trim() || '0');
+          const roundsLost = parseInt(rlEl?.trim() || '0');
+          const roundDiff = parseInt(rdEl?.trim() || '0');
+          const currentStanding = recordEl?.trim() || '';
+
+          // Find this team in standingsData and update it
+          const teamInfo = standingsData.slotIdToTeamInfo?.find((t: any) => t.teamName === teamName);
+          if (teamInfo) {
+            teamInfo.matches = matches;
+            teamInfo.roundsWon = roundsWon;
+            teamInfo.roundsLost = roundsLost;
+            teamInfo.roundDiff = roundDiff;
+            teamInfo.currentStanding = currentStanding;
+            console.log(`✅ Updated ${teamName}: ${currentStanding} (${roundsWon}-${roundsLost})`);
+          }
+        }
+
+        console.log(`✅ Extracted standings from table for ${standingsData.slotIdToTeamInfo?.length || 0} teams`);
       }
 
       // Return both types of data
@@ -617,6 +684,130 @@ export class HLTVPlaywrightScraper {
     return news;
   }
 
+  async scrapeMatchStats(matchId: number): Promise<any> {
+    await this.init();
+    if (!this.page) throw new Error('Page not initialized');
+
+    console.log(`🔍 Scraping match stats for match ${matchId}...`);
+
+    // Go to match page
+    await this.page.goto(`https://www.hltv.org/matches/${matchId}/-`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000
+    });
+
+    // Wait for Cloudflare challenge
+    await this.page.waitForTimeout(20000);
+
+    try {
+      // Scroll down to load stats
+      await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await this.page.waitForTimeout(2000);
+
+      // Extract match data
+      const matchData: any = {};
+
+      // Get team names
+      const team1Name = await this.page.locator('.team1-gradient .teamName').textContent();
+      const team2Name = await this.page.locator('.team2-gradient .teamName').textContent();
+
+      matchData.team1Name = team1Name?.trim();
+      matchData.team2Name = team2Name?.trim();
+
+      // Get scores
+      const scoreElements = await this.page.locator('.teamScore').allTextContents();
+      if (scoreElements.length >= 2) {
+        matchData.team1Score = parseInt(scoreElements[0]) || null;
+        matchData.team2Score = parseInt(scoreElements[1]) || null;
+      }
+
+      // Get maps played
+      const maps: any[] = [];
+      const mapHolders = this.page.locator('.mapholder');
+      const mapCount = await mapHolders.count();
+
+      console.log(`📊 Found ${mapCount} maps`);
+
+      for (let i = 0; i < mapCount; i++) {
+        const mapHolder = mapHolders.nth(i);
+
+        const mapName = await mapHolder.locator('.mapname').textContent();
+        const results = await mapHolder.locator('.results .results-team-score').allTextContents();
+
+        if (mapName && results.length >= 2) {
+          maps.push({
+            name: mapName.trim(),
+            team1Score: parseInt(results[0]) || 0,
+            team2Score: parseInt(results[1]) || 0
+          });
+        }
+      }
+
+      matchData.maps = maps;
+
+      // Try to get player stats
+      console.log('🔍 Looking for player stats table...');
+      const statsTable = this.page.locator('.stats-content table.stats-table');
+      const hasStats = await statsTable.count() > 0;
+
+      if (hasStats) {
+        console.log('✅ Found stats table, extracting player data...');
+
+        const playerStats: any[] = [];
+        const rows = statsTable.locator('tbody tr');
+        const rowCount = await rows.count();
+
+        for (let i = 0; i < rowCount; i++) {
+          const row = rows.nth(i);
+
+          // Get player name
+          const playerLink = row.locator('.player-nick a');
+          const playerName = await playerLink.textContent();
+
+          // Get team
+          const teamCell = row.locator('td').nth(1);
+          const teamName = await teamCell.textContent();
+
+          // Get stats (K-D, +/-, ADR, KAST, Rating)
+          const cells = row.locator('td');
+          const cellCount = await cells.count();
+
+          if (cellCount >= 7 && playerName) {
+            const kd = await cells.nth(3).textContent();
+            const plusMinus = await cells.nth(4).textContent();
+            const adr = await cells.nth(5).textContent();
+            const kast = await cells.nth(6).textContent();
+            const rating = await cells.nth(7).textContent();
+
+            playerStats.push({
+              name: playerName.trim(),
+              team: teamName?.trim(),
+              kills: parseInt(kd?.split('-')[0]) || 0,
+              deaths: parseInt(kd?.split('-')[1]) || 0,
+              plusMinus: parseInt(plusMinus) || 0,
+              adr: parseFloat(adr) || 0,
+              kast: parseFloat(kast) || 0,
+              rating: parseFloat(rating) || 0
+            });
+          }
+        }
+
+        matchData.playerStats = playerStats;
+        console.log(`✅ Extracted stats for ${playerStats.length} players`);
+      } else {
+        console.log('⚠️  No stats table found');
+        matchData.playerStats = null;
+      }
+
+      console.log(`✅ Match data extracted for ${matchData.team1Name} vs ${matchData.team2Name}`);
+      return matchData;
+
+    } catch (error) {
+      console.error('Error extracting match stats:', error);
+      return null;
+    }
+  }
+
   async close(): Promise<void> {
     if (this.browser) {
       await this.browser.close();
@@ -626,7 +817,6 @@ export class HLTVPlaywrightScraper {
   }
 }
 
-// Singleton instance
 let scraperInstance: HLTVPlaywrightScraper | null = null;
 
 export async function getPlaywrightScraper(): Promise<HLTVPlaywrightScraper> {

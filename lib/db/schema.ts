@@ -107,6 +107,10 @@ export const matches = pgTable('matches', {
   scoreTeam1: integer('score_team1'),
   scoreTeam2: integer('score_team2'),
   maps: jsonb('maps'), // Array of map results
+  playerOfTheMatchId: integer('player_of_the_match_id').references(() => players.id),
+  significance: varchar('significance', { length: 100 }),
+  hasStats: boolean('has_stats').default(false).notNull(),
+  statsLastSyncedAt: timestamp('stats_last_synced_at'),
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -123,6 +127,10 @@ export const matchMaps = pgTable('match_maps', {
   team1Score: integer('team1_score'),
   team2Score: integer('team2_score'),
   winnerTeamId: integer('winner_team_id').references(() => teams.id),
+  statsId: integer('stats_id'), // HLTV stats ID for detailed map stats
+  halfTeam1Score: integer('half_team1_score'), // Score at halftime (round 15)
+  halfTeam2Score: integer('half_team2_score'),
+  overtimeRounds: integer('overtime_rounds'), // Number of OT rounds played
   metadata: jsonb('metadata'), // rounds, ct/t sides, etc
 }, (table) => ({
   uniqueMapIdx: uniqueIndex('unique_map_idx').on(table.matchId, table.mapNumber),
@@ -141,12 +149,65 @@ export const playerMatchStats = pgTable('player_match_stats', {
   rating: decimal('rating', { precision: 4, scale: 2 }),
   kast: decimal('kast', { precision: 5, scale: 2 }), // KAST percentage
   hsPercentage: decimal('hs_percentage', { precision: 5, scale: 2 }),
+  flashAssists: integer('flash_assists'),
+  impact: decimal('impact', { precision: 4, scale: 2 }),
+  firstKillsDiff: integer('first_kills_diff'),
+  isPlayerOfTheMatch: boolean('is_player_of_the_match').default(false).notNull(),
   metadata: jsonb('metadata'), // Game-specific stats
 }, (table) => ({
   uniquePlayerMatchIdx: uniqueIndex('unique_player_match_idx').on(table.matchId, table.playerId),
 }));
 
-// 10. TEAM_STATS (Aggregated)
+// 10. MAP_VETOES (Pick/Ban Phase)
+export const mapVetoes = pgTable('map_vetoes', {
+  id: serial('id').primaryKey(),
+  matchId: integer('match_id').references(() => matches.id).notNull(),
+  teamId: integer('team_id').references(() => teams.id), // null for leftover maps
+  mapName: varchar('map_name', { length: 50 }).notNull(), // mirage, dust2, inferno, etc
+  vetoType: varchar('veto_type', { length: 20 }).notNull(), // removed, picked, leftover
+  vetoOrder: integer('veto_order').notNull(), // 1-7 (sequence in veto phase)
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueVetoIdx: uniqueIndex('unique_veto_idx').on(table.matchId, table.vetoOrder),
+}));
+
+// 11. PLAYER_MAP_STATS (Per-map player statistics)
+export const playerMapStats = pgTable('player_map_stats', {
+  id: serial('id').primaryKey(),
+  matchMapId: integer('match_map_id').references(() => matchMaps.id).notNull(),
+  playerId: integer('player_id').references(() => players.id).notNull(),
+  teamId: integer('team_id').references(() => teams.id).notNull(),
+
+  // Core Stats
+  kills: integer('kills').notNull(),
+  deaths: integer('deaths').notNull(),
+  assists: integer('assists').notNull(),
+
+  // Advanced Metrics
+  adr: decimal('adr', { precision: 5, scale: 2 }), // Average Damage per Round
+  kast: decimal('kast', { precision: 5, scale: 2 }), // Kill/Assist/Survive/Trade %
+  rating: decimal('rating', { precision: 4, scale: 2 }), // Rating 2.0
+  hsKills: integer('hs_kills'), // Headshot kills
+  hsPercentage: decimal('hs_percentage', { precision: 5, scale: 2 }),
+
+  // Impact Metrics
+  impact: decimal('impact', { precision: 4, scale: 2 }),
+  firstKillsDiff: integer('first_kills_diff'), // +/- in first kills
+  flashAssists: integer('flash_assists'),
+
+  // Per-Round Metrics
+  killsPerRound: decimal('kills_per_round', { precision: 4, scale: 2 }),
+  deathsPerRound: decimal('deaths_per_round', { precision: 4, scale: 2 }),
+
+  // Side-Specific (extracted via getMatchMapStats)
+  metadata: jsonb('metadata'), // { ctStats: {...}, tStats: {...} }
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  uniquePlayerMapIdx: uniqueIndex('unique_player_map_idx').on(table.matchMapId, table.playerId),
+}));
+
+// 12. TEAM_STATS (Aggregated)
 export const teamStats = pgTable('team_stats', {
   id: serial('id').primaryKey(),
   teamId: integer('team_id').references(() => teams.id).notNull(),
@@ -168,7 +229,7 @@ export const teamStats = pgTable('team_stats', {
   uniqueTeamStatsIdx: uniqueIndex('unique_team_stats_idx').on(table.teamId, table.eventId, table.periodStart, table.periodEnd),
 }));
 
-// 11. HEAD_TO_HEAD
+// 13. HEAD_TO_HEAD
 export const headToHead = pgTable('head_to_head', {
   id: serial('id').primaryKey(),
   team1Id: integer('team1_id').references(() => teams.id).notNull(),
@@ -183,7 +244,7 @@ export const headToHead = pgTable('head_to_head', {
   uniqueH2HIdx: uniqueIndex('unique_h2h_idx').on(table.team1Id, table.team2Id, table.eventId),
 }));
 
-// 12. NEWS
+// 14. NEWS
 export const news = pgTable('news', {
   id: serial('id').primaryKey(),
   gameId: integer('game_id').references(() => games.id).notNull(),
@@ -200,7 +261,7 @@ export const news = pgTable('news', {
   uniqueNewsIdx: uniqueIndex('unique_news_idx').on(table.externalId, table.source),
 }));
 
-// 13. SWISS_ROUNDS (Swiss System Tournament Rounds)
+// 15. SWISS_ROUNDS (Swiss System Tournament Rounds)
 export const swissRounds = pgTable('swiss_rounds', {
   id: serial('id').primaryKey(),
   eventId: integer('event_id').references(() => events.id).notNull(),
@@ -220,7 +281,7 @@ export const swissRounds = pgTable('swiss_rounds', {
   uniqueSwissRoundIdx: uniqueIndex('unique_swiss_round_idx').on(table.eventId, table.roundNumber, table.matchId),
 }));
 
-// 14. EVENT_NEWS (Many-to-Many relationship between events and news)
+// 16. EVENT_NEWS (Many-to-Many relationship between events and news)
 export const eventNews = pgTable('event_news', {
   id: serial('id').primaryKey(),
   eventId: integer('event_id').references(() => events.id).notNull(),
@@ -230,7 +291,7 @@ export const eventNews = pgTable('event_news', {
   uniqueEventNewsIdx: uniqueIndex('unique_event_news_idx').on(table.eventId, table.newsId),
 }));
 
-// 15. SYNC_LOG (Audit Trail)
+// 17. SYNC_LOG (Audit Trail)
 export const syncLogs = pgTable('sync_logs', {
   id: serial('id').primaryKey(),
   jobName: varchar('job_name', { length: 100 }).notNull(),
@@ -283,7 +344,9 @@ export const matchesRelations = relations(matches, ({ one, many }) => ({
   team1: one(teams, { fields: [matches.team1Id], references: [teams.id], relationName: 'team1' }),
   team2: one(teams, { fields: [matches.team2Id], references: [teams.id], relationName: 'team2' }),
   winner: one(teams, { fields: [matches.winnerId], references: [teams.id] }),
+  playerOfTheMatch: one(players, { fields: [matches.playerOfTheMatchId], references: [players.id] }),
   maps: many(matchMaps),
+  vetoes: many(mapVetoes),
   playerStats: many(playerMatchStats),
   swissRounds: many(swissRounds),
 }));
@@ -303,4 +366,48 @@ export const eventNewsRelations = relations(eventNews, ({ one }) => ({
 export const newsRelations = relations(news, ({ one, many }) => ({
   game: one(games, { fields: [news.gameId], references: [games.id] }),
   eventNews: many(eventNews),
+}));
+
+export const mapVetoesRelations = relations(mapVetoes, ({ one }) => ({
+  match: one(matches, { fields: [mapVetoes.matchId], references: [matches.id] }),
+  team: one(teams, { fields: [mapVetoes.teamId], references: [teams.id] }),
+}));
+
+export const matchMapsRelations = relations(matchMaps, ({ one, many }) => ({
+  match: one(matches, { fields: [matchMaps.matchId], references: [matches.id] }),
+  winnerTeam: one(teams, { fields: [matchMaps.winnerTeamId], references: [teams.id] }),
+  playerStats: many(playerMapStats),
+}));
+
+export const playerMatchStatsRelations = relations(playerMatchStats, ({ one }) => ({
+  match: one(matches, { fields: [playerMatchStats.matchId], references: [matches.id] }),
+  player: one(players, { fields: [playerMatchStats.playerId], references: [players.id] }),
+  team: one(teams, { fields: [playerMatchStats.teamId], references: [teams.id] }),
+}));
+
+export const playerMapStatsRelations = relations(playerMapStats, ({ one }) => ({
+  matchMap: one(matchMaps, { fields: [playerMapStats.matchMapId], references: [matchMaps.id] }),
+  player: one(players, { fields: [playerMapStats.playerId], references: [players.id] }),
+  team: one(teams, { fields: [playerMapStats.teamId], references: [teams.id] }),
+}));
+
+export const eventParticipantsRelations = relations(eventParticipants, ({ one }) => ({
+  event: one(events, { fields: [eventParticipants.eventId], references: [events.id] }),
+  team: one(teams, { fields: [eventParticipants.teamId], references: [teams.id] }),
+}));
+
+export const teamRostersRelations = relations(teamRosters, ({ one }) => ({
+  team: one(teams, { fields: [teamRosters.teamId], references: [teams.id] }),
+  player: one(players, { fields: [teamRosters.playerId], references: [players.id] }),
+}));
+
+export const teamStatsRelations = relations(teamStats, ({ one }) => ({
+  team: one(teams, { fields: [teamStats.teamId], references: [teams.id] }),
+  event: one(events, { fields: [teamStats.eventId], references: [events.id] }),
+}));
+
+export const headToHeadRelations = relations(headToHead, ({ one }) => ({
+  team1: one(teams, { fields: [headToHead.team1Id], references: [teams.id], relationName: 'h2hTeam1' }),
+  team2: one(teams, { fields: [headToHead.team2Id], references: [teams.id], relationName: 'h2hTeam2' }),
+  event: one(events, { fields: [headToHead.eventId], references: [events.id] }),
 }));

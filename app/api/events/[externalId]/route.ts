@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
-import { events, eventParticipants } from '@/lib/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { events } from '@/lib/db/schema';
+import { eq, asc, desc } from 'drizzle-orm';
 
-export const runtime = 'nodejs';
-export const revalidate = 600; // Cache for 10 minutes
+export const dynamic = 'force-dynamic';
 
 export async function GET(
     request: Request,
@@ -13,39 +12,113 @@ export async function GET(
     try {
         const { externalId } = await context.params;
 
-        // Fetch event with participant count
-        const eventData = await db
-            .select({
-                id: events.id,
-                externalId: events.externalId,
-                name: events.name,
-                dateStart: events.dateStart,
-                dateEnd: events.dateEnd,
-                prizePool: events.prizePool,
-                location: events.location,
-                status: events.status,
-                championshipMode: events.championshipMode,
-                metadata: events.metadata,
-                totalTeams: sql<number>`COUNT(DISTINCT ${eventParticipants.teamId})`,
-            })
-            .from(events)
-            .leftJoin(eventParticipants, eq(events.id, eventParticipants.eventId))
-            .where(eq(events.externalId, externalId))
-            .groupBy(events.id)
-            .limit(1);
+        // Fetch event with full details
+        const event = await db.query.events.findFirst({
+            where: eq(events.externalId, externalId),
+            with: {
+                game: {
+                    columns: {
+                        id: true,
+                        slug: true,
+                        name: true,
+                    }
+                },
+                participants: {
+                    with: {
+                        team: {
+                            columns: {
+                                id: true,
+                                name: true,
+                                logoUrl: true,
+                                rank: true,
+                                country: true,
+                            }
+                        }
+                    },
+                    orderBy: (participants, { asc }) => [asc(participants.seed)],
+                },
+                matches: {
+                    with: {
+                        team1: {
+                            columns: {
+                                id: true,
+                                name: true,
+                                logoUrl: true,
+                            }
+                        },
+                        team2: {
+                            columns: {
+                                id: true,
+                                name: true,
+                                logoUrl: true,
+                            }
+                        },
+                        winner: {
+                            columns: {
+                                id: true,
+                                name: true,
+                            }
+                        }
+                    },
+                    orderBy: (matches, { desc }) => [desc(matches.date)],
+                    limit: 50,
+                }
+            }
+        });
 
-        if (!eventData || eventData.length === 0) {
+        if (!event) {
             return NextResponse.json(
                 { error: 'Event not found' },
                 { status: 404 }
             );
         }
 
-        return NextResponse.json(eventData[0]);
+        // Format participants
+        const participants = event.participants.map(p => ({
+            seed: p.seed,
+            placement: p.placement,
+            prizeMoney: p.prizeMoney,
+            team: p.team,
+        }));
+
+        // Format matches
+        const matches = event.matches.map(m => ({
+            id: m.id,
+            externalId: m.externalId,
+            team1: m.team1,
+            team2: m.team2,
+            date: m.date ? m.date.toISOString() : null,
+            format: m.format,
+            status: m.status,
+            winnerId: m.winnerId,
+            scoreTeam1: m.scoreTeam1,
+            scoreTeam2: m.scoreTeam2,
+            significance: m.significance,
+        }));
+
+        // Build response
+        const response = {
+            id: event.id,
+            externalId: event.externalId,
+            name: event.name,
+            game: event.game,
+            dateStart: event.dateStart ? event.dateStart.toISOString() : null,
+            dateEnd: event.dateEnd ? event.dateEnd.toISOString() : null,
+            prizePool: event.prizePool,
+            location: event.location,
+            status: event.status,
+            championshipMode: event.championshipMode,
+            metadata: event.metadata,
+            participants,
+            matches,
+        };
+
+        return NextResponse.json(response);
+
     } catch (error: any) {
         console.error('Error fetching event:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch event data', details: error.message },
+            { error: 'Failed to fetch event', details: error.message },
             { status: 500 }
         );
     }

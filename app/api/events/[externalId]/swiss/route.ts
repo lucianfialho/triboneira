@@ -4,7 +4,7 @@ import { events, matches, teams, eventParticipants } from '@/lib/db/schema';
 import { eq, sql, asc, inArray } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
-export const revalidate = 600; // Cache for 10 minutes
+export const dynamic = 'force-dynamic'; // Disable caching for real-time updates
 
 interface SwissTeam {
   id: number;
@@ -284,95 +284,105 @@ export async function GET(
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
 
-    // 5. Build rounds structure based on Swiss format
+    // 5. Build team record map from standings data
+    const teamRecordMap = new Map<string, { wins: number; losses: number }>();
+
+    if (standingsData?.slotIdToTeamInfo) {
+      standingsData.slotIdToTeamInfo.forEach((teamInfo: any) => {
+        const teamName = teamInfo.teamName;
+        const standing = teamInfo.currentStanding || '0-0';
+        const [wins, losses] = standing.split('-').map((n: string) => parseInt(n.trim()));
+
+        if (!isNaN(wins) && !isNaN(losses)) {
+          teamRecordMap.set(teamName, { wins, losses });
+        }
+      });
+    }
+
+    // Helper function to get team record
+    const getTeamRecord = (teamName: string): { wins: number; losses: number } => {
+      return teamRecordMap.get(teamName) || { wins: 0, losses: 0 };
+    };
+
+    // Helper function to determine match bucket based on team records
+    const getMatchBucket = (match: typeof sortedMatches[0]): string | null => {
+      const team1Name = match.team1?.name;
+      const team2Name = match.team2?.name;
+
+      if (!team1Name || !team2Name || team1Name === 'TBD' || team2Name === 'TBD') {
+        return null;
+      }
+
+      const team1Record = getTeamRecord(team1Name);
+      const team2Record = getTeamRecord(team2Name);
+
+      // Both teams should have the same record for a valid Swiss match
+      if (team1Record.wins === team2Record.wins && team1Record.losses === team2Record.losses) {
+        return `${team1Record.wins}:${team1Record.losses}`;
+      }
+
+      return null;
+    };
+
+    // 6. Build rounds structure by grouping matches into buckets
     const rounds: SwissRound[] = [];
-    let matchIndex = 0;
-    let currentRound = 1;
 
-    // Determine current round based on how many matches have been played
-    const finishedMatches = sortedMatches.filter(m => m.status === 'finished').length;
-    if (finishedMatches >= 8 && finishedMatches < 16) currentRound = 2;
-    else if (finishedMatches >= 16 && finishedMatches < 24) currentRound = 3;
-    else if (finishedMatches >= 24 && finishedMatches < 30) currentRound = 4;
-    else if (finishedMatches >= 30) currentRound = 5;
-
-    // Build each round
     for (const roundStructure of SWISS_STRUCTURE) {
       const roundBuckets: SwissBucket[] = [];
 
       for (const bucketKey of roundStructure.buckets) {
         const [wins, losses] = bucketKey.split(':').map(Number);
-        const bucketMatches: SwissMatch[] = [];
+
+        // Find all matches that belong to this bucket
+        const matchesInBucket = sortedMatches.filter(match => {
+          const matchBucket = getMatchBucket(match);
+          return matchBucket === bucketKey;
+        });
+
+        const bucketMatches: SwissMatch[] = matchesInBucket.map(match => ({
+          id: match.id,
+          team1: {
+            id: match.team1.id ?? 0,
+            name: match.team1.name ?? 'TBD',
+            logoUrl: match.team1.logoUrl,
+            seed: match.team1.seed,
+          },
+          team2: {
+            id: match.team2.id ?? 0,
+            name: match.team2.name ?? 'TBD',
+            logoUrl: match.team2.logoUrl,
+            seed: match.team2.seed,
+          },
+          winner: match.winner?.id ? {
+            id: match.winner.id,
+            name: match.winner.name!,
+            logoUrl: match.winner.logoUrl,
+            seed: null,
+          } : null,
+          score: {
+            team1: match.scoreTeam1,
+            team2: match.scoreTeam2,
+          },
+          status: match.status,
+          date: match.date ? new Date(match.date).toISOString() : null,
+          team1Record: { wins, losses },
+          team2Record: { wins, losses },
+        }));
+
+        // Fill remaining slots with TBD if needed
         const expectedMatches = BUCKET_MATCH_COUNTS[bucketKey] || 0;
-
-        // Try to fill this bucket with real matches from the database
-        for (let i = 0; i < expectedMatches; i++) {
-          if (matchIndex < sortedMatches.length) {
-            const match = sortedMatches[matchIndex];
-
-            // Only use this match if it belongs to this round
-            // (either by status or by date proximity to other matches in the round)
-            const shouldIncludeMatch = matchIndex < finishedMatches + 8; // Include upcoming matches too
-
-            if (shouldIncludeMatch) {
-              bucketMatches.push({
-                id: match.id,
-                team1: {
-                  id: match.team1.id ?? 0,
-                  name: match.team1.name ?? 'TBD',
-                  logoUrl: match.team1.logoUrl,
-                  seed: match.team1.seed,
-                },
-                team2: {
-                  id: match.team2.id ?? 0,
-                  name: match.team2.name ?? 'TBD',
-                  logoUrl: match.team2.logoUrl,
-                  seed: match.team2.seed,
-                },
-                winner: match.winner?.id ? {
-                  id: match.winner.id,
-                  name: match.winner.name!,
-                  logoUrl: match.winner.logoUrl,
-                  seed: null,
-                } : null,
-                score: {
-                  team1: match.scoreTeam1,
-                  team2: match.scoreTeam2,
-                },
-                status: match.status,
-                date: match.date ? new Date(match.date).toISOString() : null,
-                team1Record: { wins, losses },
-                team2Record: { wins, losses },
-              });
-              matchIndex++;
-            } else {
-              // This bucket should be TBD for now
-              bucketMatches.push({
-                id: null,
-                team1: TBD_TEAM,
-                team2: TBD_TEAM,
-                winner: null,
-                score: { team1: null, team2: null },
-                status: 'scheduled',
-                date: null,
-                team1Record: { wins, losses },
-                team2Record: { wins, losses },
-              });
-            }
-          } else {
-            // No more matches in database, fill with TBD
-            bucketMatches.push({
-              id: null,
-              team1: TBD_TEAM,
-              team2: TBD_TEAM,
-              winner: null,
-              score: { team1: null, team2: null },
-              status: 'scheduled',
-              date: null,
-              team1Record: { wins, losses },
-              team2Record: { wins, losses },
-            });
-          }
+        while (bucketMatches.length < expectedMatches) {
+          bucketMatches.push({
+            id: null,
+            team1: TBD_TEAM,
+            team2: TBD_TEAM,
+            winner: null,
+            score: { team1: null, team2: null },
+            status: 'scheduled',
+            date: null,
+            team1Record: { wins, losses },
+            team2Record: { wins, losses },
+          });
         }
 
         if (bucketMatches.length > 0) {
@@ -388,6 +398,15 @@ export async function GET(
         buckets: roundBuckets,
       });
     }
+
+    // Determine current round based on team standings
+    let currentRound = 1;
+    const finishedMatches = sortedMatches.filter(m => m.status === 'finished').length;
+    if (finishedMatches >= 8 && finishedMatches < 16) currentRound = 2;
+    else if (finishedMatches >= 16 && finishedMatches < 24) currentRound = 3;
+    else if (finishedMatches >= 24 && finishedMatches < 30) currentRound = 4;
+    else if (finishedMatches >= 30) currentRound = 5;
+
 
     // 6. Get qualified and eliminated teams from HLTV standings data
     const qualified: QualifiedTeam[] = [];
