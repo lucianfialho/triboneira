@@ -772,7 +772,7 @@ export default function HomePage() {
   const totalViewers = streams.reduce((total, stream) => total + (stream.viewerCount || 0), 0);
 
   const renderGrid = () => (
-    <div className={`layout-${layout} animate-fade-in`}>
+    <div className={`layout-${layout} ${layout === 'pip' ? `pip-${pipThumbnailSize}` : ''} animate-fade-in`}>
       {streams.map((stream, index) => {
         const progress = unmutingProgress[stream.id] || 0;
         const isHovering = hoveringStream === stream.id;
@@ -1168,6 +1168,33 @@ export default function HomePage() {
               })}
             </div>
           </div>
+
+          {/* PIP Thumbnail Size - Only show when PIP layout is active */}
+          {layout === 'pip' && (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <Maximize2 className="w-4 h-4 text-[hsl(var(--primary))]" />
+                <h3 className="text-xs font-semibold text-[hsl(var(--foreground))]">Thumbnail Size</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {(['small', 'medium', 'large'] as const).map((size) => (
+                  <Button
+                    key={size}
+                    variant={pipThumbnailSize === size ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPipThumbnailSize(size)}
+                    className={`h-10 text-xs capitalize transition-all ${pipThumbnailSize === size
+                        ? 'bg-[hsl(217_91%_60%)] text-white border-0'
+                        : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
+                      }`}
+                  >
+                    {size}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
 
 
 
