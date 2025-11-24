@@ -176,7 +176,7 @@ export async function generateDailyRecap(date: Date = new Date()): Promise<Daily
     topPerformancesFiltered.slice(0, 5).map(async (perf) => {
       const [player] = await db
         .select()
-        .from(db.select().from(playerMatchStats))
+        .from(playerMatchStats)
         .where(eq(playerMatchStats.id, perf.id));
 
       // Get player details
