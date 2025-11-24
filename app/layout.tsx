@@ -84,6 +84,12 @@ export const metadata: Metadata = {
   verification: {
     google: 'RTLPxCdxEWQ8a_W6vGX0WDHxxUAaIPwh_B2i_rwpnAo',
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
 };
 
 export default function RootLayout({
