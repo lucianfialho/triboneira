@@ -1,6 +1,6 @@
 # Multistream API Documentation
 
-**Base URL:** `https://your-domain.com/api`  
+**Base URL:** `https://entreganewba.com.br/api`  
 **Version:** 1.0  
 **Last Updated:** 2025-01-24
 
