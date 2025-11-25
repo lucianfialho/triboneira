@@ -959,14 +959,6 @@ export default function HomePage() {
                 alt="Major Budapest 2025"
                 className="w-3/4 h-auto mx-auto drop-shadow-lg"
               />
-              {/* Budapest Major Banner */}
-              <div className="flex items-center justify-center bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-lg p-2 border border-yellow-500/20">
-                <img
-                  src="/budapest-major-banner.png"
-                  alt="Assista o Major ao Vivo"
-                  className="h-12 w-auto drop-shadow-md hover:scale-105 transition-transform"
-                />
-              </div>
             </Link>
           </div>
 
