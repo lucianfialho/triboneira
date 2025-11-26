@@ -958,9 +958,6 @@ export default function HomePage() {
               height="100%"
               className="w-full h-full"
               style={{
-                minWidth: isMobile ? '100%' : '400px',
-                maxWidth: '100%',
-                minHeight: '300px',
                 display: 'block',
                 pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto',
               }}
@@ -1057,8 +1054,8 @@ export default function HomePage() {
                   togglePictureInPicture(stream.id);
                 }}
                 className={`w-10 h-10 rounded-full ${pipStreams.has(stream.id)
-                    ? 'bg-green-600 hover:bg-green-500'
-                    : 'bg-black/60 hover:bg-black/80'
+                  ? 'bg-green-600 hover:bg-green-500'
+                  : 'bg-black/60 hover:bg-black/80'
                   } backdrop-blur-sm flex items-center justify-center shadow-lg hover:scale-110 transition-all cursor-pointer`}
                 title="Picture-in-Picture"
               >
