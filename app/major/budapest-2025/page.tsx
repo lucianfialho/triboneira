@@ -57,8 +57,13 @@ import {
   MessageCircle,
   BarChart3,
   PictureInPicture,
+  LayoutGrid,
+  Minimize2,
+  Smartphone,
+  X,
 } from 'lucide-react';
 import EventInfoModal from '@/components/event-info-modal';
+import { HeaderLiveMatches } from '@/components/header-live-matches';
 
 // Types
 type Platform = 'twitch' | 'youtube' | 'kick' | 'custom';
@@ -1386,6 +1391,12 @@ export default function HomePage() {
                     <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
                   )}
                 </button>
+
+                {/* Live Matches in Header - Centered */}
+                <div className="flex-1 flex justify-center px-4">
+                  <HeaderLiveMatches externalId="8504" />
+                </div>
+
                 {/* Share Setup Button */}
                 {streams.length > 0 && (
                   <>

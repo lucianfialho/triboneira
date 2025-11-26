@@ -6,19 +6,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import amplitude from '@/amplitude';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { StreamerCommandPalette, type CommandPaletteRef } from '@/components/streamer-command-palette';
 import { ChatPanel } from '@/components/chat/chat-panel';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
 import {
   Dialog,
   DialogContent,
@@ -28,23 +19,15 @@ import {
 } from '@/components/ui/dialog';
 import {
   Plus,
-  Trash2,
   Layout,
   Monitor,
   Video,
-  Sparkles,
   Grid2x2,
-  Grid3x3,
   Columns2,
-  Columns3,
-  Square,
   Youtube,
   Twitch as TwitchIcon,
   Volume2,
   VolumeX,
-  Headphones,
-  Copy,
-  ExternalLink,
   Eye,
   Users,
   ChevronLeft,
@@ -58,6 +41,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import EventInfoModal from '@/components/event-info-modal';
+import { HeaderLiveMatches } from '@/components/header-live-matches';
 
 // Types
 type Platform = 'twitch' | 'youtube' | 'kick' | 'custom';
@@ -417,6 +401,7 @@ export default function HomePage() {
             isMuted: true,
             channelName: 'gaulestv2',
           },
+
         ];
 
         setStreams(majorStreams);
@@ -715,9 +700,6 @@ export default function HomePage() {
     }
   };
 
-  const openInNewTab = (url: string) => {
-    window.open(url, '_blank');
-  };
 
   // Drag and Drop Handlers
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -1226,6 +1208,12 @@ export default function HomePage() {
                     <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
                   )}
                 </button>
+
+                {/* Live Matches in Header - Centered */}
+                <div className="flex-1 flex justify-center px-4">
+                  <HeaderLiveMatches externalId="8504" />
+                </div>
+
                 {/* Share Setup Button */}
                 {streams.length > 0 && (
                   <>
