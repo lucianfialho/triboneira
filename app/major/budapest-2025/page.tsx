@@ -56,6 +56,7 @@ import {
   Menu,
   MessageCircle,
   BarChart3,
+  PictureInPicture,
 } from 'lucide-react';
 import EventInfoModal from '@/components/event-info-modal';
 
@@ -200,6 +201,8 @@ export default function HomePage() {
   const [selectedStreamers, setSelectedStreamers] = useState<Set<string>>(new Set());
   const [eventInfoModalOpen, setEventInfoModalOpen] = useState(false);
   const [pipThumbnailSize, setPipThumbnailSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [pipStreams, setPipStreams] = useState<Set<string>>(new Set());
+  const pipWindowsRef = useRef<Map<string, Window>>(new Map());
 
   // Drag and drop states
   const [draggedStreamIndex, setDraggedStreamIndex] = useState<number | null>(null);
@@ -685,6 +688,181 @@ export default function HomePage() {
   };
 
   // Drag and Drop Handlers
+  // Picture-in-Picture functionality
+  const togglePictureInPicture = async (streamId: string) => {
+    const stream = streams.find(s => s.id === streamId);
+    if (!stream) return;
+
+    try {
+      // If already in PiP, close it
+      const existingWindow = pipWindowsRef.current.get(streamId);
+      if (existingWindow) {
+        existingWindow.close();
+        pipWindowsRef.current.delete(streamId);
+        setPipStreams(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(streamId);
+          return newSet;
+        });
+        return;
+      }
+
+      // Calculate position for new window
+      const windowCount = pipWindowsRef.current.size;
+      const offset = windowCount * 50;
+      const width = 800;
+      const height = 450;
+      const left = window.screen.width - width - 50 - offset;
+      const top = 50 + offset;
+
+      // Check if Document Picture-in-Picture API is supported AND no PiP window exists yet
+      // Note: Document PiP API only allows ONE window at a time
+      if ('documentPictureInPicture' in window && pipWindowsRef.current.size === 0) {
+        try {
+          // @ts-ignore - Document Picture-in-Picture API
+          const pipWindow = await window.documentPictureInPicture.requestWindow({
+            width,
+            height,
+          });
+
+          // Store the window reference
+          pipWindowsRef.current.set(streamId, pipWindow);
+          setPipStreams(prev => new Set(prev).add(streamId));
+
+          // Copy styles to PiP window
+          const styleSheets = Array.from(document.styleSheets);
+          styleSheets.forEach((styleSheet) => {
+            try {
+              const cssRules = Array.from(styleSheet.cssRules)
+                .map((rule) => rule.cssText)
+                .join('');
+              const style = document.createElement('style');
+              style.textContent = cssRules;
+              pipWindow.document.head.appendChild(style);
+            } catch (e) {
+              // Handle CORS errors for external stylesheets
+              const link = document.createElement('link');
+              link.rel = 'stylesheet';
+              link.href = styleSheet.href || '';
+              pipWindow.document.head.appendChild(link);
+            }
+          });
+
+          // Create iframe in PiP window
+          const container = pipWindow.document.createElement('div');
+          container.style.cssText = 'width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #000;';
+
+          const iframe = pipWindow.document.createElement('iframe');
+          iframe.src = getPlatformEmbed(stream.url, stream.platform, stream.isMuted);
+          iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
+          iframe.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope';
+          iframe.allowFullscreen = true;
+
+          container.appendChild(iframe);
+          pipWindow.document.body.style.cssText = 'margin: 0; padding: 0; overflow: hidden;';
+          pipWindow.document.body.appendChild(container);
+
+          // Handle window close
+          pipWindow.addEventListener('pagehide', () => {
+            pipWindowsRef.current.delete(streamId);
+            setPipStreams(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(streamId);
+              return newSet;
+            });
+          });
+
+          amplitude.track('Picture-in-Picture Opened', {
+            platform: stream.platform,
+            channelName: stream.channelName || stream.videoId,
+            activePipWindows: pipWindowsRef.current.size,
+            method: 'document_pip',
+          });
+
+          return;
+        } catch (error) {
+          console.error('Document PiP failed, falling back to popup:', error);
+          // Fall through to popup window fallback
+        }
+      }
+
+      // Fallback or additional windows: Use regular popup windows
+      const newWindow = window.open(
+        '',
+        `PiP Stream ${streamId}`,
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,menubar=no,toolbar=no,location=no,status=no`
+      );
+
+      if (newWindow) {
+        newWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${stream.channelName || stream.videoId || 'Stream'} - PiP</title>
+              <style>
+                body { margin: 0; padding: 0; overflow: hidden; background: #000; }
+                iframe { width: 100%; height: 100vh; border: none; }
+              </style>
+            </head>
+            <body>
+              <iframe 
+                src="${getPlatformEmbed(stream.url, stream.platform, stream.isMuted)}"
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope"
+                allowfullscreen
+              ></iframe>
+            </body>
+          </html>
+        `);
+        newWindow.document.close();
+
+        // Store window reference
+        pipWindowsRef.current.set(streamId, newWindow);
+        setPipStreams(prev => new Set(prev).add(streamId));
+
+        // Handle window close
+        const checkClosed = setInterval(() => {
+          if (newWindow.closed) {
+            clearInterval(checkClosed);
+            pipWindowsRef.current.delete(streamId);
+            setPipStreams(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(streamId);
+              return newSet;
+            });
+          }
+        }, 1000);
+
+        amplitude.track('Picture-in-Picture Opened', {
+          platform: stream.platform,
+          channelName: stream.channelName || stream.videoId,
+          activePipWindows: pipWindowsRef.current.size,
+          method: 'popup_window',
+        });
+      }
+    } catch (error) {
+      console.error('Error opening Picture-in-Picture:', error);
+
+      // Final fallback: open original URL
+      const windowCount = pipWindowsRef.current.size;
+      const offset = windowCount * 50;
+      const width = 800;
+      const height = 450;
+      const left = window.screen.width - width - 50 - offset;
+      const top = 50 + offset;
+
+      const newWindow = window.open(
+        stream.url,
+        `Stream ${streamId}`,
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes`
+      );
+
+      if (newWindow) {
+        pipWindowsRef.current.set(streamId, newWindow);
+        setPipStreams(prev => new Set(prev).add(streamId));
+      }
+    }
+  };
+
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedStreamIndex(index);
     e.dataTransfer.effectAllowed = 'move';
@@ -867,6 +1045,26 @@ export default function HomePage() {
                 </button>
               </div>
             )}
+
+            {/* Picture-in-Picture Button */}
+            <div
+              className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
+            >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePictureInPicture(stream.id);
+                }}
+                className={`w-10 h-10 rounded-full ${pipStreams.has(stream.id)
+                    ? 'bg-green-600 hover:bg-green-500'
+                    : 'bg-black/60 hover:bg-black/80'
+                  } backdrop-blur-sm flex items-center justify-center shadow-lg hover:scale-110 transition-all cursor-pointer`}
+                title="Picture-in-Picture"
+              >
+                <PictureInPicture className="w-5 h-5 text-white" />
+              </button>
+            </div>
           </div>
         );
       })}

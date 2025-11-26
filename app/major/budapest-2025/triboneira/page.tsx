@@ -384,6 +384,14 @@ export default function HomePage() {
             isMuted: true,
             channelName: 'gaulestv',
           },
+          {
+            id: 'gaulestv2',
+            url: 'https://kick.com/gaulestv2',
+            platform: 'kick',
+            title: 'GaulesTV2 - Major Budapest 2025',
+            isMuted: true,
+            channelName: 'gaulestv2',
+          },
         ] : [
           {
             id: 'gaules',
@@ -402,12 +410,12 @@ export default function HomePage() {
             channelName: 'gaulestv',
           },
           {
-            id: 'michel',
-            url: 'https://kick.com/michel',
+            id: 'gaulestv2',
+            url: 'https://kick.com/gaulestv2',
             platform: 'kick',
-            title: 'Michel - Major Budapest 2025',
+            title: 'GaulesTV2 - Major Budapest 2025',
             isMuted: true,
-            channelName: 'michel',
+            channelName: 'gaulestv2',
           },
         ];
 
