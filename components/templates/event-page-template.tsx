@@ -6,19 +6,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import amplitude from '@/amplitude';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { StreamerCommandPalette, type CommandPaletteRef } from '@/components/streamer-command-palette';
 import { ChatPanel } from '@/components/chat/chat-panel';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
 import {
   Dialog,
   DialogContent,
@@ -28,13 +19,10 @@ import {
 } from '@/components/ui/dialog';
 import {
   Plus,
-  Trash2,
   Layout,
   Monitor,
   Video,
-  Sparkles,
   Grid2x2,
-  Grid3x3,
   Columns2,
   Columns3,
   Square,
@@ -42,9 +30,6 @@ import {
   Twitch as TwitchIcon,
   Volume2,
   VolumeX,
-  Headphones,
-  Copy,
-  ExternalLink,
   Eye,
   Users,
   ChevronLeft,
@@ -55,13 +40,16 @@ import {
   Play,
   Menu,
   MessageCircle,
+  BarChart3,
 } from 'lucide-react';
+import EventInfoModal from '@/components/event-info-modal';
+import { HeaderLiveMatches } from '@/components/header-live-matches';
 import { Sidebar, type LayoutType } from '@/components/sidebar';
 
 // Types
 type Platform = 'twitch' | 'youtube' | 'kick' | 'custom';
 
-interface Stream {
+export interface Stream {
   id: string;
   url: string;
   platform: Platform;
@@ -151,8 +139,6 @@ const layoutConfigs = {
   'horizontal': { icon: Columns3, label: 'Horizontal', description: 'Side by side' },
 };
 
-const STORAGE_KEY = 'multistream-data';
-
 // Helper function to format numbers
 const formatViewerCount = (count: number): string => {
   if (count >= 1000000) {
@@ -175,7 +161,18 @@ interface TopStreamer {
   url: string;
 }
 
-export default function HomePage() {
+export interface EventPageTemplateProps {
+  eventId: string;
+  storageKey?: string;
+  defaultStreams: (isMobile: boolean) => Stream[];
+}
+
+export function EventPageTemplate({
+  eventId,
+  storageKey = 'multistream-data',
+  defaultStreams
+}: EventPageTemplateProps) {
+  const STORAGE_KEY = storageKey;
   // TV Navigation Support
   useTVNavigation();
 
@@ -185,13 +182,21 @@ export default function HomePage() {
   const [layout, setLayout] = useState<LayoutType>('grid');
   const [hoveringStream, setHoveringStream] = useState<string | null>(null);
   const [unmutingProgress, setUnmutingProgress] = useState<Record<string, number>>({});
-  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [sidebarVisible, setSidebarVisible] = useState(() => {
+    // Initialize sidebar as hidden on mobile devices
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768;
+    }
+    return true; // Default to visible for SSR
+  });
   const [chatPanelVisible, setChatPanelVisible] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [topStreamers, setTopStreamers] = useState<TopStreamer[]>([]);
   const [loadingTopStreamers, setLoadingTopStreamers] = useState(false);
   const [selectedStreamers, setSelectedStreamers] = useState<Set<string>>(new Set());
+  const [eventInfoModalOpen, setEventInfoModalOpen] = useState(false);
+  const [pipThumbnailSize, setPipThumbnailSize] = useState<'small' | 'medium' | 'large'>('medium');
 
   // Drag and drop states
   const [draggedStreamIndex, setDraggedStreamIndex] = useState<number | null>(null);
@@ -286,7 +291,7 @@ export default function HomePage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Load from URL params or localStorage on mount
+  // Load from URL params or pre-load Major streams on mount
   useEffect(() => {
     try {
       // Check URL params first
@@ -354,18 +359,17 @@ export default function HomePage() {
         // Clear URL params after loading
         window.history.replaceState({}, '', window.location.pathname);
       } else {
-        // Fallback to localStorage
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const data = JSON.parse(saved);
-          setStreams(data.streams || []);
-          setLayout(data.layout || 'grid');
-        }
+        // Use default streams from props
+        const isMobileDevice = window.innerWidth < 768;
+        const initialStreams = defaultStreams(isMobileDevice);
+
+        setStreams(initialStreams);
+        setLayout(isMobileDevice ? 'grid' : 'pip');
       }
     } catch (error) {
       console.error('Error loading streams:', error);
     }
-  }, []);
+  }, [defaultStreams]);
 
   // Save to localStorage whenever streams or layout changes
   useEffect(() => {
@@ -655,9 +659,6 @@ export default function HomePage() {
     }
   };
 
-  const openInNewTab = (url: string) => {
-    window.open(url, '_blank');
-  };
 
   // Drag and Drop Handlers
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -705,7 +706,7 @@ export default function HomePage() {
   const totalViewers = streams.reduce((total, stream) => total + (stream.viewerCount || 0), 0);
 
   const renderGrid = () => (
-    <div className={`layout-${layout} animate-fade-in`}>
+    <div className={`layout-${layout} ${layout === 'pip' ? `pip-${pipThumbnailSize}` : ''} animate-fade-in ${!sidebarVisible && !isMobile ? 'h-[100vh] gap-0' : ''}`}>
       {streams.map((stream, index) => {
         const progress = unmutingProgress[stream.id] || 0;
         const isHovering = hoveringStream === stream.id;
@@ -749,7 +750,7 @@ export default function HomePage() {
             </div>
 
             <iframe
-              key={`${stream.id}-${stream.isMuted}`}
+              key={stream.id}
               src={getPlatformEmbed(stream.url, stream.platform, stream.isMuted)}
               width="100%"
               height="100%"
@@ -805,51 +806,30 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Hold to Unmute Overlay */}
+
+            {/* Mute/Unmute Toggle Button */}
             {stream.isMuted && isHovering && (
               <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-4 animate-fade-in z-10"
+                className="absolute top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
               >
-                <div className="relative w-24 h-24">
-                  <svg className="w-24 h-24 transform -rotate-90">
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="45"
-                      fill="none"
-                      stroke="hsl(var(--border))"
-                      strokeWidth="4"
-                    />
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="45"
-                      fill="none"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="4"
-                      strokeDasharray={`${2 * Math.PI * 45}`}
-                      strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
-                      className="transition-all duration-100"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <VolumeX className="w-10 h-10 text-white" />
-                  </div>
-                </div>
-
-                <div className="absolute bottom-8 left-0 right-0 text-center">
-                  <p className="text-sm font-medium text-white drop-shadow-lg">
-                    Hold to unmute
-                  </p>
-                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleMute(stream.id);
+                  }}
+                  className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center shadow-lg hover:scale-110 hover:bg-red-500 transition-transform cursor-pointer"
+                >
+                  <VolumeX className="w-5 h-5 text-white" />
+                </button>
               </div>
             )}
+
 
             {/* Unmuted indicator */}
             {!stream.isMuted && (
               <div
-                className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                className="absolute top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
               >
                 <button
@@ -881,7 +861,19 @@ export default function HomePage() {
         }))}
       />
 
-      <div className="flex min-h-screen bg-[hsl(var(--background))] animate-fade-in relative max-w-screen overflow-x-hidden">
+      <div className="flex h-screen bg-[hsl(var(--background))] animate-fade-in relative max-w-screen overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/major-bg.png"
+            alt="Background"
+            fill
+            className="object-cover opacity-25"
+            priority
+            unoptimized
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/80 to-black/60" />
+        </div>
         {/* Mobile backdrop */}
         {isMobile && sidebarVisible && (
           <div
@@ -904,17 +896,31 @@ export default function HomePage() {
           onAddStream={addStreamFromCommandPalette}
           onLayoutChange={changeLayout}
           onShareSetup={shareSetup}
+          onPipThumbnailSizeChange={setPipThumbnailSize}
+          pipThumbnailSize={pipThumbnailSize}
           commandPaletteRef={commandPaletteRef}
           layoutConfigs={layoutConfigs}
+          eventLogo="/major-budapest-2025.png"
         />
 
-
         {/* Main Content */}
-        <main className={`flex-1 p-4 lg:p-6 overflow-y-auto transition-all duration-300 ${chatPanelVisible ? (isMobile ? 'mr-80' : 'mr-96') : ''
-          }`}>
-          <div className="max-w-[1800px] mx-auto">
+        <main className={`flex-1 overflow-y-auto transition-all duration-300 relative z-10 
+          ${chatPanelVisible ? (isMobile ? 'mr-80' : 'mr-96') : ''}
+          ${!sidebarVisible && !isMobile ? 'p-0' : 'p-4 lg:p-6'}
+        `}>
+          <div className={`${!sidebarVisible && !isMobile ? 'h-full w-full' : 'max-w-[1800px] mx-auto'}`}>
+            {/* Hover Trigger Area for Auto-Hide Header */}
+            {!sidebarVisible && !isMobile && (
+              <div className="fixed top-0 left-0 right-0 h-4 z-50 peer" />
+            )}
+
             {/* Header */}
-            <div className="mb-4 animate-slide-up">
+            <div className={`
+              animate-slide-up relative z-20 transition-all duration-300 ease-out
+              ${!sidebarVisible && !isMobile
+                ? 'fixed top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/90 via-black/60 to-transparent z-50 transform -translate-y-full hover:translate-y-0 peer-hover:translate-y-0'
+                : 'mb-4'}
+            `}>
               <div className="flex items-center gap-3">
                 {/* Toggle Sidebar Button - Hamburger on mobile, chevron on desktop */}
                 <button
@@ -938,19 +944,10 @@ export default function HomePage() {
                   )}
                 </button>
 
-
-                {/* Triboneira Button - Mobile only, when sidebar is hidden or no streams */}
-                {isMobile && (!sidebarVisible || streams.length === 0) && (
-                  <Link
-                    href="/major/budapest-2025/triboneira"
-                    className="fixed top-4 right-4 z-30 px-4 h-12 rounded-xl bg-gradient-to-r from-red-600 to-red-700 shadow-lg flex items-center gap-2 hover:scale-105 transition-all border border-white/10"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-white shadow-[0_0_5px_rgba(255,255,255,0.8)] animate-pulse" />
-                    <span className="text-white font-bold text-sm">TRIBONEIRA</span>
-                  </Link>
-                )}
-
-
+                {/* Live Matches in Header - Centered */}
+                <div className="flex-1 flex justify-center px-4">
+                  <HeaderLiveMatches externalId={eventId} />
+                </div>
 
                 {/* Share Setup Button */}
                 {streams.length > 0 && (
@@ -965,6 +962,15 @@ export default function HomePage() {
                       ) : (
                         <Share2 className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
                       )}
+                    </button>
+
+                    {/* Event Info Button */}
+                    <button
+                      onClick={() => setEventInfoModalOpen(true)}
+                      className="w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
+                      title="Event Info"
+                    >
+                      <BarChart3 className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
                     </button>
 
                     {/* Chat Button */}
@@ -1178,56 +1184,6 @@ export default function HomePage() {
           </DialogContent>
         </Dialog >
 
-        {/* Footer com links legais */}
-        < footer className="fixed bottom-0 left-0 right-0 bg-[hsl(var(--background))]/80 backdrop-blur-sm border-t border-[hsl(var(--border))] z-40" >
-          <div className="max-w-7xl mx-auto px-4 py-3">
-            <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-[hsl(var(--muted-foreground))]">
-              <span>© 2025 Entrega Newba</span>
-              <span className="text-[hsl(var(--border))]">•</span>
-              <Link
-                href="/about"
-                className="hover:text-[hsl(var(--foreground))] transition-colors"
-              >
-                Sobre
-              </Link>
-              <span className="text-[hsl(var(--border))]">•</span>
-              <Link
-                href="/guides"
-                className="hover:text-[hsl(var(--foreground))] transition-colors"
-              >
-                Guias
-              </Link>
-              <span className="text-[hsl(var(--border))]">•</span>
-              <Link
-                href="/faq"
-                className="hover:text-[hsl(var(--foreground))] transition-colors"
-              >
-                FAQ
-              </Link>
-              <span className="text-[hsl(var(--border))]">•</span>
-              <Link
-                href="/privacy"
-                className="hover:text-[hsl(var(--foreground))] transition-colors"
-              >
-                Privacidade
-              </Link>
-              <span className="text-[hsl(var(--border))]">•</span>
-              <Link
-                href="/terms"
-                className="hover:text-[hsl(var(--foreground))] transition-colors"
-              >
-                Termos
-              </Link>
-              <span className="text-[hsl(var(--border))]">•</span>
-              <a
-                href="mailto:contato@entreganewba.com.br"
-                className="hover:text-[hsl(var(--foreground))] transition-colors"
-              >
-                Contato
-              </a>
-            </div>
-          </div>
-        </footer >
       </div >
 
       {/* Chat Panel */}
@@ -1240,6 +1196,13 @@ export default function HomePage() {
         isVisible={chatPanelVisible}
         onToggle={() => setChatPanelVisible(!chatPanelVisible)}
         compact={isMobile}
+      />
+
+      {/* Event Info Modal */}
+      <EventInfoModal
+        externalId={eventId}
+        open={eventInfoModalOpen}
+        onClose={() => setEventInfoModalOpen(false)}
       />
     </>
   );
