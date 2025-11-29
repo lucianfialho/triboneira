@@ -35,7 +35,6 @@ export interface StreamGridProps {
 
   // Stream interactions
   hoveringStream: string | null;
-  unmutingProgress: Record<string, number>;
   onStreamHover: (id: string, isHovering: boolean) => void;
   onStreamClick: (id: string) => void;
 
@@ -46,9 +45,6 @@ export interface StreamGridProps {
 
   // Mute toggle
   onToggleMute?: (id: string) => void;
-
-  // Hold to unmute mode (para página principal)
-  holdToUnmuteMode?: boolean;
 }
 
 export function StreamGrid({
@@ -63,14 +59,12 @@ export function StreamGrid({
   onDrop,
   onDragEnd,
   hoveringStream,
-  unmutingProgress,
   onStreamHover,
   onStreamClick,
   getPlatformEmbed,
   getPlatformColor,
   getPlatformIcon,
   onToggleMute,
-  holdToUnmuteMode = false,
 }: StreamGridProps) {
   return (
     <div
@@ -79,7 +73,6 @@ export function StreamGrid({
       }`}
     >
       {streams.map((stream, index) => {
-        const progress = unmutingProgress[stream.id] || 0;
         const isHovering = hoveringStream === stream.id;
 
         return (
@@ -179,49 +172,8 @@ export function StreamGrid({
               </div>
             )}
 
-            {/* Hold to Unmute Overlay (modo página principal) */}
-            {holdToUnmuteMode && stream.isMuted && isHovering && (
-              <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-4 animate-fade-in z-10"
-                style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
-              >
-                <div className="relative w-24 h-24">
-                  <svg className="w-24 h-24 transform -rotate-90">
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="45"
-                      fill="none"
-                      stroke="hsl(var(--border))"
-                      strokeWidth="4"
-                    />
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="45"
-                      fill="none"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="4"
-                      strokeDasharray={`${2 * Math.PI * 45}`}
-                      strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
-                      className="transition-all duration-100"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <VolumeX className="w-10 h-10 text-white" />
-                  </div>
-                </div>
-
-                <div className="absolute bottom-8 left-0 right-0 text-center">
-                  <p className="text-sm font-medium text-white drop-shadow-lg">
-                    Hold to unmute
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Mute/Unmute Toggle Button (modo template de evento) */}
-            {!holdToUnmuteMode && onToggleMute && stream.isMuted && isHovering && (
+            {/* Mute/Unmute Toggle Button - Sempre visível no hover */}
+            {onToggleMute && (
               <div
                 className="absolute top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
@@ -231,45 +183,19 @@ export function StreamGrid({
                     e.stopPropagation();
                     onToggleMute(stream.id);
                   }}
-                  className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center shadow-lg hover:scale-110 hover:bg-red-500 transition-transform cursor-pointer"
+                  className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all cursor-pointer ${
+                    stream.isMuted
+                      ? 'bg-red-600 hover:bg-red-500'
+                      : 'bg-[hsl(217_91%_60%)] hover:bg-[hsl(217_91%_55%)]'
+                  }`}
+                  title={stream.isMuted ? 'Desmutar' : 'Mutar'}
                 >
-                  <VolumeX className="w-5 h-5 text-white" />
+                  {stream.isMuted ? (
+                    <VolumeX className="w-5 h-5 text-white" />
+                  ) : (
+                    <Volume2 className="w-5 h-5 text-white" />
+                  )}
                 </button>
-              </div>
-            )}
-
-            {/* Unmuted indicator */}
-            {onToggleMute && !stream.isMuted && (
-              <div
-                className={`absolute ${holdToUnmuteMode ? 'bottom-3 right-3' : 'top-3 left-1/2 -translate-x-1/2'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-                style={{ pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto' }}
-              >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleMute(stream.id);
-                  }}
-                  className="w-10 h-10 rounded-full bg-[hsl(217_91%_60%)] flex items-center justify-center shadow-lg hover:scale-110 hover:bg-[hsl(217_91%_55%)] transition-transform cursor-pointer"
-                >
-                  <Volume2 className="w-5 h-5 text-white" />
-                </button>
-              </div>
-            )}
-
-            {/* Unmuting Progress (if applicable) */}
-            {progress > 0 && progress < 100 && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-30">
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 shadow-2xl">
-                  <div className="w-48 h-2 bg-white/20 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <p className="text-white text-sm mt-3 text-center">
-                    Unmuting... {Math.round(progress)}%
-                  </p>
-                </div>
               </div>
             )}
           </div>

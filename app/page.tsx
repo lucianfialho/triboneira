@@ -181,7 +181,6 @@ export default function HomePage() {
   const [inputUrl, setInputUrl] = useState('');
   const [layout, setLayout] = useState<LayoutType>('grid');
   const [hoveringStream, setHoveringStream] = useState<string | null>(null);
-  const [unmutingProgress, setUnmutingProgress] = useState<Record<string, number>>({});
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [chatPanelVisible, setChatPanelVisible] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -715,14 +714,12 @@ export default function HomePage() {
       onDrop={handleDrop}
       onDragEnd={handleDragEnd}
       hoveringStream={hoveringStream}
-      unmutingProgress={unmutingProgress}
       onStreamHover={handleStreamHover}
       onStreamClick={handleStreamClick}
       getPlatformEmbed={getPlatformEmbed}
       getPlatformColor={getPlatformColor}
       getPlatformIcon={getPlatformIcon}
       onToggleMute={toggleMute}
-      holdToUnmuteMode={true}
     />
   );
 

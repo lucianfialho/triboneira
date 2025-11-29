@@ -200,7 +200,6 @@ export function EventPageTemplate({
   const [inputUrl, setInputUrl] = useState('');
   const [layout, setLayout] = useState<LayoutType>('grid');
   const [hoveringStream, setHoveringStream] = useState<string | null>(null);
-  const [unmutingProgress, setUnmutingProgress] = useState<Record<string, number>>({});
   const [sidebarVisible, setSidebarVisible] = useState(() => {
     // Initialize sidebar as hidden on mobile devices
     if (typeof window !== 'undefined') {
@@ -738,7 +737,6 @@ export function EventPageTemplate({
       onDrop={handleDrop}
       onDragEnd={handleDragEnd}
       hoveringStream={hoveringStream}
-      unmutingProgress={unmutingProgress}
       onStreamHover={handleStreamHover}
       onStreamClick={handleStreamClick}
       getPlatformEmbed={getPlatformEmbed}
