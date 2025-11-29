@@ -59,7 +59,6 @@ export interface SidebarProps {
     loadingTopStreamers: boolean;
     copied: boolean;
     totalViewers: number;
-    pipThumbnailSize?: 'small' | 'medium' | 'large';
 
     // Callbacks
     onToggleSidebar: () => void;
@@ -67,7 +66,6 @@ export interface SidebarProps {
     onRemoveStream?: (id: string) => void;
     onLayoutChange: (layout: LayoutType) => void;
     onShareSetup: () => void;
-    onPipThumbnailSizeChange?: (size: 'small' | 'medium' | 'large') => void;
 
     // Refs
     commandPaletteRef: RefObject<CommandPaletteRef | null>;
@@ -89,13 +87,11 @@ export function Sidebar({
     loadingTopStreamers,
     copied,
     totalViewers,
-    pipThumbnailSize,
     onToggleSidebar,
     onAddStream,
     onRemoveStream,
     onLayoutChange,
     onShareSetup,
-    onPipThumbnailSizeChange,
     commandPaletteRef,
     layoutConfigs,
     headerContent,
@@ -401,33 +397,6 @@ export function Sidebar({
                 </div>
             </div>
 
-            {/* PIP Thumbnail Size */}
-            {
-                layout === 'pip' && onPipThumbnailSizeChange && pipThumbnailSize && (
-                    <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-2">
-                            <Maximize2 className="w-4 h-4 text-[hsl(var(--primary))]" />
-                            <h3 className="text-xs font-semibold text-[hsl(var(--foreground))]">Thumbnail Size</h3>
-                        </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            {(['small', 'medium', 'large'] as const).map((size) => (
-                                <Button
-                                    key={size}
-                                    variant={pipThumbnailSize === size ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => onPipThumbnailSizeChange(size)}
-                                    className={`h-12 text-xs capitalize transition-all px-3 py-2 ${pipThumbnailSize === size
-                                        ? 'bg-[hsl(217_91%_60%)] text-white border-0'
-                                        : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
-                                        }`}
-                                >
-                                    {size}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-                )
-            }
             </div>
         </aside >
     );

@@ -198,7 +198,7 @@ export function EventPageTemplate({
   });
 
   const [inputUrl, setInputUrl] = useState('');
-  const [layout, setLayout] = useState<LayoutType>('main-side');
+  const [layout, setLayout] = useState<LayoutType>('grid');
   const [hoveringStream, setHoveringStream] = useState<string | null>(null);
   const [unmutingProgress, setUnmutingProgress] = useState<Record<string, number>>({});
   const [sidebarVisible, setSidebarVisible] = useState(() => {
@@ -215,7 +215,6 @@ export function EventPageTemplate({
   const [loadingTopStreamers, setLoadingTopStreamers] = useState(false);
   const [selectedStreamers, setSelectedStreamers] = useState<Set<string>>(new Set());
   const [showEventInfo, setShowEventInfo] = useState(false);
-  const [pipThumbnailSize, setPipThumbnailSize] = useState<'small' | 'medium' | 'large'>('medium');
 
   // Drag and drop states
   const [draggedStreamIndex, setDraggedStreamIndex] = useState<number | null>(null);
@@ -797,8 +796,6 @@ export function EventPageTemplate({
           onRemoveStream={removeStream}
           onLayoutChange={changeLayout}
           onShareSetup={shareSetup}
-          onPipThumbnailSizeChange={setPipThumbnailSize}
-          pipThumbnailSize={pipThumbnailSize}
           commandPaletteRef={commandPaletteRef}
           layoutConfigs={layoutConfigs}
           eventLogo="/major-budapest-2025.png"
