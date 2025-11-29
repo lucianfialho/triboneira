@@ -1,7 +1,7 @@
 import { ContentTrigger } from './types';
 import { getContentGenerator } from './content-generator';
 import { getContentQueue } from './content-queue';
-import { detectUpset, detectOvertimes, detectEpicSeries } from '../../jobs/analysis/detect-upsets';
+// import { detectUpset, detectOvertimes, detectEpicSeries } from '../../jobs/analysis/detect-upsets'; // Moved to cron-service
 
 /**
  * Event Handlers
@@ -31,66 +31,69 @@ export async function handleMatchFinished(matchId: number, matchData: any): Prom
   queue.enqueueBatch(matchResultContent);
   console.log(`  ✅ Generated ${matchResultContent.length} match result posts`);
 
-  // 2. Check for upset
-  const upset = await detectUpset(matchId);
-  if (upset && upset.isUpset && upset.rankDifference >= 10) {
-    console.log(`  🔥 UPSET DETECTED! ${upset.underdog.name} beats ${upset.favorite.name}`);
+  // NOTE: Upset/overtime/epic series detection moved to cron-service
+  // Uncomment and implement these when integrating with cron-service
 
-    const upsetTrigger: ContentTrigger = {
-      event: 'upset.detected',
-      data: {
-        ...upset,
-        matchId,
-        score: matchData.score,
-      },
-      timestamp: new Date(),
-      priority: 'high',
-    };
+  // // 2. Check for upset
+  // const upset = await detectUpset(matchId);
+  // if (upset && upset.isUpset && upset.rankDifference >= 10) {
+  //   console.log(`  🔥 UPSET DETECTED! ${upset.underdog.name} beats ${upset.favorite.name}`);
 
-    const upsetContent = await generator.generateFromTrigger(upsetTrigger);
-    queue.enqueueBatch(upsetContent);
-    console.log(`  ✅ Generated ${upsetContent.length} upset posts`);
-  }
+  //   const upsetTrigger: ContentTrigger = {
+  //     event: 'upset.detected',
+  //     data: {
+  //       ...upset,
+  //       matchId,
+  //       score: matchData.score,
+  //     },
+  //     timestamp: new Date(),
+  //     priority: 'high',
+  //   };
 
-  // 3. Check for overtime
-  const overtime = await detectOvertimes(matchId);
-  if (overtime && overtime.totalOvertimes > 0) {
-    console.log(`  ⏱️  OVERTIME DETECTED! ${overtime.totalOvertimes} maps went to OT`);
+  //   const upsetContent = await generator.generateFromTrigger(upsetTrigger);
+  //   queue.enqueueBatch(upsetContent);
+  //   console.log(`  ✅ Generated ${upsetContent.length} upset posts`);
+  // }
 
-    const overtimeTrigger: ContentTrigger = {
-      event: 'overtime.detected',
-      data: {
-        ...overtime,
-        matchId,
-      },
-      timestamp: new Date(),
-      priority: 'high',
-    };
+  // // 3. Check for overtime
+  // const overtime = await detectOvertimes(matchId);
+  // if (overtime && overtime.totalOvertimes > 0) {
+  //   console.log(`  ⏱️  OVERTIME DETECTED! ${overtime.totalOvertimes} maps went to OT`);
 
-    const overtimeContent = await generator.generateFromTrigger(overtimeTrigger);
-    queue.enqueueBatch(overtimeContent);
-    console.log(`  ✅ Generated ${overtimeContent.length} overtime posts`);
-  }
+  //   const overtimeTrigger: ContentTrigger = {
+  //     event: 'overtime.detected',
+  //     data: {
+  //       ...overtime,
+  //       matchId,
+  //     },
+  //     timestamp: new Date(),
+  //     priority: 'high',
+  //   };
 
-  // 4. Check for epic series
-  const epicSeries = await detectEpicSeries(matchId);
-  if (epicSeries) {
-    console.log(`  💥 EPIC SERIES DETECTED! Went to map ${epicSeries.totalMaps}`);
+  //   const overtimeContent = await generator.generateFromTrigger(overtimeTrigger);
+  //   queue.enqueueBatch(overtimeContent);
+  //   console.log(`  ✅ Generated ${overtimeContent.length} overtime posts`);
+  // }
 
-    const epicSeriesTrigger: ContentTrigger = {
-      event: 'epic-series.detected',
-      data: {
-        ...epicSeries,
-        matchId,
-      },
-      timestamp: new Date(),
-      priority: 'high',
-    };
+  // // 4. Check for epic series
+  // const epicSeries = await detectEpicSeries(matchId);
+  // if (epicSeries) {
+  //   console.log(`  💥 EPIC SERIES DETECTED! Went to map ${epicSeries.totalMaps}`);
 
-    const epicSeriesContent = await generator.generateFromTrigger(epicSeriesTrigger);
-    queue.enqueueBatch(epicSeriesContent);
-    console.log(`  ✅ Generated ${epicSeriesContent.length} epic series posts`);
-  }
+  //   const epicSeriesTrigger: ContentTrigger = {
+  //     event: 'epic-series.detected',
+  //     data: {
+  //       ...epicSeries,
+  //       matchId,
+  //     },
+  //     timestamp: new Date(),
+  //     priority: 'high',
+  //   };
+
+  //   const epicSeriesContent = await generator.generateFromTrigger(epicSeriesTrigger);
+  //   queue.enqueueBatch(epicSeriesContent);
+  //   console.log(`  ✅ Generated ${epicSeriesContent.length} epic series posts`);
+  // }
 
   console.log(`✅ Match ${matchId} processing complete\n`);
 }

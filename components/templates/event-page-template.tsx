@@ -382,7 +382,7 @@ export function EventPageTemplate({
         const streams = initialStreams(isMobileDevice);
 
         setStreams(streams);
-        setLayout(isMobileDevice ? 'grid' : 'pip');
+        setLayout('grid');
       }
     } catch (error) {
       console.error('Error loading streams:', error);

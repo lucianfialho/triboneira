@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Users, VolumeX, Volume2 } from 'lucide-react';
 import type { LayoutType } from '@/components/sidebar';
 
@@ -41,7 +42,7 @@ export interface StreamGridProps {
   // Platform utilities
   getPlatformEmbed: (url: string, platform: Platform, isMuted: boolean) => string;
   getPlatformColor: (platform: Platform) => string;
-  getPlatformIcon: (platform: Platform) => JSX.Element;
+  getPlatformIcon: (platform: Platform) => React.ReactElement;
 
   // Mute toggle
   onToggleMute?: (id: string) => void;
