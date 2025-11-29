@@ -47,15 +47,17 @@ export async function GET(
                 isNotNull(matches.team1Id),
             ];
 
-            // Add date filters for scheduled matches (next 7 days)
+            // Add date filters for scheduled matches (today + next 7 days)
             if (status === 'scheduled') {
                 const now = new Date();
+                // Start of today (00:00)
+                const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 const sevenDaysFromNow = new Date();
                 sevenDaysFromNow.setDate(now.getDate() + 7);
 
                 conditions.push(
                     isNotNull(matches.date),
-                    gte(matches.date, now),
+                    gte(matches.date, startOfToday), // Include all matches from today onwards
                     lte(matches.date, sevenDaysFromNow)
                 );
             }
