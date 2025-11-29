@@ -184,6 +184,7 @@ export default function HomePage() {
   const [streams, setStreams] = useState<Stream[]>([]);
   const [inputUrl, setInputUrl] = useState('');
   const [layout, setLayout] = useState<LayoutType>('grid');
+  const [pipThumbnailSize, setPipThumbnailSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [hoveringStream, setHoveringStream] = useState<string | null>(null);
   const [unmutingProgress, setUnmutingProgress] = useState<Record<string, number>>({});
   const [sidebarVisible, setSidebarVisible] = useState(true);
