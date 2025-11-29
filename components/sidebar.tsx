@@ -104,13 +104,13 @@ export function Sidebar({
     return (
         <aside
             className={`
-        sidebar animate-slide-up transition-all duration-300
+        sidebar animate-slide-up transition-all duration-300 flex flex-col
         ${!sidebarVisible ? '-translate-x-full w-0 p-0 border-none overflow-hidden' : 'translate-x-0'}
-        ${isMobile ? 'fixed inset-y-0 left-0 z-50 w-full md:w-80' : 'relative'}
+        ${isMobile ? 'fixed inset-y-0 left-0 z-50 w-full md:w-80' : 'relative h-screen'}
       `}
         >
             {/* Header & Logo Section */}
-            <div className="p-4 border-b border-[hsl(var(--border))] relative">
+            <div className="p-4 border-b border-[hsl(var(--border))] relative flex-shrink-0">
                 {headerContent ? (
                     <>
                         {isMobile && (
@@ -143,10 +143,12 @@ export function Sidebar({
                 )}
             </div>
 
-            {/* Total Viewers Counter */}
-            {
-                streams.length > 0 && (
-                    <div className="glass-card p-4 animate-scale-in">
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4 p-4">
+                {/* Total Viewers Counter */}
+                {
+                    streams.length > 0 && (
+                        <div className="glass-card p-4 animate-scale-in">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-lg bg-[hsl(217_91%_60%)] flex items-center justify-center">
@@ -368,7 +370,7 @@ export function Sidebar({
                     <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Layout</h2>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                     {(Object.keys(layoutConfigs) as LayoutType[]).map((layoutType) => {
                         const config = layoutConfigs[layoutType];
                         const Icon = config.icon;
@@ -380,17 +382,17 @@ export function Sidebar({
                                 variant={isActive ? 'default' : 'outline'}
                                 size="sm"
                                 onClick={() => onLayoutChange(layoutType)}
-                                className={`h-20 flex flex-col gap-1 transition-all ${isActive
+                                className={`h-20 flex flex-col gap-1.5 transition-all px-3 py-2 ${isActive
                                     ? 'bg-[hsl(217_91%_60%)] text-white border-0 shadow-lg'
                                     : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
                                     }`}
                                 title={config.description}
                             >
-                                <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`} />
-                                <span className={`text-xs font-medium ${isActive ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`}>
+                                <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`} />
+                                <span className={`text-xs font-medium leading-tight text-center ${isActive ? 'text-white' : 'text-[hsl(var(--muted-foreground))]'}`}>
                                     {config.label}
                                 </span>
-                                <span className={`text-[10px] ${isActive ? 'text-white/70' : 'text-[hsl(var(--subtle-foreground))]'}`}>
+                                <span className={`text-[10px] leading-tight text-center ${isActive ? 'text-white/70' : 'text-[hsl(var(--subtle-foreground))]'}`}>
                                     {config.description}
                                 </span>
                             </Button>
@@ -407,14 +409,14 @@ export function Sidebar({
                             <Maximize2 className="w-4 h-4 text-[hsl(var(--primary))]" />
                             <h3 className="text-xs font-semibold text-[hsl(var(--foreground))]">Thumbnail Size</h3>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-3 gap-3">
                             {(['small', 'medium', 'large'] as const).map((size) => (
                                 <Button
                                     key={size}
                                     variant={pipThumbnailSize === size ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => onPipThumbnailSizeChange(size)}
-                                    className={`h-10 text-xs capitalize transition-all ${pipThumbnailSize === size
+                                    className={`h-12 text-xs capitalize transition-all px-3 py-2 ${pipThumbnailSize === size
                                         ? 'bg-[hsl(217_91%_60%)] text-white border-0'
                                         : 'bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))] hover:border-[hsl(var(--border-strong))]'
                                         }`}
@@ -426,6 +428,7 @@ export function Sidebar({
                     </div>
                 )
             }
+            </div>
         </aside >
     );
 }

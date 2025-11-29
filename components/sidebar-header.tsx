@@ -10,7 +10,7 @@ interface SidebarHeaderProps {
 export function SidebarHeader({ isMobile, onClose }: SidebarHeaderProps) {
     return (
         <div className="flex items-center gap-3 animate-scale-in">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg relative">
+            <Link href="/" className="w-10 h-10 rounded-xl overflow-hidden shadow-lg relative hover:opacity-80 transition-opacity">
                 <Image
                     src="/android-chrome-192x192.png"
                     alt="Entrega Newba"
@@ -19,10 +19,12 @@ export function SidebarHeader({ isMobile, onClose }: SidebarHeaderProps) {
                     className="object-cover"
                     unoptimized
                 />
-            </div>
+            </Link>
             <div className="flex-1">
-                <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">Entrega Newba</h1>
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">Watch smarter, not harder</p>
+                <Link href="/" className="hover:opacity-80 transition-opacity">
+                    <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">Entrega Newba</h1>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))]">Watch smarter, not harder</p>
+                </Link>
             </div>
 
             {/* Close button - Mobile only */}
