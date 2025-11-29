@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     description: 'Assista múltiplas transmissões ao vivo de Twitch, YouTube e Kick simultaneamente. Layouts flexíveis, descoberta de streamers e totalmente gratuito!',
     images: [
       {
-        url: '/og-image.png',
+        url: '/10.png',
         width: 1200,
         height: 630,
         alt: 'Entrega Newba - Multistream Viewer',
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Entrega Newba - Assista Múltiplas Lives Simultaneamente',
     description: 'Assista múltiplas transmissões ao vivo de Twitch, YouTube e Kick simultaneamente. Totalmente gratuito!',
-    images: ['/og-image.png'],
+    images: ['/10.png'],
     creator: '@entreganewba',
   },
   icons: {
