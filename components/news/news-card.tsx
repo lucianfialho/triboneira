@@ -1,7 +1,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { NewsItem } from '@/types/news';
-import { Calendar, ExternalLink } from 'lucide-react';
+import { Calendar, ExternalLink, Globe } from 'lucide-react';
+import {
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface NewsCardProps {
     news: NewsItem;
@@ -18,11 +23,8 @@ export function NewsCard({ news, compact = false }: NewsCardProps) {
         })
         : '';
 
-    return (
-        <Link
-            href={`/news/${news.id}`}
-            className="group block bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] rounded-xl overflow-hidden hover:border-[hsl(var(--primary))] transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-        >
+    const CardContent = (
+        <div className={`group block bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] rounded-xl overflow-hidden hover:border-[hsl(var(--primary))] transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-default`}>
             <div className={`flex ${compact ? 'gap-3' : 'gap-4'} p-3`}>
                 {/* Image */}
                 {news.imageUrl && (
@@ -45,8 +47,8 @@ export function NewsCard({ news, compact = false }: NewsCardProps) {
                             </h3>
                         </div>
 
-                        {/* Summary Bullets Preview - Only show 1 if not compact */}
-                        {!compact && news.summaryBullets && news.summaryBullets.length > 0 && (
+                        {/* Summary Bullets Preview - Only show 1 if not compact AND not translated (since translated shows on hover) */}
+                        {!compact && !news.isTranslated && news.summaryBullets && news.summaryBullets.length > 0 && (
                             <p className="text-xs text-[hsl(var(--muted-foreground))] line-clamp-1 mb-2">
                                 • {news.summaryBullets[0].text}
                             </p>
@@ -69,6 +71,56 @@ export function NewsCard({ news, compact = false }: NewsCardProps) {
                     </div>
                 </div>
             </div>
-        </Link>
+        </div>
+    );
+
+    if (news.isTranslated) {
+        return (
+            <HoverCard openDelay={200}>
+                <HoverCardTrigger asChild>
+                    {CardContent}
+                </HoverCardTrigger>
+                <HoverCardContent className="w-80 bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))]">
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <span className="w-1 h-4 bg-[hsl(var(--primary))] rounded-full" />
+                            <h4 className="text-sm font-semibold text-[hsl(var(--foreground))]">Resumo Rápido</h4>
+                        </div>
+                        {news.summaryBullets && news.summaryBullets.length > 0 ? (
+                            <ul className="space-y-2">
+                                {news.summaryBullets.map((bullet, idx) => (
+                                    <li key={idx} className="flex items-start gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+                                        <span className="mt-1.5 w-1 h-1 rounded-full bg-[hsl(var(--primary))] shrink-0 opacity-50" />
+                                        <span className="leading-relaxed">{bullet.text}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-xs text-[hsl(var(--muted-foreground))]">Resumo indisponível.</p>
+                        )}
+                        <div className="pt-2 border-t border-[hsl(var(--border))] flex justify-end">
+                            <Link
+                                href={`/news/${news.id}`}
+                                className="text-xs text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
+                            >
+                                Ler completa <ExternalLink className="w-3 h-3" />
+                            </Link>
+                        </div>
+                    </div>
+                </HoverCardContent>
+            </HoverCard>
+        );
+    }
+
+    // Fallback for non-translated news: Link to external source
+    return (
+        <a
+            href={news.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block"
+        >
+            {CardContent}
+        </a>
     );
 }
