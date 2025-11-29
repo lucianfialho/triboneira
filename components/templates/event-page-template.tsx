@@ -131,7 +131,7 @@ const getPlatformIcon = (platform: Platform) => {
 // Layout Configurations
 const layoutConfigs = {
   'single': { icon: Square, label: 'Single', description: '1 stream full' },
-  'focused': { icon: Layout, label: 'Focused', description: '1 large + grid' },
+  'triple': { icon: Layout, label: 'Triple', description: '1 large + 2' },
   'grid': { icon: Grid2x2, label: 'Grid', description: 'Equal grid' },
   'cinema': { icon: Film, label: 'Cinema', description: '1 wide + stack' },
 };

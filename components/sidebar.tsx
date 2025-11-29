@@ -30,7 +30,7 @@ const formatViewerCount = (count: number): string => {
 };
 
 // Type imports
-export type LayoutType = 'single' | 'focused' | 'grid' | 'cinema';
+export type LayoutType = 'single' | 'triple' | 'grid' | 'cinema';
 
 export interface TopStreamer {
     id: string;

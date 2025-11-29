@@ -244,31 +244,28 @@
     @apply grid grid-cols-1 gap-6;
   }
 
-  /* Apply 16:9 aspect ratio to streams */
-  .layout-focused > *:first-child {
-    aspect-ratio: 16 / 9;
-  }
-
-  .layout-focused > *:not(:first-child) {
-    aspect-ratio: 16 / 9;
-    max-height: 350px;
-  }
-
   /* Grid and single layouts keep 16:9 for uniformity */
   .layout-grid .stream-container,
   .layout-single .stream-container {
     aspect-ratio: 16 / 9;
   }
 
-  .layout-focused {
+  /* Triple Layout - 2 large stacked on left + 2 thumbnails stacked on right */
+  .layout-triple {
     @apply grid gap-4;
     grid-template-columns: 2fr 1fr;
-    grid-auto-rows: auto;
+    grid-template-rows: 1fr 1fr;
     align-items: start;
   }
 
-  .layout-focused>*:first-child {
-    grid-row: span 2;
+  .layout-triple > *:first-child,
+  .layout-triple > *:nth-child(2) {
+    aspect-ratio: 16 / 9;
+  }
+
+  .layout-triple > *:nth-child(3),
+  .layout-triple > *:nth-child(4) {
+    aspect-ratio: 16 / 9;
   }
 
   .layout-grid {
@@ -299,18 +296,19 @@
   /* Responsive adjustments */
   @media (max-width: 1024px) {
 
-    .layout-focused,
+    .layout-triple,
     .layout-grid,
     .layout-cinema {
       @apply grid-cols-1;
     }
 
-    .layout-focused,
+    .layout-triple,
     .layout-cinema {
       grid-template-columns: 1fr;
+      grid-template-rows: auto;
     }
 
-    .layout-focused>*:first-child,
+    .layout-triple>*:first-child,
     .layout-cinema>*:first-child {
       grid-row: auto;
       max-height: 600px;
@@ -342,10 +340,6 @@
 
     .layout-grid {
       grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-    }
-
-    .layout-focused {
-      grid-template-columns: 3fr 1fr;
     }
 
     .layout-cinema > *:first-child {
