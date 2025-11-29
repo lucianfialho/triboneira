@@ -902,6 +902,7 @@ export default function HomePage() {
           totalViewers={totalViewers}
           onToggleSidebar={() => setSidebarVisible(!sidebarVisible)}
           onAddStream={addStreamFromCommandPalette}
+          onRemoveStream={removeStream}
           onLayoutChange={changeLayout}
           onShareSetup={shareSetup}
           commandPaletteRef={commandPaletteRef}
