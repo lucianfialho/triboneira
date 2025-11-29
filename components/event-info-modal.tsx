@@ -150,40 +150,7 @@ export default function EventInfoModal({ externalId, open, onClose }: EventInfoM
 
 import { MatchCard } from '@/components/match-card';
 
-// News Card Component
-function NewsCard({ news }: { news: any }) {
-    const formatRelativeTime = (date: string | null) => {
-        if (!date) return '';
-        const now = new Date();
-        const published = new Date(date);
-        const diffInHours = Math.floor((now.getTime() - published.getTime()) / (1000 * 60 * 60));
-
-        if (diffInHours < 1) return 'Agora';
-        if (diffInHours < 24) return `${diffInHours}h`;
-        const diffInDays = Math.floor(diffInHours / 24);
-        if (diffInDays === 1) return '1d';
-        if (diffInDays < 7) return `${diffInDays}d`;
-        return `${Math.floor(diffInDays / 7)}sem`;
-    };
-
-    return (
-        <a
-            href={news.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="glass-card p-3 hover:bg-[hsl(var(--surface-elevated))] transition-all block group"
-        >
-            <h4 className="text-sm font-semibold text-white mb-1 group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-2">
-                {news.title}
-            </h4>
-            {news.publishedAt && (
-                <p className="text-xs text-[hsl(var(--subtle-foreground))]">
-                    {formatRelativeTime(news.publishedAt)}
-                </p>
-            )}
-        </a>
-    );
-}
+import { NewsCard } from '@/components/news/news-card';
 
 // Matches Tab with Three Sections Layout
 function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; loading: boolean; externalId: string }) {

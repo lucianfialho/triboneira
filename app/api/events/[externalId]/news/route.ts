@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
-import { news, events, eventParticipants, teams } from '@/lib/db/schema';
+import { news, events, eventParticipants, teams, newsTranslations, newsSummaries } from '@/lib/db/schema';
 import { eq, desc, or, and, sql, ilike } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
@@ -69,13 +69,17 @@ export async function GET(
             .select({
                 id: news.id,
                 externalId: news.externalId,
-                title: news.title,
+                originalTitle: news.title,
                 description: news.description,
                 link: news.link,
                 publishedAt: news.publishedAt,
                 country: news.country,
+                translatedTitle: newsTranslations.title,
+                summaryBullets: newsSummaries.bullets,
             })
             .from(news)
+            .leftJoin(newsTranslations, eq(newsTranslations.newsId, news.id))
+            .leftJoin(newsSummaries, eq(newsSummaries.newsId, news.id))
             .where(
                 and(
                     eq(news.gameId, eventData.gameId),
@@ -85,7 +89,20 @@ export async function GET(
             .orderBy(desc(news.publishedAt))
             .limit(limit);
 
-        return NextResponse.json({ news: newsData, totalTeams: teamNames.length });
+        const formattedNews = newsData.map(item => ({
+            id: item.id,
+            externalId: item.externalId,
+            title: item.translatedTitle || item.originalTitle,
+            originalTitle: item.originalTitle,
+            description: item.description,
+            link: item.link,
+            publishedAt: item.publishedAt,
+            country: item.country,
+            isTranslated: !!item.translatedTitle,
+            summaryBullets: item.summaryBullets,
+        }));
+
+        return NextResponse.json({ news: formattedNews, totalTeams: teamNames.length });
     } catch (error: any) {
         console.error('Error fetching news:', error);
         return NextResponse.json(
