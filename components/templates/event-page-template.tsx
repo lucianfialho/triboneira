@@ -23,7 +23,6 @@ import {
   Monitor,
   Video,
   Grid2x2,
-  Columns2,
   Square,
   Youtube,
   Twitch as TwitchIcon,
@@ -33,7 +32,6 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
-  Maximize2,
   Share2,
   Check,
   Play,
@@ -133,8 +131,6 @@ const getPlatformIcon = (platform: Platform) => {
 // Layout Configurations
 const layoutConfigs = {
   'single': { icon: Square, label: 'Single', description: '1 stream full' },
-  'pip': { icon: Maximize2, label: 'PiP', description: '1 main + small' },
-  'main-side': { icon: Columns2, label: 'Sidebar', description: '1 main + side' },
   'focused': { icon: Layout, label: 'Focused', description: '1 large + grid' },
   'grid': { icon: Grid2x2, label: 'Grid', description: 'Equal grid' },
   'cinema': { icon: Film, label: 'Cinema', description: '1 wide + stack' },
@@ -735,7 +731,6 @@ export function EventPageTemplate({
     <StreamGrid
       streams={streams}
       layout={layout}
-      pipThumbnailSize={pipThumbnailSize}
       sidebarVisible={sidebarVisible}
       isMobile={isMobile}
       draggedStreamIndex={draggedStreamIndex}

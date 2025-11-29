@@ -244,78 +244,9 @@
     @apply grid grid-cols-1 gap-6;
   }
 
-  .layout-pip {
-    @apply relative;
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
-    gap: 1.5rem;
-  }
-
-  .layout-pip>*:first-child {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .layout-pip>*:not(:first-child) {
-    position: absolute;
-    z-index: 20;
-    width: 20%;
-    min-width: 300px;
-    box-shadow: var(--shadow-xl);
-  }
-
-  .layout-pip>*:nth-child(2) {
-    bottom: 1.5rem;
-    right: 1.5rem;
-  }
-
-  .layout-pip>*:nth-child(3) {
-    top: 1.5rem;
-    right: 1.5rem;
-    bottom: auto;
-  }
-
-  .layout-pip>*:nth-child(4) {
-    bottom: 1.5rem;
-    left: 1.5rem;
-    right: auto;
-  }
-
-  .layout-pip>*:nth-child(5) {
-    top: 1.5rem;
-    left: 1.5rem;
-    right: auto;
-    bottom: auto;
-  }
-
-  /* PIP Thumbnail Size Variations */
-  .layout-pip.pip-small>*:not(:first-child) {
-    width: 15%;
-    min-width: 250px;
-  }
-
-  .layout-pip.pip-medium>*:not(:first-child) {
-    width: 20%;
-    min-width: 300px;
-  }
-
-  .layout-pip.pip-large>*:not(:first-child) {
-    width: 25%;
-    min-width: 350px;
-  }
-
-  /* Apply 16:9 aspect ratio to primary streams in asymmetric layouts */
-  .layout-main-side > *:first-child,
-  .layout-focused > *:first-child,
-  .layout-pip > *:first-child {
+  /* Apply 16:9 aspect ratio to streams */
+  .layout-focused > *:first-child {
     aspect-ratio: 16 / 9;
-  }
-
-  /* Secondary streams maintain 16:9 aspect ratio */
-  .layout-main-side > *:not(:first-child) {
-    aspect-ratio: 16 / 9;
-    max-height: 400px;
   }
 
   .layout-focused > *:not(:first-child) {
@@ -323,27 +254,10 @@
     max-height: 350px;
   }
 
-  .layout-pip > *:not(:first-child) {
-    height: auto;
-    min-height: 300px;
-  }
-
-  /* Grid and horizontal layouts keep 16:9 for uniformity */
+  /* Grid and single layouts keep 16:9 for uniformity */
   .layout-grid .stream-container,
-  .layout-horizontal .stream-container,
   .layout-single .stream-container {
     aspect-ratio: 16 / 9;
-  }
-
-  .layout-main-side {
-    @apply grid gap-4;
-    grid-template-columns: 1fr 350px;
-    grid-auto-rows: auto;
-    align-items: start;
-  }
-
-  .layout-main-side>*:first-child {
-    grid-row: span 10;
   }
 
   .layout-focused {
@@ -401,8 +315,6 @@
   /* Responsive adjustments */
   @media (max-width: 1024px) {
 
-    .layout-pip,
-    .layout-main-side,
     .layout-focused,
     .layout-grid,
     .layout-cinema,
@@ -410,21 +322,11 @@
       @apply grid-cols-1;
     }
 
-    .layout-pip>*:not(:first-child) {
-      position: relative;
-      width: 100%;
-      min-width: auto;
-      bottom: auto;
-      right: auto;
-    }
-
-    .layout-main-side,
     .layout-focused,
     .layout-cinema {
       grid-template-columns: 1fr;
     }
 
-    .layout-main-side>*:first-child,
     .layout-focused>*:first-child,
     .layout-cinema>*:first-child {
       grid-row: auto;
@@ -451,10 +353,6 @@
 
     .layout-grid {
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    }
-
-    .layout-main-side {
-      grid-template-columns: 1fr 320px;
     }
   }
 
@@ -488,16 +386,6 @@
     .layout-grid {
       grid-template-columns: 1fr !important;
       gap: 1rem;
-    }
-
-    /* PiP layout mobile fix */
-    .layout-pip>*:not(:first-child) {
-      position: relative;
-      width: 100%;
-      min-width: 0;
-      max-width: 100%;
-      bottom: auto;
-      right: auto;
     }
 
     /* Stream containers - mobile optimized */

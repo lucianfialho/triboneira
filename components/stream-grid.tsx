@@ -21,7 +21,6 @@ export interface Stream {
 export interface StreamGridProps {
   streams: Stream[];
   layout: LayoutType;
-  pipThumbnailSize?: 'small' | 'medium' | 'large';
   sidebarVisible: boolean;
   isMobile: boolean;
 
@@ -54,7 +53,6 @@ export interface StreamGridProps {
 export function StreamGrid({
   streams,
   layout,
-  pipThumbnailSize,
   sidebarVisible,
   isMobile,
   draggedStreamIndex,
@@ -75,9 +73,7 @@ export function StreamGrid({
 }: StreamGridProps) {
   return (
     <div
-      className={`layout-${layout} ${
-        layout === 'pip' ? `pip-${pipThumbnailSize}` : ''
-      } animate-fade-in ${
+      className={`layout-${layout} animate-fade-in ${
         !sidebarVisible && !isMobile ? 'h-[100vh] gap-0' : ''
       }`}
     >
