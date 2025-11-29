@@ -41,6 +41,7 @@ import {
   Menu,
   MessageCircle,
   BarChart3,
+  Film,
 } from 'lucide-react';
 import EventInfoModal from '@/components/event-info-modal';
 import { HeaderLiveMatches } from '@/components/header-live-matches';
@@ -138,6 +139,8 @@ const layoutConfigs = {
   'focused': { icon: Layout, label: 'Focused', description: '1 large + grid' },
   'grid': { icon: Grid2x2, label: 'Grid', description: 'Equal grid' },
   'horizontal': { icon: Columns3, label: 'Horizontal', description: 'Side by side' },
+  'cinema': { icon: Film, label: 'Cinema', description: '1 wide + stack' },
+  'quad-wide': { icon: Grid2x2, label: 'Quad Wide', description: '2×2 optimized' },
 };
 
 // Helper function to format numbers

@@ -55,6 +55,7 @@ import {
   Play,
   Menu,
   MessageCircle,
+  Film,
 } from 'lucide-react';
 import { Sidebar, type LayoutType } from '@/components/sidebar';
 import { StreamGrid } from '@/components/stream-grid';
@@ -150,6 +151,8 @@ const layoutConfigs = {
   'focused': { icon: Layout, label: 'Focused', description: '1 large + grid' },
   'grid': { icon: Grid2x2, label: 'Grid', description: 'Equal grid' },
   'horizontal': { icon: Columns3, label: 'Horizontal', description: 'Side by side' },
+  'cinema': { icon: Film, label: 'Cinema', description: '1 wide + stack' },
+  'quad-wide': { icon: Grid2x2, label: 'Quad Wide', description: '2×2 optimized' },
 };
 
 const STORAGE_KEY = 'multistream-data';
