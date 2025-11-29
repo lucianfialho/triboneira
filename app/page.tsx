@@ -190,6 +190,7 @@ export default function HomePage() {
   const [topStreamers, setTopStreamers] = useState<TopStreamer[]>([]);
   const [loadingTopStreamers, setLoadingTopStreamers] = useState(false);
   const [selectedStreamers, setSelectedStreamers] = useState<Set<string>>(new Set());
+  const [headerVisible, setHeaderVisible] = useState(true);
 
   // Drag and drop states
   const [draggedStreamIndex, setDraggedStreamIndex] = useState<number | null>(null);
@@ -768,11 +769,44 @@ export default function HomePage() {
 
 
         {/* Main Content */}
-        <main className={`flex-1 p-4 lg:p-6 overflow-y-auto transition-all duration-300 ${chatPanelVisible ? (isMobile ? 'mr-80' : 'mr-96') : ''
+        <main className={`flex-1 ${sidebarVisible ? 'p-4 lg:p-6' : 'p-0'} overflow-y-auto transition-all duration-300 ${chatPanelVisible ? (isMobile ? 'mr-80' : 'mr-96') : ''
           }`}>
-          <div className="max-w-[1800px] mx-auto">
-            {/* Header */}
-            <div className="mb-4 animate-slide-up">
+          <div className={sidebarVisible ? "max-w-[1800px] mx-auto" : ""}>
+            {/* Header - Dock behavior when sidebar is hidden */}
+            {!sidebarVisible && (
+              <div
+                className="fixed top-0 left-0 right-0 z-40 h-16"
+                onMouseEnter={() => setHeaderVisible(true)}
+                onMouseLeave={() => setHeaderVisible(false)}
+              >
+                <div className={`transition-transform duration-300 ${headerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+                  <div className="bg-[hsl(var(--background))] border-b border-[hsl(var(--border))] px-6 py-3 shadow-lg backdrop-blur-sm">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={toggleSidebar}
+                        className="w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:scale-110 transition-all cursor-pointer group"
+                        title="Mostrar sidebar"
+                      >
+                        <ChevronRight className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]" />
+                      </button>
+                      {streams.length > 0 && (
+                        <button
+                          onClick={shareSetup}
+                          className="ml-auto w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
+                          title="Compartilhar setup"
+                        >
+                          <Share2 className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))]" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Header - Normal when sidebar visible */}
+            {sidebarVisible && (
+              <div className="mb-4 animate-slide-up">
               <div className="flex items-center gap-3">
                 {/* Toggle Sidebar Button - Hamburger on mobile, chevron on desktop */}
                 <button
@@ -837,6 +871,7 @@ export default function HomePage() {
                 )}
               </div>
             </div>
+            )}
 
             {/* Stream Grid */}
             {streams.length === 0 ? (
