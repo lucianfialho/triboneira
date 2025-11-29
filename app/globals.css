@@ -213,8 +213,9 @@
     @apply relative overflow-hidden rounded-[var(--radius-lg)];
     @apply bg-[hsl(var(--surface))];
     @apply border border-[hsl(var(--border))];
-    aspect-ratio: 16 / 9;
+    /* aspect-ratio removed - now layout-specific */
     transition: all var(--duration-normal) var(--ease-out);
+    min-height: 300px;
   }
 
   .stream-container:hover {
@@ -304,11 +305,41 @@
     min-width: 350px;
   }
 
+  /* Apply 16:9 aspect ratio to primary streams in asymmetric layouts */
+  .layout-main-side > *:first-child,
+  .layout-focused > *:first-child,
+  .layout-pip > *:first-child {
+    aspect-ratio: 16 / 9;
+  }
+
+  /* Secondary streams maintain 16:9 aspect ratio */
+  .layout-main-side > *:not(:first-child) {
+    aspect-ratio: 16 / 9;
+    max-height: 400px;
+  }
+
+  .layout-focused > *:not(:first-child) {
+    aspect-ratio: 16 / 9;
+    max-height: 350px;
+  }
+
+  .layout-pip > *:not(:first-child) {
+    height: auto;
+    min-height: 300px;
+  }
+
+  /* Grid and horizontal layouts keep 16:9 for uniformity */
+  .layout-grid .stream-container,
+  .layout-horizontal .stream-container,
+  .layout-single .stream-container {
+    aspect-ratio: 16 / 9;
+  }
 
   .layout-main-side {
-    @apply grid gap-6;
-    grid-template-columns: 1fr 400px;
-    grid-auto-rows: minmax(200px, 1fr);
+    @apply grid gap-4;
+    grid-template-columns: 1fr 350px;
+    grid-auto-rows: auto;
+    align-items: start;
   }
 
   .layout-main-side>*:first-child {
@@ -316,9 +347,10 @@
   }
 
   .layout-focused {
-    @apply grid gap-6;
+    @apply grid gap-4;
     grid-template-columns: 2fr 1fr;
-    grid-auto-rows: minmax(200px, auto);
+    grid-auto-rows: auto;
+    align-items: start;
   }
 
   .layout-focused>*:first-child {
