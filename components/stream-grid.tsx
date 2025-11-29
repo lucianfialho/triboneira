@@ -74,7 +74,7 @@ export function StreamGrid({
   return (
     <div
       className={`layout-${layout} animate-fade-in ${
-        !sidebarVisible && !isMobile ? 'h-[100vh] gap-0' : ''
+        !sidebarVisible && !isMobile ? 'h-[100vh]' : ''
       }`}
     >
       {streams.map((stream, index) => {
