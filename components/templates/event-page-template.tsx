@@ -134,7 +134,6 @@ const layoutConfigs = {
   'focused': { icon: Layout, label: 'Focused', description: '1 large + grid' },
   'grid': { icon: Grid2x2, label: 'Grid', description: 'Equal grid' },
   'cinema': { icon: Film, label: 'Cinema', description: '1 wide + stack' },
-  'quad-wide': { icon: Grid2x2, label: 'Quad Wide', description: '2×2 optimized' },
 };
 
 // Helper function to format numbers

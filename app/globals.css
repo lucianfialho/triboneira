@@ -296,29 +296,12 @@
     max-height: 250px;
   }
 
-  /* Quad Wide Layout - 2x2 optimized */
-  .layout-quad-wide {
-    @apply grid gap-4;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    grid-auto-rows: auto;
-    align-items: start;
-    max-width: 2000px;
-    margin: 0 auto;
-  }
-
-  .layout-quad-wide .stream-container {
-    aspect-ratio: 16 / 9;
-    max-height: 550px;
-  }
-
   /* Responsive adjustments */
   @media (max-width: 1024px) {
 
     .layout-focused,
     .layout-grid,
-    .layout-cinema,
-    .layout-quad-wide {
+    .layout-cinema {
       @apply grid-cols-1;
     }
 
@@ -331,11 +314,6 @@
     .layout-cinema>*:first-child {
       grid-row: auto;
       max-height: 600px;
-    }
-
-    .layout-quad-wide {
-      grid-template-columns: 1fr;
-      grid-template-rows: auto;
     }
 
     .sidebar {
@@ -372,10 +350,6 @@
 
     .layout-cinema > *:first-child {
       max-height: 1000px;
-    }
-
-    .layout-quad-wide .stream-container {
-      max-height: 700px;
     }
   }
 
