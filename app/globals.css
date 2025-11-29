@@ -254,18 +254,13 @@
   .layout-triple {
     @apply grid gap-4;
     grid-template-columns: 2fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: minmax(300px, 1fr) minmax(300px, 1fr);
     align-items: start;
   }
 
-  .layout-triple > *:first-child,
-  .layout-triple > *:nth-child(2) {
+  .layout-triple .stream-container {
     aspect-ratio: 16 / 9;
-  }
-
-  .layout-triple > *:nth-child(3),
-  .layout-triple > *:nth-child(4) {
-    aspect-ratio: 16 / 9;
+    width: 100%;
   }
 
   .layout-grid {
