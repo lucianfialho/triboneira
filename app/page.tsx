@@ -36,7 +36,6 @@ import {
   Grid2x2,
   Grid3x3,
   Columns2,
-  Columns3,
   Square,
   Youtube,
   Twitch as TwitchIcon,
@@ -150,7 +149,6 @@ const layoutConfigs = {
   'main-side': { icon: Columns2, label: 'Sidebar', description: '1 main + side' },
   'focused': { icon: Layout, label: 'Focused', description: '1 large + grid' },
   'grid': { icon: Grid2x2, label: 'Grid', description: 'Equal grid' },
-  'horizontal': { icon: Columns3, label: 'Horizontal', description: 'Side by side' },
   'cinema': { icon: Film, label: 'Cinema', description: '1 wide + stack' },
   'quad-wide': { icon: Grid2x2, label: 'Quad Wide', description: '2×2 optimized' },
 };
