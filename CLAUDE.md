@@ -62,15 +62,11 @@ lib/
 │   ├── kick.ts               # Kick API
 │   ├── news/                 # News scraping
 │   └── content-generation/   # AI content generation
-├── chat/                     # Chat connectors
-│   ├── chat-aggregator.ts    # Multi-platform chat aggregation
-│   ├── twitch-chat.ts        # TMI.js wrapper
-│   ├── youtube-chat.ts       # YouTube Live Chat
-│   └── kick-chat.ts          # Kick chat connector
-└── jobs/                     # Analytics and data processing jobs
-    ├── calculate/            # Stats calculations (team stats, H2H)
-    ├── analysis/             # Upset detection, pattern analysis
-    └── reports/              # Daily/hourly reports
+└── chat/                     # Chat connectors
+    ├── chat-aggregator.ts    # Multi-platform chat aggregation
+    ├── twitch-chat.ts        # TMI.js wrapper
+    ├── youtube-chat.ts       # YouTube Live Chat
+    └── kick-chat.ts          # Kick chat connector
 ```
 
 ### Database Schema (lib/db/schema.ts)
