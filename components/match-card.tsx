@@ -6,27 +6,10 @@ export function MatchCard({ match, isLive = false, compact = false }: { match: a
         if (!dateString) return null;
 
         const date = new Date(dateString);
-        const now = new Date();
-        const isToday = date.toDateString() === now.toDateString();
-        const isTomorrow = date.toDateString() === new Date(now.getTime() + 86400000).toDateString();
-
-        const timeString = date.toLocaleTimeString('pt-BR', {
+        return date.toLocaleTimeString('pt-BR', {
             hour: '2-digit',
             minute: '2-digit'
         });
-
-        if (isToday) {
-            return `Hoje ${timeString}`;
-        } else if (isTomorrow) {
-            return `Amanhã ${timeString}`;
-        } else {
-            return date.toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
     };
 
     const isScheduled = match.status === 'scheduled' && match.date;

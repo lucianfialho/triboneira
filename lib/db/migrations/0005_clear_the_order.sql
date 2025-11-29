@@ -1,0 +1,1 @@
+ALTER TABLE "news" ADD COLUMN "slug_pt_br" varchar(200);

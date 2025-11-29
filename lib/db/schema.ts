@@ -251,7 +251,8 @@ export const news = pgTable('news', {
   externalId: varchar('external_id', { length: 100 }).notNull(),
   source: varchar('source', { length: 50 }).notNull(),
   title: varchar('title', { length: 500 }).notNull(),
-  slug: varchar('slug', { length: 200 }), // URL-friendly slug (e.g., "fnatic-scrape-past-red-canids")
+  slug: varchar('slug', { length: 200 }), // URL-friendly slug original (EN)
+  slugPtBr: varchar('slug_pt_br', { length: 200 }), // Slug traduzido PT-BR
   description: text('description'),
   link: varchar('link', { length: 500 }).notNull(),
   imageUrl: varchar('image_url', { length: 500 }),

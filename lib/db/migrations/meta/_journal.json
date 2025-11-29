@@ -36,6 +36,13 @@
       "when": 1764411427850,
       "tag": "0004_low_magdalene",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1764413784975,
+      "tag": "0005_clear_the_order",
+      "breakpoints": true
     }
   ]
 }
