@@ -234,7 +234,7 @@
     @apply flex flex-col gap-6;
     @apply bg-[hsl(var(--surface))] border-r border-[hsl(var(--border))];
     @apply p-6;
-    width: 280px;
+    width: 320px;
     min-height: 100vh;
   }
 
