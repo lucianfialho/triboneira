@@ -98,14 +98,6 @@ export function NewsCard({ news, compact = false }: NewsCardProps) {
                         ) : (
                             <p className="text-xs text-[hsl(var(--muted-foreground))]">Resumo indisponível.</p>
                         )}
-                        <div className="pt-2 border-t border-[hsl(var(--border))] flex justify-end">
-                            <Link
-                                href={`/news/${news.id}`}
-                                className="text-xs text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
-                            >
-                                Ler completa <ExternalLink className="w-3 h-3" />
-                            </Link>
-                        </div>
                     </div>
                 </HoverCardContent>
             </HoverCard>
