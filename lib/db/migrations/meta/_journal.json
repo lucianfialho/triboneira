@@ -29,6 +29,13 @@
       "when": 1764384297336,
       "tag": "0003_quick_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1764411427850,
+      "tag": "0004_low_magdalene",
+      "breakpoints": true
     }
   ]
 }

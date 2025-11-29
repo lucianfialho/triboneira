@@ -251,12 +251,15 @@ export const news = pgTable('news', {
   externalId: varchar('external_id', { length: 100 }).notNull(),
   source: varchar('source', { length: 50 }).notNull(),
   title: varchar('title', { length: 500 }).notNull(),
+  slug: varchar('slug', { length: 200 }), // URL-friendly slug (e.g., "fnatic-scrape-past-red-canids")
   description: text('description'),
   link: varchar('link', { length: 500 }).notNull(),
+  imageUrl: varchar('image_url', { length: 500 }),
   publishedAt: timestamp('published_at'),
   country: varchar('country', { length: 10 }),
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
   uniqueNewsIdx: uniqueIndex('unique_news_idx').on(table.externalId, table.source),
 }));

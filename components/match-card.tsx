@@ -1,6 +1,37 @@
 import React from 'react';
+import { Clock } from 'lucide-react';
 
 export function MatchCard({ match, isLive = false, compact = false }: { match: any; isLive?: boolean; compact?: boolean }) {
+    const formatMatchTime = (dateString: string | null) => {
+        if (!dateString) return null;
+
+        const date = new Date(dateString);
+        const now = new Date();
+        const isToday = date.toDateString() === now.toDateString();
+        const isTomorrow = date.toDateString() === new Date(now.getTime() + 86400000).toDateString();
+
+        const timeString = date.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        if (isToday) {
+            return `Hoje ${timeString}`;
+        } else if (isTomorrow) {
+            return `Amanhã ${timeString}`;
+        } else {
+            return date.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    };
+
+    const isScheduled = match.status === 'scheduled' && match.date;
+    const formattedTime = isScheduled ? formatMatchTime(match.date) : null;
+
     return (
         <div className="glass-card p-4 hover:bg-[hsl(var(--surface-elevated))] transition-all">
             <div className="flex items-center justify-between">
@@ -40,6 +71,12 @@ export function MatchCard({ match, isLive = false, compact = false }: { match: a
                 {/* Match Info - Only show if not compact */}
                 {!compact && (
                     <div className="flex items-center gap-3 ml-6">
+                        {formattedTime && (
+                            <span className="text-xs px-2 py-1 rounded bg-[hsl(var(--surface-elevated))] text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
+                                <Clock className="w-3 h-3" />
+                                {formattedTime}
+                            </span>
+                        )}
                         {match.format && (
                             <span className="text-xs px-2 py-1 rounded bg-[hsl(var(--surface-elevated))] text-[hsl(var(--muted-foreground))] uppercase">
                                 {match.format}
