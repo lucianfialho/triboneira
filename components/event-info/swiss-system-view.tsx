@@ -15,7 +15,7 @@ interface SwissTeam {
 interface SwissMatch {
     id: number;
     team1: SwissTeam;
-    team2: SwissTeam;
+    team2: SwissTeam | null; // Can be null for TBD matches
     winner: SwissTeam | null;
     score: {
         team1: number | null;
@@ -229,7 +229,7 @@ function RoundColumn({ round }: { round: SwissRound }) {
 // Swiss Match Card
 function SwissMatchCard({ match }: { match: SwissMatch }) {
     const team1Won = match.winner?.id === match.team1.id;
-    const team2Won = match.winner?.id === match.team2.id;
+    const team2Won = match.team2 && match.winner?.id === match.team2.id;
 
     return (
         <div className={`p-1.5 rounded border bg-[hsl(var(--surface-elevated))]/80 ${match.status === 'live' ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-[hsl(var(--border))]/50'
@@ -260,22 +260,27 @@ function SwissMatchCard({ match }: { match: SwissMatch }) {
                 {/* Team 2 */}
                 <div className={`flex items-center gap-2 p-1.5 rounded ${team2Won ? 'bg-green-500/15' : team1Won ? 'bg-red-500/10' : 'bg-[hsl(var(--surface))]/60'
                     }`}>
-                    <span className={`text-base font-bold min-w-[20px] text-center ${team2Won ? 'text-green-500' : 'text-[hsl(var(--muted-foreground))]'
-                        }`}>
+                    <span className={`text-base font-bold min-w-[20px] text-center ${team2Won ? "text-green-500" : "text-[hsl(var(--muted-foreground))]"}`}>
                         {match.score.team2 ?? '-'}
                     </span>
                     <div className="relative w-7 h-7 flex-shrink-0">
-                        {match.team2.logoUrl ? (
-                            <Image src={match.team2.logoUrl} alt={match.team2.name} fill className="object-contain" unoptimized />
+                        {match.team2 ? (
+                            match.team2.logoUrl ? (
+                                <Image src={match.team2.logoUrl} alt={match.team2.name} fill className="object-contain" unoptimized />
+                            ) : (
+                                <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs font-bold">
+                                    {match.team2.name.charAt(0)}
+                                </div>
+                            )
                         ) : (
-                            <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-xs font-bold">
-                                {match.team2.name.charAt(0)}
+                            <div className="w-full h-full bg-[hsl(var(--surface-elevated))] rounded flex items-center justify-center text-[10px] font-bold text-[hsl(var(--muted-foreground))]">
+                                TBD
                             </div>
                         )}
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 

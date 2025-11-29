@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { events, matches, teams, eventParticipants } from '@/lib/db/schema';
-import { eq, and, desc, asc, sql } from 'drizzle-orm';
+import { eq, and, desc, asc, sql, or } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
 export const revalidate = 600; // Cache for 10 minutes
@@ -273,6 +273,11 @@ export async function GET(
     const { externalId } = await context.params;
 
     // Get event data
+    const searchConditions = [eq(events.externalId, externalId)];
+    if (!isNaN(Number(externalId))) {
+      searchConditions.push(eq(events.id, Number(externalId)));
+    }
+
     const event = await db
       .select({
         id: events.id,
@@ -282,7 +287,7 @@ export async function GET(
         status: events.status,
       })
       .from(events)
-      .where(eq(events.externalId, externalId))
+      .where(or(...searchConditions))
       .limit(1);
 
     if (!event || event.length === 0) {

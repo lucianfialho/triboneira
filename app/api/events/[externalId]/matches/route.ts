@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { matches, teams, events } from '@/lib/db/schema';
-import { eq, and, desc, asc, sql, gte, lte, isNotNull } from 'drizzle-orm';
+import { eq, and, desc, asc, sql, gte, lte, isNotNull, or } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
 export const revalidate = 600; // Cache for 10 minutes
@@ -16,10 +16,16 @@ export async function GET(
         const statusFilter = searchParams.get('status'); // live, scheduled, finished
 
         // First get the event ID
+        // Allow searching by internal ID if it's a number
+        const searchConditions = [eq(events.externalId, externalId)];
+        if (!isNaN(Number(externalId))) {
+            searchConditions.push(eq(events.id, Number(externalId)));
+        }
+
         const event = await db
             .select({ id: events.id })
             .from(events)
-            .where(eq(events.externalId, externalId))
+            .where(or(...searchConditions))
             .limit(1);
 
         if (!event || event.length === 0) {
@@ -37,9 +43,8 @@ export async function GET(
             const conditions = [
                 eq(matches.eventId, eventId),
                 eq(matches.status, status),
-                // Ensure both teams have IDs (no TBD matches)
+                // Ensure at least team1 has ID (allow TBD for team2 in Swiss system)
                 isNotNull(matches.team1Id),
-                isNotNull(matches.team2Id),
             ];
 
             // Add date filters for scheduled matches (next 7 days)

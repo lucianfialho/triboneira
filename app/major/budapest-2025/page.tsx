@@ -27,9 +27,9 @@ export default function MajorPage() {
 
   return (
     <EventPageTemplate
-      eventId="8504"
-      storageKey="multistream-data-major"
-      defaultStreams={getMajorStreams}
+      eventId={15}
+      initialStreams={getMajorStreams}
+      eventLogo="/major-budapest-2025.png"
     />
   );
 }

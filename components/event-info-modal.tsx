@@ -326,7 +326,7 @@ function MatchesTab({ matchesData, loading, externalId }: { matchesData: any; lo
                             </button>
                         )}
                     </div>
-                    <div className="grid grid-cols-4 gap-1">
+                    <div className="grid grid-cols-5 gap-3">
                         {teamsLoading ? (
                             [...Array(8)].map((_, i) => (
                                 <div key={i} className="flex flex-col items-center gap-2 p-2 rounded animate-pulse">

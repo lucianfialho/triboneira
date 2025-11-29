@@ -60,9 +60,9 @@ export default function TriboneiraPage() {
 
   return (
     <EventPageTemplate
-      eventId="8504"
-      storageKey="multistream-data"
-      defaultStreams={getTriboneiraStreams}
+      eventId={15}
+      initialStreams={getTriboneiraStreams}
+      eventLogo="/major-budapest-2025.png"
     />
   );
 }

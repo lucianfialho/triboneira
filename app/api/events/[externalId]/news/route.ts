@@ -15,7 +15,12 @@ export async function GET(
         const { searchParams } = new URL(request.url);
         const limit = parseInt(searchParams.get('limit') || '20');
 
-        // First get the event and its details
+        // First get the event and its details - support both ID and externalId
+        const searchConditions = [eq(events.externalId, externalId)];
+        if (!isNaN(Number(externalId))) {
+            searchConditions.push(eq(events.id, Number(externalId)));
+        }
+
         const event = await db
             .select({
                 id: events.id,
@@ -23,7 +28,7 @@ export async function GET(
                 gameId: events.gameId,
             })
             .from(events)
-            .where(eq(events.externalId, externalId))
+            .where(or(...searchConditions))
             .limit(1);
 
         if (!event || event.length === 0) {

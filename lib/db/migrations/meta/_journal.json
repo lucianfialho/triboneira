@@ -22,6 +22,13 @@
       "when": 1763927304791,
       "tag": "0002_real_rhino",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1764384297336,
+      "tag": "0003_quick_gunslinger",
+      "breakpoints": true
     }
   ]
 }

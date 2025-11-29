@@ -977,19 +977,6 @@ export default function HomePage() {
                     </button>
                   </>
                 )}
-                {/* Download APK Link - Only on TV */}
-                {isTV && (
-                  <a
-                    href="https://github.com/lucianfialho/triboneira/releases/latest/download/app-release-signed.apk"
-                    className="ml-2 px-4 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 border-0 flex items-center justify-center gap-2 hover:from-green-600 hover:to-green-700 transition-all cursor-pointer shadow-md hover:shadow-lg text-white font-medium text-sm"
-                    title="Baixar app para Android TV"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-                    </svg>
-                    <span className="hidden md:inline">TV</span>
-                  </a>
-                )}
               </div>
             </div>
 
@@ -1142,7 +1129,7 @@ export default function HomePage() {
               renderGrid()
             )}
           </div>
-        </main>
+        </main >
 
         {/* Share Suggestion Modal */}
         < Dialog open={showShareModal} onOpenChange={setShowShareModal} >
@@ -1231,14 +1218,17 @@ export default function HomePage() {
       </div >
 
       {/* Chat Panel */}
-      <ChatPanel
-        streams={streams.filter(s => s.platform !== 'custom') as Array<{
-          platform: 'twitch' | 'youtube' | 'kick';
-          channelName?: string;
-          videoId?: string;
-        }>}
+      < ChatPanel
+        streams={
+          streams.filter(s => s.platform !== 'custom') as Array<{
+            platform: 'twitch' | 'youtube' | 'kick';
+            channelName?: string;
+            videoId?: string;
+          }>
+        }
         isVisible={chatPanelVisible}
-        onToggle={() => setChatPanelVisible(!chatPanelVisible)}
+        onToggle={() => setChatPanelVisible(!chatPanelVisible)
+        }
         compact={isMobile}
       />
     </>

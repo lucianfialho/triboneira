@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { events } from '@/lib/db/schema';
-import { eq, asc, desc } from 'drizzle-orm';
+import { eq, asc, desc, or } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,8 +13,13 @@ export async function GET(
         const { externalId } = await context.params;
 
         // Fetch event with full details
+        const searchConditions = [eq(events.externalId, externalId)];
+        if (!isNaN(Number(externalId))) {
+            searchConditions.push(eq(events.id, Number(externalId)));
+        }
+
         const event = await db.query.events.findFirst({
-            where: eq(events.externalId, externalId),
+            where: or(...searchConditions),
             with: {
                 game: {
                     columns: {

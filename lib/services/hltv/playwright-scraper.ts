@@ -228,23 +228,60 @@ class HLTVPlaywrightScraper {
       console.log(`🌐 Navigating to event matches: ${url}`);
       await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
 
-      await page.waitForSelector('.upcoming-matches, .results-holder', { timeout: 10000 });
+      await page.waitForSelector('.upcoming-matches, .results-holder, .upcomingMatch', { timeout: 10000 });
 
-      const matchCards = await page.$$('.upcoming-match, .result-con');
+      const matchCards = await page.$$('.upcoming-match, .result-con, .upcomingMatch, .a-reset');
       const matches = [];
 
       for (const card of matchCards) {
-        const linkEl = await card.$('a');
-        const href = linkEl ? await linkEl.getAttribute('href') : null;
+        try {
+          const linkEl = await card.$('a.match, a');
+          const href = linkEl ? await linkEl.getAttribute('href') : null;
 
-        if (href) {
-          const matchIdMatch = href.match(/\/matches\/(\d+)\//);
-          if (matchIdMatch) {
+          if (href && href.includes('/matches/')) {
+            const matchIdMatch = href.match(/\/matches\/(\d+)\//);
+            if (!matchIdMatch) continue;
+
+            // Extract team names
+            const team1El = await card.$('.team1 .team, .matchTeamName:first-of-type, .team:first-of-type');
+            const team2El = await card.$('.team2 .team, .matchTeamName:last-of-type, .team:last-of-type');
+
+            const team1Name = team1El ? (await team1El.textContent())?.trim() : 'TBD';
+            const team2Name = team2El ? (await team2El.textContent())?.trim() : 'TBD';
+
+            // Extract date/time
+            const dateEl = await card.$('.matchTime, .matchDate, time');
+            let date = null;
+            if (dateEl) {
+              const dateAttr = await dateEl.getAttribute('data-unix');
+              if (dateAttr) {
+                date = new Date(parseInt(dateAttr) * 1000);
+              }
+            }
+
+            // Extract format (bo1, bo3, etc)
+            const formatEl = await card.$('.bestof, .matchMeta');
+            const formatText = formatEl ? await formatEl.textContent() : null;
+            let format = null;
+            if (formatText) {
+              const boMatch = formatText.match(/bo(\d+)/i);
+              if (boMatch) {
+                format = `bo${boMatch[1]}`;
+              }
+            }
+
             matches.push({
-              externalId: matchIdMatch[1],
+              id: parseInt(matchIdMatch[1]),
+              team1: { name: team1Name || 'TBD' },
+              team2: { name: team2Name || 'TBD' },
+              date,
+              format,
+              event: `Event ${eventId}`,
               link: href
             });
           }
+        } catch (err) {
+          console.log('⚠️  Error parsing match card:', err);
         }
       }
 

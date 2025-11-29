@@ -266,6 +266,7 @@ export const swissRounds = pgTable('swiss_rounds', {
   id: serial('id').primaryKey(),
   eventId: integer('event_id').references(() => events.id).notNull(),
   roundNumber: integer('round_number').notNull(), // 1-5 in swiss
+  matchPosition: integer('match_position'), // Position within the round (0-based index)
   matchId: integer('match_id').references(() => matches.id),
   team1Id: integer('team1_id').references(() => teams.id),
   team2Id: integer('team2_id').references(() => teams.id),
@@ -278,7 +279,7 @@ export const swissRounds = pgTable('swiss_rounds', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
-  uniqueSwissRoundIdx: uniqueIndex('unique_swiss_round_idx').on(table.eventId, table.roundNumber, table.matchId),
+  uniqueSwissRoundIdx: uniqueIndex('unique_swiss_round_idx').on(table.eventId, table.roundNumber, table.matchPosition),
 }));
 
 // 16. EVENT_NEWS (Many-to-Many relationship between events and news)
@@ -303,6 +304,63 @@ export const syncLogs = pgTable('sync_logs', {
   startedAt: timestamp('started_at').defaultNow().notNull(),
   completedAt: timestamp('completed_at'),
 });
+
+// 18. NEWS_ENRICHMENT_QUEUE (AI Processing Queue)
+export const newsEnrichmentQueue = pgTable('news_enrichment_queue', {
+  id: serial('id').primaryKey(),
+  newsId: integer('news_id').references(() => news.id, { onDelete: 'cascade' }).notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, processing, completed, failed
+  priority: integer('priority').notNull().default(5), // 1-10 (10 = highest)
+  attempts: integer('attempts').notNull().default(0),
+  maxAttempts: integer('max_attempts').notNull().default(3),
+  errorMessage: text('error_message'),
+  lastAttemptAt: timestamp('last_attempt_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+}, (table) => ({
+  uniqueNewsQueueIdx: uniqueIndex('unique_news_queue_idx').on(table.newsId),
+}));
+
+// 19. NEWS_CONTENT_CACHE (Scraped Article Cache)
+export const newsContentCache = pgTable('news_content_cache', {
+  id: serial('id').primaryKey(),
+  newsId: integer('news_id').references(() => news.id, { onDelete: 'cascade' }).notNull(),
+  content: text('content').notNull(),
+  wordCount: integer('word_count').notNull(),
+  scrapeMethod: varchar('scrape_method', { length: 50 }).notNull(), // playwright, fallback-title
+  selectorsUsed: jsonb('selectors_used'),
+  scrapedAt: timestamp('scraped_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueNewsContentIdx: uniqueIndex('unique_news_content_idx').on(table.newsId),
+}));
+
+// 20. NEWS_TRANSLATIONS (Translated Content)
+export const newsTranslations = pgTable('news_translations', {
+  id: serial('id').primaryKey(),
+  newsId: integer('news_id').references(() => news.id, { onDelete: 'cascade' }).notNull(),
+  language: varchar('language', { length: 10 }).notNull(), // pt-BR, es, fr
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  agentMetadata: jsonb('agent_metadata'), // { model, tokens, confidence, processingTime }
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueTranslationIdx: uniqueIndex('unique_translation_idx').on(table.newsId, table.language),
+}));
+
+// 21. NEWS_SUMMARIES (Particle-style Bullet Summaries)
+export const newsSummaries = pgTable('news_summaries', {
+  id: serial('id').primaryKey(),
+  newsId: integer('news_id').references(() => news.id, { onDelete: 'cascade' }).notNull(),
+  language: varchar('language', { length: 10 }).notNull(), // pt-BR
+  style: varchar('style', { length: 20 }).notNull(), // 5ws, eli5, bullet-points, key-facts
+  bullets: jsonb('bullets').notNull(), // Array of bullet objects with type and text
+  agentMetadata: jsonb('agent_metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueSummaryIdx: uniqueIndex('unique_summary_idx').on(table.newsId, table.language, table.style),
+}));
 
 // Relations
 export const gamesRelations = relations(games, ({ many }) => ({
@@ -366,6 +424,26 @@ export const eventNewsRelations = relations(eventNews, ({ one }) => ({
 export const newsRelations = relations(news, ({ one, many }) => ({
   game: one(games, { fields: [news.gameId], references: [games.id] }),
   eventNews: many(eventNews),
+  enrichmentQueue: many(newsEnrichmentQueue),
+  contentCache: many(newsContentCache),
+  translations: many(newsTranslations),
+  summaries: many(newsSummaries),
+}));
+
+export const newsEnrichmentQueueRelations = relations(newsEnrichmentQueue, ({ one }) => ({
+  news: one(news, { fields: [newsEnrichmentQueue.newsId], references: [news.id] }),
+}));
+
+export const newsContentCacheRelations = relations(newsContentCache, ({ one }) => ({
+  news: one(news, { fields: [newsContentCache.newsId], references: [news.id] }),
+}));
+
+export const newsTranslationsRelations = relations(newsTranslations, ({ one }) => ({
+  news: one(news, { fields: [newsTranslations.newsId], references: [news.id] }),
+}));
+
+export const newsSummariesRelations = relations(newsSummaries, ({ one }) => ({
+  news: one(news, { fields: [newsSummaries.newsId], references: [news.id] }),
 }));
 
 export const mapVetoesRelations = relations(mapVetoes, ({ one }) => ({

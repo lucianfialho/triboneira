@@ -19,6 +19,7 @@ import {
     Maximize2,
     Share2,
     Check,
+    X,
 } from 'lucide-react';
 
 // Helper function
@@ -63,6 +64,7 @@ export interface SidebarProps {
     // Callbacks
     onToggleSidebar: () => void;
     onAddStream: (streamer: any) => void;
+    onRemoveStream?: (id: string) => void;
     onLayoutChange: (layout: LayoutType) => void;
     onShareSetup: () => void;
     onPipThumbnailSizeChange?: (size: 'small' | 'medium' | 'large') => void;
@@ -90,6 +92,7 @@ export function Sidebar({
     pipThumbnailSize,
     onToggleSidebar,
     onAddStream,
+    onRemoveStream,
     onLayoutChange,
     onShareSetup,
     onPipThumbnailSizeChange,
@@ -157,6 +160,74 @@ export function Sidebar({
                             <Eye className="w-5 h-5 text-[hsl(var(--primary))]" />
                         </div>
                     </div>
+                )
+            }
+
+            {/* Active Streams List */}
+            {
+                streams.length > 0 && onRemoveStream && (
+                    <>
+                        <Separator className="bg-[hsl(var(--border))]" />
+
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">Streams Ativas</h2>
+                                <Badge variant="outline" className="text-xs">
+                                    {streams.length}
+                                </Badge>
+                            </div>
+
+                            <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                {streams.map((stream, index) => (
+                                    <div
+                                        key={stream.id}
+                                        className="glass-card p-3 flex items-center gap-3 group relative"
+                                    >
+                                        {/* Platform Icon */}
+                                        <div className="w-8 h-8 rounded-lg bg-[hsl(var(--surface-elevated))] flex items-center justify-center flex-shrink-0">
+                                            {stream.platform === 'twitch' && (
+                                                <TwitchIcon className="w-4 h-4 text-[rgb(145_70_255)]" />
+                                            )}
+                                            {stream.platform === 'youtube' && (
+                                                <Youtube className="w-4 h-4 text-[rgb(255_0_0)]" />
+                                            )}
+                                            {stream.platform === 'kick' && (
+                                                <Video className="w-4 h-4 text-[rgb(83_255_75)]" />
+                                            )}
+                                        </div>
+
+                                        {/* Stream Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">
+                                                {stream.channelName || stream.videoId || stream.title || 'Stream'}
+                                            </p>
+                                            {stream.viewerCount > 0 && (
+                                                <div className="flex items-center gap-1 text-xs text-[hsl(var(--muted-foreground))]">
+                                                    <Eye className="w-3 h-3" />
+                                                    {formatViewerCount(stream.viewerCount)}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Remove Button */}
+                                        <button
+                                            onClick={() => {
+                                                onRemoveStream(stream.id);
+                                                amplitude.track('Stream Removed from Sidebar', {
+                                                    platform: stream.platform,
+                                                    position: index,
+                                                });
+                                            }}
+                                            className="w-7 h-7 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500/10 hover:border-red-500 transition-all cursor-pointer"
+                                            title="Remover stream"
+                                        >
+                                            <X className="w-4 h-4 text-[hsl(var(--muted-foreground))] hover:text-red-500" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </>
                 )
             }
 

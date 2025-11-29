@@ -162,22 +162,44 @@ interface TopStreamer {
 }
 
 export interface EventPageTemplateProps {
-  eventId: string;
+  eventId: string | number;
   storageKey?: string;
-  defaultStreams: (isMobile: boolean) => Stream[];
+  initialStreams: (isMobile: boolean) => Stream[];
+  eventLogo?: string;
 }
 
 export function EventPageTemplate({
   eventId,
   storageKey = 'multistream-data',
-  defaultStreams
+  initialStreams,
+  eventLogo,
 }: EventPageTemplateProps) {
   const STORAGE_KEY = storageKey;
   // TV Navigation Support
   useTVNavigation();
 
   const commandPaletteRef = useRef<CommandPaletteRef>(null);
-  const [streams, setStreams] = useState<Stream[]>([]);
+
+  // Initialize streams
+  const [streams, setStreams] = useState<Stream[]>(() => {
+    if (typeof window === 'undefined') return initialStreams(false);
+
+    // Try to load from localStorage
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load streams from storage', e);
+    }
+
+    return initialStreams(window.innerWidth < 768);
+  });
+
   const [inputUrl, setInputUrl] = useState('');
   const [layout, setLayout] = useState<LayoutType>('grid');
   const [hoveringStream, setHoveringStream] = useState<string | null>(null);
@@ -195,7 +217,7 @@ export function EventPageTemplate({
   const [topStreamers, setTopStreamers] = useState<TopStreamer[]>([]);
   const [loadingTopStreamers, setLoadingTopStreamers] = useState(false);
   const [selectedStreamers, setSelectedStreamers] = useState<Set<string>>(new Set());
-  const [eventInfoModalOpen, setEventInfoModalOpen] = useState(false);
+  const [showEventInfo, setShowEventInfo] = useState(false);
   const [pipThumbnailSize, setPipThumbnailSize] = useState<'small' | 'medium' | 'large'>('medium');
 
   // Drag and drop states
@@ -361,15 +383,15 @@ export function EventPageTemplate({
       } else {
         // Use default streams from props
         const isMobileDevice = window.innerWidth < 768;
-        const initialStreams = defaultStreams(isMobileDevice);
+        const streams = initialStreams(isMobileDevice);
 
-        setStreams(initialStreams);
+        setStreams(streams);
         setLayout(isMobileDevice ? 'grid' : 'pip');
       }
     } catch (error) {
       console.error('Error loading streams:', error);
     }
-  }, [defaultStreams]);
+  }, [initialStreams]);
 
   // Save to localStorage whenever streams or layout changes
   useEffect(() => {
@@ -582,6 +604,8 @@ export function EventPageTemplate({
   const copyStreamUrl = (url: string) => {
     navigator.clipboard.writeText(url);
   };
+
+
 
   // Fetch top streamers when no streams are added
   useEffect(() => {
@@ -894,6 +918,7 @@ export function EventPageTemplate({
           totalViewers={totalViewers}
           onToggleSidebar={() => setSidebarVisible(!sidebarVisible)}
           onAddStream={addStreamFromCommandPalette}
+          onRemoveStream={removeStream}
           onLayoutChange={changeLayout}
           onShareSetup={shareSetup}
           onPipThumbnailSizeChange={setPipThumbnailSize}
@@ -945,8 +970,9 @@ export function EventPageTemplate({
                 </button>
 
                 {/* Live Matches in Header - Centered */}
-                <div className="flex-1 flex justify-center px-4">
-                  <HeaderLiveMatches externalId={eventId} />
+                <div className="flex-1 flex justify-center">
+                  {/* Header */}
+                  <HeaderLiveMatches externalId={eventId.toString()} />
                 </div>
 
                 {/* Share Setup Button */}
@@ -966,7 +992,7 @@ export function EventPageTemplate({
 
                     {/* Event Info Button */}
                     <button
-                      onClick={() => setEventInfoModalOpen(true)}
+                      onClick={() => setShowEventInfo(true)}
                       className="w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
                       title="Event Info"
                     >
@@ -976,25 +1002,12 @@ export function EventPageTemplate({
                     {/* Chat Button */}
                     <button
                       onClick={() => setChatPanelVisible(!chatPanelVisible)}
-                      className="ml-2 w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
+                      className="ml-auto w-10 h-10 rounded-lg bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center hover:bg-[hsl(var(--border-strong))] hover:border-[hsl(var(--muted-foreground))] transition-all cursor-pointer group"
                       title="Toggle chat"
                     >
                       <MessageCircle className={`w-5 h-5 ${chatPanelVisible ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]'}`} />
                     </button>
                   </>
-                )}
-                {/* Download APK Link - Only on TV */}
-                {isTV && (
-                  <a
-                    href="https://github.com/lucianfialho/triboneira/releases/latest/download/app-release-signed.apk"
-                    className="ml-2 px-4 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 border-0 flex items-center justify-center gap-2 hover:from-green-600 hover:to-green-700 transition-all cursor-pointer shadow-md hover:shadow-lg text-white font-medium text-sm"
-                    title="Baixar app para Android TV"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-                    </svg>
-                    <span className="hidden md:inline">TV</span>
-                  </a>
                 )}
               </div>
             </div>
@@ -1200,9 +1213,9 @@ export function EventPageTemplate({
 
       {/* Event Info Modal */}
       <EventInfoModal
-        externalId={eventId}
-        open={eventInfoModalOpen}
-        onClose={() => setEventInfoModalOpen(false)}
+        externalId={eventId.toString()}
+        open={showEventInfo}
+        onClose={() => setShowEventInfo(false)}
       />
     </>
   );
