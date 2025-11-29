@@ -252,15 +252,17 @@
 
   /* Triple Layout - 2 large stacked on left + 2 thumbnails stacked on right */
   .layout-triple {
-    @apply grid gap-4;
-    grid-template-columns: 2fr 1fr;
-    grid-template-rows: minmax(300px, 1fr) minmax(300px, 1fr);
+    @apply grid gap-6;
+    grid-template-columns: 1.6fr 1fr;
+    grid-template-rows: auto auto;
     align-items: start;
+    max-height: 100vh;
   }
 
   .layout-triple .stream-container {
     aspect-ratio: 16 / 9;
     width: 100%;
+    max-height: 48vh;
   }
 
   .layout-grid {
