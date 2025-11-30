@@ -1,6 +1,9 @@
 import { Metadata } from 'next';
 import { NewsCard } from '@/components/news/news-card';
 import { Newspaper } from 'lucide-react';
+import { db } from '@/lib/db/client';
+import { news, newsTranslations, newsSummaries } from '@/lib/db/schema';
+import { eq, desc } from 'drizzle-orm';
 
 export const metadata: Metadata = {
   title: 'Notícias CS2 - Últimas Notícias do Counter-Strike 2 | Triboneira',
@@ -12,6 +15,8 @@ export const metadata: Metadata = {
     type: 'website',
   },
 };
+
+export const revalidate = 600; // Revalidate every 10 minutes
 
 interface NewsItem {
   id: number;
@@ -26,18 +31,34 @@ interface NewsItem {
 
 async function getNews(): Promise<NewsItem[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/news?limit=30`, {
-      next: { revalidate: 600 }, // Revalidate every 10 minutes
-    });
+    const newsList = await db
+      .select({
+        id: news.id,
+        slug: news.slug,
+        slugPtBr: news.slugPtBr,
+        imageUrl: news.imageUrl,
+        publishedAt: news.publishedAt,
+        link: news.link,
+        originalTitle: news.title,
+        translatedTitle: newsTranslations.title,
+        summaryBullets: newsSummaries.bullets,
+      })
+      .from(news)
+      .leftJoin(newsTranslations, eq(newsTranslations.newsId, news.id))
+      .leftJoin(newsSummaries, eq(newsSummaries.newsId, news.id))
+      .orderBy(desc(news.publishedAt))
+      .limit(30);
 
-    if (!res.ok) {
-      console.error('Failed to fetch news:', res.statusText);
-      return [];
-    }
-
-    const data = await res.json();
-    return data.news || [];
+    return newsList.map((item) => ({
+      id: item.id,
+      title: item.translatedTitle || item.originalTitle,
+      slug: item.slugPtBr || item.slug || '',
+      imageUrl: item.imageUrl,
+      publishedAt: item.publishedAt?.toISOString() || '',
+      link: item.link,
+      isTranslated: !!item.translatedTitle,
+      summaryBullets: item.summaryBullets as Array<{ type: string; text: string }> | undefined,
+    }));
   } catch (error) {
     console.error('Error fetching news:', error);
     return [];

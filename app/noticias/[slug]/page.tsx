@@ -4,6 +4,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Calendar, ExternalLink, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { db } from '@/lib/db/client';
+import { news, newsTranslations, newsSummaries, newsContentCache } from '@/lib/db/schema';
+import { eq, or } from 'drizzle-orm';
+
+export const revalidate = 3600; // Revalidate every hour
 
 interface NewsDetail {
   id: number;
@@ -21,16 +26,50 @@ interface NewsDetail {
 
 async function getNewsDetail(slug: string): Promise<NewsDetail | null> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/news/slug/${slug}`, {
-      next: { revalidate: 3600 }, // Revalidate every hour
-    });
+    const [newsItem] = await db
+      .select({
+        id: news.id,
+        slug: news.slug,
+        slugPtBr: news.slugPtBr,
+        originalTitle: news.title,
+        imageUrl: news.imageUrl,
+        publishedAt: news.publishedAt,
+        link: news.link,
+        translatedTitle: newsTranslations.title,
+        translatedContent: newsTranslations.content,
+        summaryBullets: newsSummaries.bullets,
+        originalContent: newsContentCache.content,
+        wordCount: newsContentCache.wordCount,
+      })
+      .from(news)
+      .leftJoin(newsTranslations, eq(newsTranslations.newsId, news.id))
+      .leftJoin(newsSummaries, eq(newsSummaries.newsId, news.id))
+      .leftJoin(newsContentCache, eq(newsContentCache.newsId, news.id))
+      .where(
+        or(
+          eq(news.slug, slug),
+          eq(news.slugPtBr, slug)
+        )
+      )
+      .limit(1);
 
-    if (!res.ok) {
+    if (!newsItem) {
       return null;
     }
 
-    return res.json();
+    return {
+      id: newsItem.id,
+      title: newsItem.translatedTitle || newsItem.originalTitle,
+      originalTitle: newsItem.originalTitle,
+      slug: newsItem.slugPtBr || newsItem.slug || '',
+      imageUrl: newsItem.imageUrl,
+      publishedAt: newsItem.publishedAt?.toISOString() || '',
+      originalLink: `https://www.hltv.org${newsItem.link}`,
+      isTranslated: !!newsItem.translatedTitle,
+      content: newsItem.translatedContent || newsItem.originalContent || '',
+      summaryBullets: newsItem.summaryBullets as Array<{ type: string; text: string }> | undefined,
+      wordCount: newsItem.wordCount || 0,
+    };
   } catch (error) {
     console.error('Error fetching news detail:', error);
     return null;
