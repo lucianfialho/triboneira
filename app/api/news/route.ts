@@ -12,7 +12,9 @@ export async function GET(request: Request) {
             .select({
                 id: news.id,
                 externalId: news.externalId,
-                metadata: news.metadata,
+                slug: news.slug,
+                slugPtBr: news.slugPtBr,
+                imageUrl: news.imageUrl,
                 publishedAt: news.publishedAt,
                 link: news.link,
                 originalTitle: news.title,
@@ -29,12 +31,12 @@ export async function GET(request: Request) {
 
         // Formatar resposta
         const formattedNews = newsList.map(item => {
-            const metadata = item.metadata as any;
             return {
                 id: item.id,
                 externalId: item.externalId,
                 title: item.translatedTitle || item.originalTitle,
-                imageUrl: metadata?.imageUrl || null,
+                slug: item.slugPtBr || item.slug,
+                imageUrl: item.imageUrl,
                 publishedAt: item.publishedAt,
                 link: item.link,
                 isTranslated: !!item.translatedTitle,

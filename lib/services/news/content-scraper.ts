@@ -6,6 +6,7 @@ export interface ScrapedContent {
   wordCount: number;
   method: 'python-curl_cffi' | 'playwright' | 'fallback-title' | 'fallback-empty';
   selectorsUsed?: string[];
+  imageUrl?: string; // Featured image URL extracted from article
 }
 
 /**

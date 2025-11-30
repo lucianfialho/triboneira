@@ -42,6 +42,12 @@ export const teams = pgTable('teams', {
   logoUrl: varchar('logo_url', { length: 500 }),
   rank: integer('rank'),
   active: boolean('active').default(true).notNull(),
+
+  // Social Media
+  twitterHandle: varchar('twitter_handle', { length: 100 }),
+  instagramHandle: varchar('instagram_handle', { length: 100 }),
+  facebookUrl: varchar('facebook_url', { length: 500 }),
+
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -365,6 +371,65 @@ export const newsSummaries = pgTable('news_summaries', {
 }, (table) => ({
   uniqueSummaryIdx: uniqueIndex('unique_summary_idx').on(table.newsId, table.language, table.style),
 }));
+
+// 22. TWITTER_QUEUE (Tweet Queue for Publishing)
+export const twitterQueue = pgTable('twitter_queue', {
+  id: serial('id').primaryKey(),
+  content: text('content').notNull(),
+  mediaUrls: jsonb('media_urls'), // URLs of images to attach
+  scheduledFor: timestamp('scheduled_for'),
+  priority: integer('priority').default(5).notNull(), // 1-10, higher = more important
+  status: varchar('status', { length: 20 }).default('pending').notNull(), // pending, posted, failed
+  tweetType: varchar('tweet_type', { length: 50 }).notNull(), // match_result, news, preview, upset, etc
+
+  // Relationships
+  matchId: integer('match_id').references(() => matches.id),
+  newsId: integer('news_id').references(() => news.id),
+
+  // Twitter metadata
+  twitterTweetId: varchar('twitter_tweet_id', { length: 100 }),
+  hashtags: jsonb('hashtags'), // Array of hashtags used
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  postedAt: timestamp('posted_at'),
+  errorMessage: text('error_message'),
+});
+
+// 23. TWITTER_MENTIONS (User Mentions to Respond)
+export const twitterMentions = pgTable('twitter_mentions', {
+  id: serial('id').primaryKey(),
+  twitterMentionId: varchar('twitter_mention_id', { length: 100 }).notNull().unique(),
+  authorUsername: varchar('author_username', { length: 100 }).notNull(),
+  content: text('content').notNull(),
+
+  status: varchar('status', { length: 20 }).default('pending').notNull(), // pending, processed, ignored
+  responseType: varchar('response_type', { length: 20 }), // auto, ai, manual
+  responseContent: text('response_content'),
+  responseTweetId: varchar('response_tweet_id', { length: 100 }),
+
+  category: varchar('category', { length: 50 }), // match_query, stat_request, opinion, other
+  sentiment: varchar('sentiment', { length: 20 }), // positive, neutral, negative, toxic
+
+  mentionedAt: timestamp('mentioned_at').notNull(),
+  processedAt: timestamp('processed_at'),
+  respondedAt: timestamp('responded_at'),
+});
+
+// 24. TWITTER_ANALYTICS (Tweet Performance Tracking)
+export const twitterAnalytics = pgTable('twitter_analytics', {
+  id: serial('id').primaryKey(),
+  queueId: integer('queue_id').references(() => twitterQueue.id),
+  twitterTweetId: varchar('twitter_tweet_id', { length: 100 }).notNull(),
+
+  impressions: integer('impressions').default(0).notNull(),
+  likes: integer('likes').default(0).notNull(),
+  retweets: integer('retweets').default(0).notNull(),
+  replies: integer('replies').default(0).notNull(),
+  linkClicks: integer('link_clicks').default(0).notNull(),
+  engagementRate: decimal('engagement_rate', { precision: 5, scale: 2 }),
+
+  lastFetchedAt: timestamp('last_fetched_at').defaultNow().notNull(),
+});
 
 // Relations
 export const gamesRelations = relations(games, ({ many }) => ({

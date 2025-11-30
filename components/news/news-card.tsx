@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/hover-card";
 
 interface NewsCardProps {
-    news: NewsItem;
+    news: NewsItem & { slug?: string };
     compact?: boolean;
 }
 
@@ -74,33 +74,36 @@ export function NewsCard({ news, compact = false }: NewsCardProps) {
         </div>
     );
 
-    if (news.isTranslated) {
+    // Se tiver slug, link para página interna
+    if (news.slug && news.isTranslated) {
         return (
-            <HoverCard openDelay={200}>
-                <HoverCardTrigger asChild>
-                    {CardContent}
-                </HoverCardTrigger>
-                <HoverCardContent className="w-80 bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))]">
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                            <span className="w-1 h-4 bg-[hsl(var(--primary))] rounded-full" />
-                            <h4 className="text-sm font-semibold text-[hsl(var(--foreground))]">Resumo Rápido</h4>
+            <Link href={`/noticias/${news.slug}`} className="block">
+                <HoverCard openDelay={200}>
+                    <HoverCardTrigger asChild>
+                        {CardContent}
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-80 bg-[hsl(var(--surface-elevated))] border-[hsl(var(--border))]">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <span className="w-1 h-4 bg-[hsl(var(--primary))] rounded-full" />
+                                <h4 className="text-sm font-semibold text-[hsl(var(--foreground))]">Resumo Rápido</h4>
+                            </div>
+                            {news.summaryBullets && news.summaryBullets.length > 0 ? (
+                                <ul className="space-y-2">
+                                    {news.summaryBullets.map((bullet, idx) => (
+                                        <li key={idx} className="flex items-start gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+                                            <span className="mt-1.5 w-1 h-1 rounded-full bg-[hsl(var(--primary))] shrink-0 opacity-50" />
+                                            <span className="leading-relaxed">{bullet.text}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-xs text-[hsl(var(--muted-foreground))]">Resumo indisponível.</p>
+                            )}
                         </div>
-                        {news.summaryBullets && news.summaryBullets.length > 0 ? (
-                            <ul className="space-y-2">
-                                {news.summaryBullets.map((bullet, idx) => (
-                                    <li key={idx} className="flex items-start gap-2 text-xs text-[hsl(var(--muted-foreground))]">
-                                        <span className="mt-1.5 w-1 h-1 rounded-full bg-[hsl(var(--primary))] shrink-0 opacity-50" />
-                                        <span className="leading-relaxed">{bullet.text}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-xs text-[hsl(var(--muted-foreground))]">Resumo indisponível.</p>
-                        )}
-                    </div>
-                </HoverCardContent>
-            </HoverCard>
+                    </HoverCardContent>
+                </HoverCard>
+            </Link>
         );
     }
 

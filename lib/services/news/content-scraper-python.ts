@@ -9,6 +9,7 @@ export interface ScrapedContent {
   wordCount: number;
   method: 'python-curl_cffi' | 'fallback-empty';
   selectorsUsed?: string[];
+  imageUrl?: string;
 }
 
 /**
