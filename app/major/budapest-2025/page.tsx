@@ -8,19 +8,19 @@ export default function MajorPage() {
     return [
       {
         id: 'official-stream-1',
-        url: 'https://www.youtube.com/watch?v=nQcHGCNuVMk',
+        url: 'https://www.youtube.com/watch?v=qHOMDDpVpgc',
         platform: 'youtube',
         title: 'Major Budapest 2025 - Official Stream',
         isMuted: false,
-        videoId: 'nQcHGCNuVMk',
+        videoId: 'qHOMDDpVpgc',
       },
       {
         id: 'official-stream-2',
-        url: 'https://www.youtube.com/watch?v=qIkVpLktGms',
+        url: 'https://www.youtube.com/watch?v=bqzmCh08wLU',
         platform: 'youtube',
         title: 'Major Budapest 2025 - Official Stream 2',
         isMuted: true,
-        videoId: 'qIkVpLktGms',
+        videoId: 'bqzmCh08wLU',
       },
     ];
   };
