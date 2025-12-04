@@ -12,6 +12,7 @@ export default function TriboneiraPage() {
         platform: 'kick',
         title: 'Gaules - Major Budapest 2025',
         isMuted: false,
+        volume: 50,
         channelName: 'gaules',
       },
       {
@@ -20,6 +21,7 @@ export default function TriboneiraPage() {
         platform: 'kick',
         title: 'GaulesTV - Major Budapest 2025',
         isMuted: true,
+        volume: 50,
         channelName: 'gaulestv',
       },
       {
@@ -28,6 +30,7 @@ export default function TriboneiraPage() {
         platform: 'kick',
         title: 'GaulesTV2 - Major Budapest 2025',
         isMuted: true,
+        volume: 50,
         channelName: 'gaulestv2',
       },
     ] : [
@@ -37,6 +40,7 @@ export default function TriboneiraPage() {
         platform: 'kick',
         title: 'Gaules - Major Budapest 2025',
         isMuted: false,
+        volume: 50,
         channelName: 'gaules',
       },
       {
@@ -45,6 +49,7 @@ export default function TriboneiraPage() {
         platform: 'kick',
         title: 'GaulesTV - Major Budapest 2025',
         isMuted: true,
+        volume: 50,
         channelName: 'gaulestv',
       },
       {
@@ -53,6 +58,7 @@ export default function TriboneiraPage() {
         platform: 'kick',
         title: 'GaulesTV2 - Major Budapest 2025',
         isMuted: true,
+        volume: 50,
         channelName: 'gaulestv2',
       },
     ];

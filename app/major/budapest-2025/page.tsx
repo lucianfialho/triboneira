@@ -12,6 +12,7 @@ export default function MajorPage() {
         platform: 'youtube',
         title: 'Major Budapest 2025 - Official Stream',
         isMuted: false,
+        volume: 50,
         videoId: 'qHOMDDpVpgc',
       },
       {
@@ -20,6 +21,7 @@ export default function MajorPage() {
         platform: 'youtube',
         title: 'Major Budapest 2025 - Official Stream 2',
         isMuted: true,
+        volume: 50,
         videoId: 'bqzmCh08wLU',
       },
     ];

@@ -66,6 +66,7 @@ interface Stream {
   platform: Platform;
   title?: string;
   isMuted: boolean;
+  volume: number;
   channelName?: string;
   videoId?: string;
   viewerCount?: number;
@@ -321,6 +322,7 @@ export default function HomePage() {
             channelName,
             videoId,
             isMuted: index > 0,
+            volume: 50,
             viewerCount: 0,
             isLive: false,
           };
@@ -452,6 +454,7 @@ export default function HomePage() {
       url: inputUrl,
       platform,
       isMuted: streams.length > 0, // Mute all streams after the first one
+      volume: 50,
       ...channelInfo,
       viewerCount: 0,
       isLive: false,
@@ -481,6 +484,7 @@ export default function HomePage() {
       url: streamer.url,
       platform: streamer.platform,
       isMuted: streams.length > 0,
+      volume: 50,
       channelName: streamer.username,
       viewerCount: streamer.currentViewers,
       isLive: streamer.isLive,
@@ -510,31 +514,14 @@ export default function HomePage() {
     ));
   };
 
+  const handleVolumeChange = (id: string, volume: number) => {
+    setStreams(streams.map(s =>
+      s.id === id ? { ...s, volume, isMuted: volume === 0 } : s
+    ));
+  };
+
   const handleStreamHover = (id: string, isHovering: boolean) => {
-    if (!isHovering) {
-      setHoveringStream(null);
-      setUnmutingProgress(prev => ({ ...prev, [id]: 0 }));
-      return;
-    }
-
-    const stream = streams.find(s => s.id === id);
-    if (!stream?.isMuted) return;
-
-    setHoveringStream(id);
-
-    // Start progress animation
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 2;
-      setUnmutingProgress(prev => ({ ...prev, [id]: progress }));
-
-      if (progress >= 100) {
-        clearInterval(interval);
-        toggleMute(id);
-        setHoveringStream(null);
-        setUnmutingProgress(prev => ({ ...prev, [id]: 0 }));
-      }
-    }, 20); // 100 updates over 2 seconds (2000ms / 20ms = 100 steps)
+    setHoveringStream(isHovering ? id : null);
   };
 
   const removeStream = (id: string) => {
@@ -617,6 +604,7 @@ export default function HomePage() {
       url: streamer.url,
       platform: streamer.platform,
       isMuted: streams.length > 0 || index > 0, // First one unmuted if no existing streams
+      volume: 50,
       channelName: streamer.username,
       viewerCount: streamer.currentViewers,
       isLive: true,
@@ -720,6 +708,7 @@ export default function HomePage() {
       getPlatformColor={getPlatformColor}
       getPlatformIcon={getPlatformIcon}
       onToggleMute={toggleMute}
+      onVolumeChange={handleVolumeChange}
     />
   );
 
