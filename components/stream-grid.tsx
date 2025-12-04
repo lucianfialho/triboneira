@@ -4,7 +4,6 @@ import React, { useRef } from 'react';
 import { Users } from 'lucide-react';
 import type { LayoutType } from '@/components/sidebar';
 import { VolumeControl } from '@/components/volume-control';
-import { usePlayerControl } from '@/hooks/use-player-control';
 
 // Types
 type Platform = 'twitch' | 'youtube' | 'kick' | 'custom';
@@ -62,18 +61,52 @@ function StreamItem({
   onVolumeChange,
 }: StreamItemProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const playerControl = usePlayerControl(stream.id, stream.platform, iframeRef);
+
+  // Get embed URL with volume - only reload for Twitch (supports volume in URL)
+  const getEmbedUrl = () => {
+    if (stream.platform === 'twitch') {
+      const twitchChannel = stream.url.split('twitch.tv/')[1]?.split('/')[0];
+      return `https://player.twitch.tv/?channel=${twitchChannel}&parent=${window.location.hostname}&autoplay=true&muted=${stream.isMuted}&volume=${stream.volume / 100}`;
+    }
+    // For other platforms, use standard embed (volume control via postMessage or not supported)
+    return getPlatformEmbed(stream.url, stream.platform, stream.isMuted);
+  };
 
   const handleVolumeChange = (streamId: string, volume: number) => {
-    playerControl.setVolume(volume);
+    // For YouTube, try to control via postMessage
+    if (stream.platform === 'youtube' && iframeRef.current) {
+      iframeRef.current.contentWindow?.postMessage(
+        JSON.stringify({
+          event: 'command',
+          func: 'setVolume',
+          args: [volume],
+        }),
+        '*'
+      );
+    }
     onVolumeChange?.(streamId, volume);
   };
 
   const handleMuteToggle = (streamId: string) => {
-    if (stream.isMuted) {
-      playerControl.unmute();
-    } else {
-      playerControl.mute();
+    // For YouTube, try to control via postMessage
+    if (stream.platform === 'youtube' && iframeRef.current) {
+      if (stream.isMuted) {
+        iframeRef.current.contentWindow?.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func: 'unMute',
+          }),
+          '*'
+        );
+      } else {
+        iframeRef.current.contentWindow?.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func: 'mute',
+          }),
+          '*'
+        );
+      }
     }
     onToggleMute?.(streamId);
   };
@@ -120,8 +153,8 @@ function StreamItem({
 
       <iframe
         ref={iframeRef}
-        key={stream.id}
-        src={getPlatformEmbed(stream.url, stream.platform, stream.isMuted)}
+        key={stream.platform === 'twitch' ? `${stream.id}-${stream.volume}-${stream.isMuted}` : stream.id}
+        src={getEmbedUrl()}
         width="100%"
         height="100%"
         className="w-full h-full"

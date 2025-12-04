@@ -226,3 +226,4 @@ YOUTUBE_API_KEY=          # YouTube Data API v3
 - **Rate Limiting**: HLTV requests use exponential backoff (2s base delay)
 - **Database Migrations**: Always run `drizzle-kit generate` after schema changes
 - Não faça pushs para prod sem minha autorização
+- Não commita nada sem me pedir
