@@ -4,6 +4,7 @@ import React, { useRef } from 'react';
 import { Users } from 'lucide-react';
 import type { LayoutType } from '@/components/sidebar';
 import { VolumeControl } from '@/components/volume-control';
+import { KickPlayer } from '@/components/kick-player';
 
 // Types
 type Platform = 'twitch' | 'youtube' | 'kick' | 'custom';
@@ -151,24 +152,40 @@ function StreamItem({
         </div>
       </div>
 
-      <iframe
-        ref={iframeRef}
-        key={stream.platform === 'twitch' ? `${stream.id}-${stream.volume}-${stream.isMuted}` : stream.id}
-        src={getEmbedUrl()}
-        width="100%"
-        height="100%"
-        className="w-full h-full"
-        style={{
-          minWidth: isMobile ? '100%' : '350px',
-          maxWidth: '100%',
-          minHeight: '200px',
-          display: 'block',
-          pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto',
-        }}
-        frameBorder="0"
-        allowFullScreen
-        allow="autoplay; encrypted-media; picture-in-picture"
-      />
+      {stream.platform === 'kick' && stream.channelName ? (
+        <KickPlayer
+          key={stream.id}
+          channelName={stream.channelName}
+          volume={stream.volume}
+          isMuted={stream.isMuted}
+          className="w-full h-full"
+          style={{
+            minWidth: isMobile ? '100%' : '350px',
+            maxWidth: '100%',
+            minHeight: '200px',
+            pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto',
+          }}
+        />
+      ) : (
+        <iframe
+          ref={iframeRef}
+          key={stream.platform === 'twitch' ? `${stream.id}-${stream.volume}-${stream.isMuted}` : stream.id}
+          src={getEmbedUrl()}
+          width="100%"
+          height="100%"
+          className="w-full h-full"
+          style={{
+            minWidth: isMobile ? '100%' : '350px',
+            maxWidth: '100%',
+            minHeight: '200px',
+            display: 'block',
+            pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto',
+          }}
+          frameBorder="0"
+          allowFullScreen
+          allow="autoplay; encrypted-media; picture-in-picture"
+        />
+      )}
 
       {/* Stream Overlay */}
       <div
