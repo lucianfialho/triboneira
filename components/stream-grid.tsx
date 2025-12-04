@@ -4,7 +4,6 @@ import React, { useRef } from 'react';
 import { Users } from 'lucide-react';
 import type { LayoutType } from '@/components/sidebar';
 import { VolumeControl } from '@/components/volume-control';
-import { KickPlayer } from '@/components/kick-player';
 
 // Types
 type Platform = 'twitch' | 'youtube' | 'kick' | 'custom';
@@ -152,39 +151,33 @@ function StreamItem({
         </div>
       </div>
 
-      {stream.platform === 'kick' && stream.channelName ? (
-        <KickPlayer
-          key={stream.id}
-          channelName={stream.channelName}
-          volume={stream.volume}
-          isMuted={stream.isMuted}
-          className="w-full h-full"
-          style={{
-            minWidth: isMobile ? '100%' : '350px',
-            maxWidth: '100%',
-            minHeight: '200px',
-            pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto',
-          }}
-        />
-      ) : (
-        <iframe
-          ref={iframeRef}
-          key={stream.platform === 'twitch' ? `${stream.id}-${stream.volume}-${stream.isMuted}` : stream.id}
-          src={getEmbedUrl()}
-          width="100%"
-          height="100%"
-          className="w-full h-full"
-          style={{
-            minWidth: isMobile ? '100%' : '350px',
-            maxWidth: '100%',
-            minHeight: '200px',
-            display: 'block',
-            pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto',
-          }}
-          frameBorder="0"
-          allowFullScreen
-          allow="autoplay; encrypted-media; picture-in-picture"
-        />
+      <iframe
+        ref={iframeRef}
+        key={stream.platform === 'twitch' ? `${stream.id}-${stream.volume}-${stream.isMuted}` : stream.id}
+        src={getEmbedUrl()}
+        width="100%"
+        height="100%"
+        className="w-full h-full"
+        style={{
+          minWidth: isMobile ? '100%' : '350px',
+          maxWidth: '100%',
+          minHeight: '200px',
+          display: 'block',
+          pointerEvents: draggedStreamIndex !== null ? 'none' : 'auto',
+        }}
+        frameBorder="0"
+        allowFullScreen
+        allow="autoplay; encrypted-media; picture-in-picture"
+      />
+
+      {/* Kick volume limitation warning */}
+      {stream.platform === 'kick' && isHovering && (
+        <div
+          className="absolute bottom-16 left-1/2 -translate-x-1/2 px-3 py-2 bg-yellow-600/90 backdrop-blur-sm rounded-lg text-xs text-white font-medium shadow-lg pointer-events-none"
+          style={{ zIndex: 25 }}
+        >
+          ⚠️ Kick: apenas mute/unmute disponível
+        </div>
       )}
 
       {/* Stream Overlay */}
@@ -236,6 +229,7 @@ function StreamItem({
             streamId={stream.id}
             volume={stream.volume}
             isMuted={stream.isMuted}
+            platform={stream.platform}
             onVolumeChange={handleVolumeChange}
             onMuteToggle={handleMuteToggle}
           />
