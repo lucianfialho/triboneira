@@ -25,13 +25,22 @@ export default function TriboneiraPage() {
         channelName: 'gaulestv',
       },
       {
-        id: 'gaulestv2',
-        url: 'https://kick.com/gaulestv2',
+        id: 'michel',
+        url: 'https://kick.com/michel',
         platform: 'kick',
-        title: 'GaulesTV2 - Major Budapest 2025',
+        title: 'Michel - Major Budapest 2025',
         isMuted: true,
         volume: 50,
-        channelName: 'gaulestv2',
+        channelName: 'michel',
+      },
+      {
+        id: 'tacocs',
+        url: 'https://kick.com/tacocs',
+        platform: 'kick',
+        title: 'TacoCS - Major Budapest 2025',
+        isMuted: true,
+        volume: 50,
+        channelName: 'tacocs',
       },
     ] : [
       {
@@ -53,20 +62,29 @@ export default function TriboneiraPage() {
         channelName: 'gaulestv',
       },
       {
-        id: 'gaulestv2',
-        url: 'https://kick.com/gaulestv2',
+        id: 'michel',
+        url: 'https://kick.com/michel',
         platform: 'kick',
-        title: 'GaulesTV2 - Major Budapest 2025',
+        title: 'Michel - Major Budapest 2025',
         isMuted: true,
         volume: 50,
-        channelName: 'gaulestv2',
+        channelName: 'michel',
+      },
+      {
+        id: 'tacocs',
+        url: 'https://kick.com/tacocs',
+        platform: 'kick',
+        title: 'TacoCS - Major Budapest 2025',
+        isMuted: true,
+        volume: 50,
+        channelName: 'tacocs',
       },
     ];
   };
 
   return (
     <EventPageTemplate
-      eventId={15}
+      eventId={16}
       initialStreams={getTriboneiraStreams}
       eventLogo="/major-budapest-2025.png"
     />

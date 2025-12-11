@@ -66,7 +66,7 @@ export default function DezorganizadaPage() {
 
   return (
     <EventPageTemplate
-      eventId={15}
+      eventId={16}
       initialStreams={getDezorganizadaStreams}
       eventLogo="/major-budapest-2025.png"
     />

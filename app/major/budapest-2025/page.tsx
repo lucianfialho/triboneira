@@ -20,7 +20,7 @@ export default function MajorPage() {
 
   return (
     <EventPageTemplate
-      eventId={15}
+      eventId={16}
       initialStreams={getMajorStreams}
       eventLogo="/major-budapest-2025.png"
     />
