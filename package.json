@@ -53,7 +53,7 @@
     "hltv": "^3.5.0",
     "https-proxy-agent": "^7.0.6",
     "lucide-react": "^0.553.0",
-    "next": "^16.0.3",
+    "next": "16.0.7",
     "openai": "^6.9.1",
     "playwright": "^1.56.1",
     "proxy-agent": "^6.5.0",
