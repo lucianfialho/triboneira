@@ -4,25 +4,16 @@ import { EventPageTemplate, type Stream } from '@/components/templates/event-pag
 
 export default function MajorPage() {
   const getMajorStreams = (isMobile: boolean): Stream[] => {
-    // Major official streams - YouTube
+    // Major official stream - YouTube
     return [
       {
-        id: 'official-stream-1',
-        url: 'https://www.youtube.com/watch?v=AN195Rfh0hI',
+        id: 'official-stream',
+        url: 'https://www.youtube.com/watch?v=TQwIfQqwP_M',
         platform: 'youtube',
         title: 'Major Budapest 2025 - Official Stream',
         isMuted: false,
         volume: 50,
-        videoId: 'AN195Rfh0hI',
-      },
-      {
-        id: 'official-stream-2',
-        url: 'https://www.youtube.com/watch?v=LB-G45bOToo',
-        platform: 'youtube',
-        title: 'Major Budapest 2025 - Official Stream 2',
-        isMuted: true,
-        volume: 50,
-        videoId: 'LB-G45bOToo',
+        videoId: 'TQwIfQqwP_M',
       },
     ];
   };
