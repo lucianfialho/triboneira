@@ -18,6 +18,7 @@ export const events = pgTable('events', {
   externalId: varchar('external_id', { length: 100 }).notNull(),
   source: varchar('source', { length: 50 }).notNull(), // hltv, liquipedia, pandascore
   name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 200 }),
   dateStart: timestamp('date_start'),
   dateEnd: timestamp('date_end'),
   prizePool: varchar('prize_pool', { length: 100 }),
@@ -29,6 +30,7 @@ export const events = pgTable('events', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
   uniqueEventIdx: uniqueIndex('unique_event_idx').on(table.externalId, table.source),
+  uniqueSlugIdx: uniqueIndex('unique_slug_idx').on(table.slug),
 }));
 
 // 3. TEAMS
@@ -98,7 +100,23 @@ export const eventParticipants = pgTable('event_participants', {
   uniqueParticipantIdx: uniqueIndex('unique_participant_idx').on(table.eventId, table.teamId),
 }));
 
-// 7. MATCHES
+// 7. EVENT_TEAM_LINEUPS (rastreia lineup específico por evento)
+export const eventTeamLineups = pgTable('event_team_lineups', {
+  id: serial('id').primaryKey(),
+  eventId: integer('event_id').references(() => events.id, { onDelete: 'cascade' }).notNull(),
+  teamId: integer('team_id').references(() => teams.id, { onDelete: 'cascade' }).notNull(),
+  playerId: integer('player_id').references(() => players.id, { onDelete: 'cascade' }).notNull(),
+  playerType: varchar('player_type', { length: 20 }).notNull(), // starter, coach, substitute, benched
+  role: varchar('role', { length: 50 }), // awper, igl, entry, support, rifler
+  joinedForEvent: timestamp('joined_for_event'),
+  leftAfterEvent: timestamp('left_after_event'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueEventTeamPlayerIdx: uniqueIndex('unique_event_team_player_idx').on(table.eventId, table.teamId, table.playerId),
+}));
+
+// 8. MATCHES
 export const matches = pgTable('matches', {
   id: serial('id').primaryKey(),
   eventId: integer('event_id').references(() => events.id),
@@ -250,7 +268,117 @@ export const headToHead = pgTable('head_to_head', {
   uniqueH2HIdx: uniqueIndex('unique_h2h_idx').on(table.team1Id, table.team2Id, table.eventId),
 }));
 
-// 14. NEWS
+// 14. PLAYER_AGGREGATE_STATS (Rolling windows for player performance)
+export const playerAggregateStats = pgTable('player_aggregate_stats', {
+  id: serial('id').primaryKey(),
+  playerId: integer('player_id').references(() => players.id).notNull(),
+
+  // Time window
+  period: varchar('period', { length: 20 }).notNull(), // 'last_7d', 'last_30d', 'event_7148', 'all_time'
+  periodStart: timestamp('period_start'),
+  periodEnd: timestamp('period_end'),
+
+  // Core stats
+  matchesPlayed: integer('matches_played').default(0),
+  mapsPlayed: integer('maps_played').default(0),
+  totalKills: integer('total_kills').default(0),
+  totalDeaths: integer('total_deaths').default(0),
+  totalAssists: integer('total_assists').default(0),
+
+  // Averages
+  avgRating: decimal('avg_rating', { precision: 4, scale: 2 }),
+  avgAdr: decimal('avg_adr', { precision: 5, scale: 2 }),
+  avgKast: decimal('avg_kast', { precision: 5, scale: 2 }),
+  avgKillsPerMap: decimal('avg_kills_per_map', { precision: 4, scale: 2 }),
+  avgDeathsPerMap: decimal('avg_deaths_per_map', { precision: 4, scale: 2 }),
+
+  // Form indicator
+  formTrend: varchar('form_trend', { length: 20 }), // 'improving', 'stable', 'declining'
+  formScore: decimal('form_score', { precision: 4, scale: 2 }), // 0-10 rating
+
+  // Metadata (map-specific stats, clutch stats if available)
+  metadata: jsonb('metadata'),
+
+  calculatedAt: timestamp('calculated_at').defaultNow().notNull(),
+}, (table) => ({
+  uniquePlayerAggregateIdx: uniqueIndex('unique_player_aggregate_idx').on(table.playerId, table.period),
+}));
+
+// 15. MAP_VETO_PATTERNS (Team pick/ban behavior analysis)
+export const mapVetoPatterns = pgTable('map_veto_patterns', {
+  id: serial('id').primaryKey(),
+  teamId: integer('team_id').references(() => teams.id).notNull(),
+
+  // Analysis period
+  period: varchar('period', { length: 20 }).notNull(), // 'last_30d', 'event_7148', 'all_time'
+  periodStart: timestamp('period_start'),
+  periodEnd: timestamp('period_end'),
+
+  // Per-map statistics
+  mapName: varchar('map_name', { length: 50 }).notNull(),
+  timesPicked: integer('times_picked').default(0),
+  timesBanned: integer('times_banned').default(0),
+  timesLeftover: integer('times_leftover').default(0),
+  winRateWhenPicked: decimal('win_rate_when_picked', { precision: 5, scale: 2 }),
+
+  // Patterns
+  avgPickOrder: decimal('avg_pick_order', { precision: 3, scale: 1 }), // 1.0 = always first pick
+  pickFrequency: decimal('pick_frequency', { precision: 5, scale: 2 }), // % of matches
+  banFrequency: decimal('ban_frequency', { precision: 5, scale: 2 }), // % of matches
+
+  // Meta
+  matchesAnalyzed: integer('matches_analyzed').notNull(),
+  calculatedAt: timestamp('calculated_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueVetoPatternIdx: uniqueIndex('unique_veto_pattern_idx').on(table.teamId, table.period, table.mapName),
+}));
+
+// 16. LIVE_MATCH_CACHE (Real-time match state)
+export const liveMatchCache = pgTable('live_match_cache', {
+  id: serial('id').primaryKey(),
+  matchId: integer('match_id').references(() => matches.id).notNull().unique(),
+
+  // Current state
+  currentMap: integer('current_map').notNull().default(1),
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, live, paused, finished
+  lastUpdate: timestamp('last_update').defaultNow().notNull(),
+
+  // Real-time scores (updated every 10min from HLTV)
+  currentScoreTeam1: integer('current_score_team1'),
+  currentScoreTeam2: integer('current_score_team2'),
+  currentMapScoreTeam1: integer('current_map_score_team1'), // rounds on current map
+  currentMapScoreTeam2: integer('current_map_score_team2'),
+
+  // Computed analytics (updated on each sync)
+  momentum: jsonb('momentum'), // { team: 1|2, strength: 0-100, recentMaps: [...] }
+  winProbability: jsonb('win_probability'), // { team1: 0.65, team2: 0.35, factors: [...] }
+  keyMoments: jsonb('key_moments'), // Array of key moment objects
+
+  // Performance tracking
+  syncCount: integer('sync_count').default(0),
+  firstSyncedAt: timestamp('first_synced_at').defaultNow(),
+});
+
+// 17. MATCH_EVENTS (Key moments, upsets, milestones)
+export const matchEvents = pgTable('match_events', {
+  id: serial('id').primaryKey(),
+  matchId: integer('match_id').references(() => matches.id).notNull(),
+  eventType: varchar('event_type', { length: 50 }).notNull(), // 'upset_alert', 'comeback', 'milestone', 'close_map'
+  severity: varchar('severity', { length: 20 }).notNull(), // 'low', 'medium', 'high', 'critical'
+
+  // Event data
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  metadata: jsonb('metadata'), // context specific to event type
+
+  // Notification tracking
+  notifiedDiscord: boolean('notified_discord').default(false).notNull(),
+  notifiedTwitter: boolean('notified_twitter').default(false).notNull(),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// 18. NEWS
 export const news = pgTable('news', {
   id: serial('id').primaryKey(),
   gameId: integer('game_id').references(() => games.id).notNull(),
@@ -271,7 +399,7 @@ export const news = pgTable('news', {
   uniqueNewsIdx: uniqueIndex('unique_news_idx').on(table.externalId, table.source),
 }));
 
-// 15. SWISS_ROUNDS (Swiss System Tournament Rounds)
+// 19. SWISS_ROUNDS (Swiss System Tournament Rounds)
 export const swissRounds = pgTable('swiss_rounds', {
   id: serial('id').primaryKey(),
   eventId: integer('event_id').references(() => events.id).notNull(),
@@ -292,7 +420,7 @@ export const swissRounds = pgTable('swiss_rounds', {
   uniqueSwissRoundIdx: uniqueIndex('unique_swiss_round_idx').on(table.eventId, table.roundNumber, table.matchPosition),
 }));
 
-// 16. EVENT_NEWS (Many-to-Many relationship between events and news)
+// 20. EVENT_NEWS (Many-to-Many relationship between events and news)
 export const eventNews = pgTable('event_news', {
   id: serial('id').primaryKey(),
   eventId: integer('event_id').references(() => events.id).notNull(),
@@ -302,7 +430,7 @@ export const eventNews = pgTable('event_news', {
   uniqueEventNewsIdx: uniqueIndex('unique_event_news_idx').on(table.eventId, table.newsId),
 }));
 
-// 17. SYNC_LOG (Audit Trail)
+// 21. SYNC_LOG (Audit Trail)
 export const syncLogs = pgTable('sync_logs', {
   id: serial('id').primaryKey(),
   jobName: varchar('job_name', { length: 100 }).notNull(),
@@ -315,7 +443,7 @@ export const syncLogs = pgTable('sync_logs', {
   completedAt: timestamp('completed_at'),
 });
 
-// 18. NEWS_ENRICHMENT_QUEUE (AI Processing Queue)
+// 22. NEWS_ENRICHMENT_QUEUE (AI Processing Queue)
 export const newsEnrichmentQueue = pgTable('news_enrichment_queue', {
   id: serial('id').primaryKey(),
   newsId: integer('news_id').references(() => news.id, { onDelete: 'cascade' }).notNull(),
@@ -331,7 +459,7 @@ export const newsEnrichmentQueue = pgTable('news_enrichment_queue', {
   uniqueNewsQueueIdx: uniqueIndex('unique_news_queue_idx').on(table.newsId),
 }));
 
-// 19. NEWS_CONTENT_CACHE (Scraped Article Cache)
+// 23. NEWS_CONTENT_CACHE (Scraped Article Cache)
 export const newsContentCache = pgTable('news_content_cache', {
   id: serial('id').primaryKey(),
   newsId: integer('news_id').references(() => news.id, { onDelete: 'cascade' }).notNull(),
@@ -344,7 +472,7 @@ export const newsContentCache = pgTable('news_content_cache', {
   uniqueNewsContentIdx: uniqueIndex('unique_news_content_idx').on(table.newsId),
 }));
 
-// 20. NEWS_TRANSLATIONS (Translated Content)
+// 24. NEWS_TRANSLATIONS (Translated Content)
 export const newsTranslations = pgTable('news_translations', {
   id: serial('id').primaryKey(),
   newsId: integer('news_id').references(() => news.id, { onDelete: 'cascade' }).notNull(),
@@ -358,7 +486,7 @@ export const newsTranslations = pgTable('news_translations', {
   uniqueTranslationIdx: uniqueIndex('unique_translation_idx').on(table.newsId, table.language),
 }));
 
-// 21. NEWS_SUMMARIES (Particle-style Bullet Summaries)
+// 25. NEWS_SUMMARIES (Particle-style Bullet Summaries)
 export const newsSummaries = pgTable('news_summaries', {
   id: serial('id').primaryKey(),
   newsId: integer('news_id').references(() => news.id, { onDelete: 'cascade' }).notNull(),
@@ -372,7 +500,7 @@ export const newsSummaries = pgTable('news_summaries', {
   uniqueSummaryIdx: uniqueIndex('unique_summary_idx').on(table.newsId, table.language, table.style),
 }));
 
-// 22. TWITTER_QUEUE (Tweet Queue for Publishing)
+// 26. TWITTER_QUEUE (Tweet Queue for Publishing)
 export const twitterQueue = pgTable('twitter_queue', {
   id: serial('id').primaryKey(),
   content: text('content').notNull(),
@@ -395,7 +523,7 @@ export const twitterQueue = pgTable('twitter_queue', {
   errorMessage: text('error_message'),
 });
 
-// 23. TWITTER_MENTIONS (User Mentions to Respond)
+// 27. TWITTER_MENTIONS (User Mentions to Respond)
 export const twitterMentions = pgTable('twitter_mentions', {
   id: serial('id').primaryKey(),
   twitterMentionId: varchar('twitter_mention_id', { length: 100 }).notNull().unique(),
@@ -415,7 +543,7 @@ export const twitterMentions = pgTable('twitter_mentions', {
   respondedAt: timestamp('responded_at'),
 });
 
-// 24. TWITTER_ANALYTICS (Tweet Performance Tracking)
+// 28. TWITTER_ANALYTICS (Tweet Performance Tracking)
 export const twitterAnalytics = pgTable('twitter_analytics', {
   id: serial('id').primaryKey(),
   queueId: integer('queue_id').references(() => twitterQueue.id),
@@ -431,6 +559,59 @@ export const twitterAnalytics = pgTable('twitter_analytics', {
   lastFetchedAt: timestamp('last_fetched_at').defaultNow().notNull(),
 });
 
+// 29. EVENT_STREAMS (Streams Broadcasting Events)
+export const eventStreams = pgTable('event_streams', {
+  id: serial('id').primaryKey(),
+  eventId: integer('event_id').references(() => events.id, { onDelete: 'cascade' }).notNull(),
+
+  // Stream Info
+  streamUrl: varchar('stream_url', { length: 500 }).notNull(),
+  platform: varchar('platform', { length: 50 }).notNull(), // twitch, youtube, kick
+  channelName: varchar('channel_name', { length: 100 }).notNull(), // gaules, ESL_CSGO, etc
+  streamerType: varchar('streamer_type', { length: 50 }), // caster, player, organizer
+
+  // Stream Metadata
+  language: varchar('language', { length: 10 }), // en, pt-BR, ru, fr
+  country: varchar('country', { length: 50 }),
+  viewerCount: integer('viewer_count'),
+
+  // Status
+  isLive: boolean('is_live').default(false).notNull(),
+  isOfficial: boolean('is_official').default(false).notNull(), // Official broadcast
+
+  // Timestamps
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueEventStreamIdx: uniqueIndex('unique_event_stream_idx').on(table.eventId, table.streamUrl),
+}));
+
+// 30. USER_PREDICTIONS (Event Simulator / Pickems)
+export const userPredictions = pgTable('user_predictions', {
+  id: serial('id').primaryKey(),
+
+  // User identification (can be fingerprint or auth-based)
+  userId: varchar('user_id', { length: 255 }).notNull(),
+
+  // Prediction target
+  eventId: integer('event_id').references(() => events.id, { onDelete: 'cascade' }),
+  matchId: integer('match_id').references(() => matches.id, { onDelete: 'cascade' }).notNull(),
+
+  // Prediction
+  predictedWinnerId: integer('predicted_winner_id').references(() => teams.id),
+  confidence: integer('confidence'), // 1-5 stars (optional)
+
+  // Result tracking
+  isCorrect: boolean('is_correct'), // null until match finishes
+  points: integer('points').default(0), // Points earned for correct prediction
+
+  // Timestamps
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserMatchPredictionIdx: uniqueIndex('unique_user_match_prediction_idx').on(table.userId, table.matchId),
+}));
+
 // Relations
 export const gamesRelations = relations(games, ({ many }) => ({
   events: many(events),
@@ -442,11 +623,13 @@ export const gamesRelations = relations(games, ({ many }) => ({
 export const eventsRelations = relations(events, ({ one, many }) => ({
   game: one(games, { fields: [events.gameId], references: [games.id] }),
   participants: many(eventParticipants),
+  lineups: many(eventTeamLineups),
   matches: many(matches),
   teamStats: many(teamStats),
   headToHeads: many(headToHead),
   swissRounds: many(swissRounds),
   eventNews: many(eventNews),
+  streams: many(eventStreams),
 }));
 
 export const teamsRelations = relations(teams, ({ one, many }) => ({
@@ -458,12 +641,14 @@ export const teamsRelations = relations(teams, ({ one, many }) => ({
   stats: many(teamStats),
   headToHeadsAsTeam1: many(headToHead, { relationName: 'team1' }),
   headToHeadsAsTeam2: many(headToHead, { relationName: 'team2' }),
+  vetoPatterns: many(mapVetoPatterns),
 }));
 
 export const playersRelations = relations(players, ({ one, many }) => ({
   game: one(games, { fields: [players.gameId], references: [games.id] }),
   rosters: many(teamRosters),
   matchStats: many(playerMatchStats),
+  aggregateStats: many(playerAggregateStats),
 }));
 
 export const matchesRelations = relations(matches, ({ one, many }) => ({
@@ -476,6 +661,8 @@ export const matchesRelations = relations(matches, ({ one, many }) => ({
   vetoes: many(mapVetoes),
   playerStats: many(playerMatchStats),
   swissRounds: many(swissRounds),
+  liveCache: one(liveMatchCache, { fields: [matches.id], references: [liveMatchCache.matchId] }),
+  events: many(matchEvents),
 }));
 
 export const swissRoundsRelations = relations(swissRounds, ({ one }) => ({
@@ -543,6 +730,12 @@ export const eventParticipantsRelations = relations(eventParticipants, ({ one })
   team: one(teams, { fields: [eventParticipants.teamId], references: [teams.id] }),
 }));
 
+export const eventTeamLineupsRelations = relations(eventTeamLineups, ({ one }) => ({
+  event: one(events, { fields: [eventTeamLineups.eventId], references: [events.id] }),
+  team: one(teams, { fields: [eventTeamLineups.teamId], references: [teams.id] }),
+  player: one(players, { fields: [eventTeamLineups.playerId], references: [players.id] }),
+}));
+
 export const teamRostersRelations = relations(teamRosters, ({ one }) => ({
   team: one(teams, { fields: [teamRosters.teamId], references: [teams.id] }),
   player: one(players, { fields: [teamRosters.playerId], references: [players.id] }),
@@ -557,4 +750,30 @@ export const headToHeadRelations = relations(headToHead, ({ one }) => ({
   team1: one(teams, { fields: [headToHead.team1Id], references: [teams.id], relationName: 'h2hTeam1' }),
   team2: one(teams, { fields: [headToHead.team2Id], references: [teams.id], relationName: 'h2hTeam2' }),
   event: one(events, { fields: [headToHead.eventId], references: [events.id] }),
+}));
+
+export const playerAggregateStatsRelations = relations(playerAggregateStats, ({ one }) => ({
+  player: one(players, { fields: [playerAggregateStats.playerId], references: [players.id] }),
+}));
+
+export const mapVetoPatternsRelations = relations(mapVetoPatterns, ({ one }) => ({
+  team: one(teams, { fields: [mapVetoPatterns.teamId], references: [teams.id] }),
+}));
+
+export const liveMatchCacheRelations = relations(liveMatchCache, ({ one }) => ({
+  match: one(matches, { fields: [liveMatchCache.matchId], references: [matches.id] }),
+}));
+
+export const matchEventsRelations = relations(matchEvents, ({ one }) => ({
+  match: one(matches, { fields: [matchEvents.matchId], references: [matches.id] }),
+}));
+
+export const eventStreamsRelations = relations(eventStreams, ({ one }) => ({
+  event: one(events, { fields: [eventStreams.eventId], references: [events.id] }),
+}));
+
+export const userPredictionsRelations = relations(userPredictions, ({ one }) => ({
+  event: one(events, { fields: [userPredictions.eventId], references: [events.id] }),
+  match: one(matches, { fields: [userPredictions.matchId], references: [matches.id] }),
+  predictedWinner: one(teams, { fields: [userPredictions.predictedWinnerId], references: [teams.id] }),
 }));
