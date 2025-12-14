@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
-import { events, eventStreams } from '@/lib/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { events } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 
 export const revalidate = 300; // ISR: 5 minutos (mais frequente para dados ao vivo)
 
@@ -14,7 +14,6 @@ const FASTAPI_URL = process.env.FASTAPI_URL || 'https://multistream-cron-service
  * - Matches (da API FastAPI)
  * - Top Players (da API FastAPI)
  * - Top Teams (da API FastAPI)
- * - Streams ao vivo (do banco local)
  *
  * Usa queries paralelas para melhor performance
  */
@@ -49,22 +48,10 @@ export async function GET(
       );
     }
 
-    // 2. Queries paralelas: FastAPI overlay + streams locais
-    const [fastapiData, streams] = await Promise.all([
-      // Buscar dados da API FastAPI
-      fetch(`${FASTAPI_URL}/api/events/${slug}/overlay`, {
-        next: { revalidate: 300 } // 5 minutos de cache
-      }).then(res => res.ok ? res.json() : null).catch(() => null),
-
-      // Streams ao vivo do banco local
-      db.query.eventStreams.findMany({
-        where: and(
-          eq(eventStreams.eventId, event.id),
-          eq(eventStreams.isLive, true)
-        ),
-        orderBy: [desc(eventStreams.isOfficial), desc(eventStreams.viewerCount)],
-      }),
-    ]);
+    // 2. Buscar dados da API FastAPI
+    const fastapiData = await fetch(`${FASTAPI_URL}/api/events/${slug}/overlay`, {
+      next: { revalidate: 300 } // 5 minutos de cache
+    }).then(res => res.ok ? res.json() : null).catch(() => null);
 
     // 3. Processar dados da FastAPI
     const matches = fastapiData?.matches || [];
@@ -130,17 +117,7 @@ export async function GET(
         winRate: t.win_rate,
         mapsPlayed: t.maps_played,
       })),
-      streams: streams.map((s) => ({
-        id: s.id,
-        url: s.streamUrl,
-        platform: s.platform,
-        channelName: s.channelName,
-        language: s.language,
-        country: s.country,
-        isOfficial: s.isOfficial,
-        viewerCount: s.viewerCount,
-        isLive: s.isLive,
-      })),
+      streams: [], // TODO: Buscar streams quando disponível
     });
   } catch (error) {
     console.error('Error fetching event overlay data:', error);
