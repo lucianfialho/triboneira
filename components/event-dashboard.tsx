@@ -48,6 +48,9 @@ interface OverlayData {
   event: EventData;
   liveMatches: Match[];
   upcomingMatches: Match[];
+  finishedMatches: Match[];
+  topPlayers: any[];
+  topTeams: any[];
   streams: Stream[];
 }
 
