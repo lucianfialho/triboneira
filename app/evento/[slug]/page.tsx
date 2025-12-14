@@ -23,6 +23,8 @@ async function getEventBySlug(slug: string) {
         externalId: true,
         name: true,
         slug: true,
+        prizePool: true,
+        location: true,
       },
     });
   } catch (error) {
