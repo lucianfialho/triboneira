@@ -32,7 +32,6 @@ export async function GET(
         externalId: true,
         slug: true,
         name: true,
-        status: true,
         dateStart: true,
         dateEnd: true,
         prizePool: true,
@@ -92,7 +91,7 @@ export async function GET(
         externalId: event.externalId,
         slug: event.slug,
         name: event.name,
-        status: event.status,
+        status: 'ongoing', // TODO: calcular status baseado nas datas
         dateStart: event.dateStart?.toISOString() || null,
         dateEnd: event.dateEnd?.toISOString() || null,
         prizePool: event.prizePool,

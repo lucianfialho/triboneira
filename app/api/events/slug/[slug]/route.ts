@@ -46,7 +46,7 @@ export async function GET(
       dateEnd: event.dateEnd?.toISOString() || null,
       prizePool: event.prizePool,
       location: event.location,
-      status: event.status,
+      status: 'ongoing', // TODO: calcular status baseado nas datas
       championshipMode: event.championshipMode,
       streams: [], // TODO: Buscar streams quando disponível
     });
