@@ -61,7 +61,13 @@ export async function GET(
     // Separar matches por status
     const liveMatches = matches.filter((m: any) => m.status === 'live');
     const upcomingMatches = matches.filter((m: any) => m.status === 'upcoming' || m.status === 'scheduled');
-    const finishedMatches = matches.filter((m: any) => m.status === 'finished').slice(0, 10);
+
+    // Se o evento acabou, mostra TODAS as partidas finalizadas (histórico completo)
+    // Se ainda está rolando, mostra apenas as 10 mais recentes
+    const allFinishedMatches = matches.filter((m: any) => m.status === 'finished');
+    const finishedMatches = event.status === 'finished'
+      ? allFinishedMatches  // Evento acabou: mostra todas
+      : allFinishedMatches.slice(0, 10);  // Evento ativo: mostra só as 10 mais recentes
 
     // Converter formato da FastAPI para o formato esperado pelo frontend
     const convertMatch = (m: any) => ({
