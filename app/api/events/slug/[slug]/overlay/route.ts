@@ -48,10 +48,14 @@ export async function GET(
       );
     }
 
-    // 2. Buscar dados da API FastAPI
-    const fastapiData = await fetch(`${FASTAPI_URL}/api/events/${slug}/overlay`, {
-      next: { revalidate: 300 } // 5 minutos de cache
-    }).then(res => res.ok ? res.json() : null).catch(() => null);
+    // 2. Buscar dados da API FastAPI com limites maiores
+    // - matches_limit: 500 (para eventos grandes)
+    // - teams_limit: 50 (todos os times do evento)
+    // - players_limit: 50 (top 50 jogadores quando disponível)
+    const fastapiData = await fetch(
+      `${FASTAPI_URL}/api/events/${slug}/overlay?matches_limit=500&teams_limit=50&players_limit=50`,
+      { next: { revalidate: 300 } }
+    ).then(res => res.ok ? res.json() : null).catch(() => null);
 
     // 3. Processar dados da FastAPI
     const matches = fastapiData?.matches || [];
