@@ -61,6 +61,7 @@ export async function GET(
     const matches = fastapiData?.matches || [];
     const topPlayers = fastapiData?.topPlayers || [];
     const topTeams = fastapiData?.topTeams || [];
+    const highlights = fastapiData?.highlights || [];
     const fastapiEventStatus = fastapiData?.event?.status || event.status || 'upcoming';
 
     // Separar matches por status
@@ -127,6 +128,16 @@ export async function GET(
         losses: t.losses,
         winRate: t.win_rate,
         mapsPlayed: t.maps_played,
+      })),
+      highlights: highlights.map((h: any) => ({
+        title: h.title,
+        url: h.url,
+        embed_url: h.embed_url,
+        thumbnail: h.thumbnail,
+        video_id: h.video_id,
+        duration: h.duration,
+        platform: h.platform,
+        view_count: h.view_count,
       })),
       streams: [], // TODO: Buscar streams quando disponível
     });
