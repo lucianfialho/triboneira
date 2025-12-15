@@ -18,16 +18,20 @@ interface NewsAnalysisInput {
  */
 export async function generateAnalyticalCommentary(input: NewsAnalysisInput): Promise<string | null> {
   try {
+    console.log(`   📝 Generating commentary for: "${input.title.substring(0, 50)}..."`);
+
     // Build context from summary bullets if available
     let context = '';
     if (input.summary && Array.isArray(input.summary)) {
       context = input.summary.map(b => `- ${b.text}`).join('\n');
+      console.log(`   📊 Using ${input.summary.length} bullets for context`);
     }
 
     // If we have translated content, use first 500 chars as additional context
     if (input.content && input.content.length > 0) {
       const contentPreview = input.content.substring(0, 500);
       context += `\n\nConteúdo: ${contentPreview}...`;
+      console.log(`   📄 Added content preview (${contentPreview.length} chars)`);
     }
 
     const prompt = `Você é um analista profissional de Counter-Strike 2 (CS2) criando comentários para Twitter.
@@ -53,8 +57,10 @@ Exemplos de bom comentário analítico:
 
 IMPORTANTE: Retorne APENAS o comentário, sem aspas ou formatação extra. Máximo 180 caracteres.`;
 
+    console.log(`   🔧 Calling OpenAI with model: gpt-4o-mini`);
+
     const completion = await openai.chat.completions.create({
-      model: 'gpt-5-nano-2025-08-07',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -69,21 +75,30 @@ IMPORTANTE: Retorne APENAS o comentário, sem aspas ou formatação extra. Máxi
       max_completion_tokens: 100,
     });
 
+    console.log(`   📦 API Response - Choices: ${completion.choices?.length || 0}`);
+    console.log(`   📦 API Response - Finish reason: ${completion.choices[0]?.finish_reason}`);
+
     const commentary = completion.choices[0]?.message?.content?.trim();
 
+    console.log(`   🤖 AI Response: "${commentary?.substring(0, 100) || 'EMPTY'}"`);
+
     if (!commentary || commentary.length === 0) {
+      console.log(`   ⚠️  AI returned empty commentary`);
       return null;
     }
 
     // Ensure it's not too long (leave room for title + links)
     if (commentary.length > 180) {
-      return commentary.substring(0, 177) + '...';
+      const truncated = commentary.substring(0, 177) + '...';
+      console.log(`   ✂️  Truncated to ${truncated.length} chars`);
+      return truncated;
     }
 
+    console.log(`   ✅ Commentary generated: ${commentary.length} chars`);
     return commentary;
 
   } catch (error: any) {
-    console.error(`Error generating analytical commentary: ${error.message}`);
+    console.error(`   ❌ Error generating analytical commentary: ${error.message}`);
     return null;
   }
 }

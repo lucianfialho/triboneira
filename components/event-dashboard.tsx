@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { EventHighlights } from './event-highlights';
+import { getProxiedTeamLogo } from '@/lib/utils/team-logo';
 
 interface Team {
   id: number;
@@ -211,7 +212,7 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
                       <div className="relative">
                         <div className="absolute inset-0 bg-yellow-500/10 blur-xl rounded-full" />
                         <Image
-                          src={championTeam.logoUrl}
+                          src={getProxiedTeamLogo(championTeam.logoUrl) || championTeam.logoUrl}
                           alt={championTeam.name}
                           width={80}
                           height={80}
@@ -306,7 +307,7 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
                         <div className="flex items-center gap-3">
                           {team.teamLogo && (
                             <Image
-                              src={team.teamLogo}
+                              src={getProxiedTeamLogo(team.teamLogo) || team.teamLogo}
                               alt={team.teamName}
                               width={32}
                               height={32}
@@ -366,7 +367,7 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
                     <div className="flex items-center gap-3 flex-1">
                       {match.team1?.logoUrl && (
                         <Image
-                          src={match.team1.logoUrl}
+                          src={getProxiedTeamLogo(match.team1.logoUrl) || match.team1.logoUrl}
                           alt={match.team1.name}
                           width={48}
                           height={48}
@@ -402,7 +403,7 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
                     <div className="flex items-center gap-3 flex-1 flex-row-reverse">
                       {match.team2?.logoUrl && (
                         <Image
-                          src={match.team2.logoUrl}
+                          src={getProxiedTeamLogo(match.team2.logoUrl) || match.team2.logoUrl}
                           alt={match.team2.name}
                           width={48}
                           height={48}
@@ -454,7 +455,7 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
                     <div className="flex items-center gap-2">
                       {match.team1?.logoUrl && (
                         <Image
-                          src={match.team1.logoUrl}
+                          src={getProxiedTeamLogo(match.team1.logoUrl) || match.team1.logoUrl}
                           alt={match.team1.name}
                           width={24}
                           height={24}
@@ -477,7 +478,7 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
                       <span className="font-medium">{match.team2?.name || 'TBD'}</span>
                       {match.team2?.logoUrl && (
                         <Image
-                          src={match.team2.logoUrl}
+                          src={getProxiedTeamLogo(match.team2.logoUrl) || match.team2.logoUrl}
                           alt={match.team2.name}
                           width={24}
                           height={24}
@@ -527,7 +528,7 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
                     <div className="flex items-center gap-2">
                       {match.team1?.logoUrl && (
                         <Image
-                          src={match.team1.logoUrl}
+                          src={getProxiedTeamLogo(match.team1.logoUrl) || match.team1.logoUrl}
                           alt={match.team1.name}
                           width={24}
                           height={24}
@@ -545,7 +546,7 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
                       <span className="font-medium">{match.team2?.name || 'TBD'}</span>
                       {match.team2?.logoUrl && (
                         <Image
-                          src={match.team2.logoUrl}
+                          src={getProxiedTeamLogo(match.team2.logoUrl) || match.team2.logoUrl}
                           alt={match.team2.name}
                           width={24}
                           height={24}
