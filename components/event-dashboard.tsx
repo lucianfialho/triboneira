@@ -188,28 +188,56 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
       <div className="max-w-7xl mx-auto">
         {/* Champion Highlight - Only for finished events */}
         {event.status === 'finished' && championTeam && (
-          <div className="mb-8 glass-card p-8 text-center bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-2 border-yellow-500/20">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Trophy className="w-8 h-8 text-yellow-500" />
-              <h2 className="text-2xl font-bold">Campeão</h2>
-              <Trophy className="w-8 h-8 text-yellow-500" />
-            </div>
-            <div className="flex items-center justify-center gap-4 mb-4">
-              {championTeam.logoUrl && (
-                <Image
-                  src={championTeam.logoUrl}
-                  alt={championTeam.name}
-                  width={96}
-                  height={96}
-                  className="w-24 h-24 object-contain"
-                  unoptimized
-                />
-              )}
-              <div>
-                <h3 className="text-4xl font-bold mb-2">{championTeam.name}</h3>
+          <div className="mb-8 relative overflow-hidden">
+            <div className="glass-card p-10 text-center relative">
+              {/* Background gradient effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-orange-500/5" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-yellow-500 to-transparent" />
+
+              <div className="relative z-10">
+                {/* Trophy Icon */}
+                <div className="mb-6 flex justify-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-yellow-500/20 blur-2xl rounded-full" />
+                    <Trophy className="relative w-16 h-16 text-yellow-500" />
+                  </div>
+                </div>
+
+                {/* Champion Name */}
+                <div className="mb-6">
+                  <p className="text-sm uppercase tracking-wider text-yellow-500 mb-2 font-semibold">Campeão do Torneio</p>
+                  <div className="flex items-center justify-center gap-6">
+                    {championTeam.logoUrl && (
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-yellow-500/10 blur-xl rounded-full" />
+                        <Image
+                          src={championTeam.logoUrl}
+                          alt={championTeam.name}
+                          width={80}
+                          height={80}
+                          className="relative w-20 h-20 object-contain drop-shadow-2xl"
+                          unoptimized
+                        />
+                      </div>
+                    )}
+                    <h3 className="text-5xl font-black bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 bg-clip-text text-transparent">
+                      {championTeam.name}
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Match Result */}
                 {champion && champion.scoreTeam1 !== null && champion.scoreTeam2 !== null && (
-                  <div className="text-lg text-[hsl(var(--muted-foreground))]">
-                    Venceu {champion.scoreTeam1 > champion.scoreTeam2 ? champion.team2?.name : champion.team1?.name} por {Math.max(champion.scoreTeam1, champion.scoreTeam2)}-{Math.min(champion.scoreTeam1, champion.scoreTeam2)}
+                  <div className="inline-flex items-center gap-4 px-6 py-3 bg-white/5 rounded-full backdrop-blur-sm border border-white/10">
+                    <span className="text-sm text-[hsl(var(--muted-foreground))]">Final</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl font-bold text-green-500">{Math.max(champion.scoreTeam1, champion.scoreTeam2)}</span>
+                      <span className="text-sm text-[hsl(var(--muted-foreground))]">-</span>
+                      <span className="text-xl font-bold text-red-500">{Math.min(champion.scoreTeam1, champion.scoreTeam2)}</span>
+                    </div>
+                    <span className="text-sm text-[hsl(var(--muted-foreground))]">
+                      vs {champion.scoreTeam1 > champion.scoreTeam2 ? champion.team2?.name : champion.team1?.name}
+                    </span>
                   </div>
                 )}
               </div>
