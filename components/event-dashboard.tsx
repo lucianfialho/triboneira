@@ -231,12 +231,11 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
           </div>
         </div>
 
-        {/* Team Standings - Show for finished events or when we have team stats */}
+        {/* Team Standings - Show only top 5 */}
         {topTeams && topTeams.length > 0 && (
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              📊 Classificação dos Times
-              <Badge variant="outline">{topTeams.length} times</Badge>
+              📊 Top 5 Times
             </h2>
             <div className="glass-card p-6 overflow-x-auto">
               <table className="w-full">
@@ -251,7 +250,7 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
                   </tr>
                 </thead>
                 <tbody>
-                  {topTeams.map((team: any, index: number) => (
+                  {topTeams.slice(0, 5).map((team: any, index: number) => (
                     <tr key={index} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="py-3 px-2">
                         {index < 3 ? (
