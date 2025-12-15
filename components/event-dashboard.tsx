@@ -194,7 +194,7 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
               )}
               <div>
                 <h3 className="text-4xl font-bold mb-2">{championTeam.name}</h3>
-                {champion && (
+                {champion && champion.scoreTeam1 !== null && champion.scoreTeam2 !== null && (
                   <div className="text-lg text-[hsl(var(--muted-foreground))]">
                     Venceu {champion.scoreTeam1 > champion.scoreTeam2 ? champion.team2?.name : champion.team1?.name} por {Math.max(champion.scoreTeam1, champion.scoreTeam2)}-{Math.min(champion.scoreTeam1, champion.scoreTeam2)}
                   </div>
