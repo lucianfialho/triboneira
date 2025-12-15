@@ -5,6 +5,7 @@ import { Play, Clock, Trophy, Tv, Users, Plus, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import { EventHighlights } from './event-highlights';
 
 interface Team {
   id: number;
@@ -44,6 +45,17 @@ interface EventData {
   location: string | null;
 }
 
+interface Highlight {
+  title: string;
+  url: string;
+  embed_url?: string;
+  thumbnail: string;
+  video_id?: string;
+  duration?: string;
+  platform: 'twitch' | 'youtube' | 'other';
+  view_count?: number;
+}
+
 interface OverlayData {
   event: EventData;
   liveMatches: Match[];
@@ -52,6 +64,7 @@ interface OverlayData {
   topPlayers: any[];
   topTeams: any[];
   streams: Stream[];
+  highlights?: Highlight[];
 }
 
 interface EventDashboardProps {
@@ -290,6 +303,11 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
               </table>
             </div>
           </div>
+        )}
+
+        {/* Highlights Section */}
+        {data?.highlights && data.highlights.length > 0 && (
+          <EventHighlights highlights={data.highlights} />
         )}
 
         {/* Header */}
