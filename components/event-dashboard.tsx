@@ -159,11 +159,140 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
     );
   }
 
-  const { event, liveMatches, upcomingMatches, streams } = data;
+  const { event, liveMatches, upcomingMatches, streams, finishedMatches, topTeams } = data;
+
+  // Get champion from finished events
+  const champion = event.status === 'finished' && finishedMatches.length > 0
+    ? finishedMatches[0] // Last match (final)
+    : null;
+
+  const championTeam = champion && champion.scoreTeam1 !== null && champion.scoreTeam2 !== null
+    ? (champion.scoreTeam1 > champion.scoreTeam2 ? champion.team1 : champion.team2)
+    : null;
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Champion Highlight - Only for finished events */}
+        {event.status === 'finished' && championTeam && (
+          <div className="mb-8 glass-card p-8 text-center bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-2 border-yellow-500/20">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Trophy className="w-8 h-8 text-yellow-500" />
+              <h2 className="text-2xl font-bold">Campeão</h2>
+              <Trophy className="w-8 h-8 text-yellow-500" />
+            </div>
+            <div className="flex items-center justify-center gap-4 mb-4">
+              {championTeam.logoUrl && (
+                <Image
+                  src={championTeam.logoUrl}
+                  alt={championTeam.name}
+                  width={96}
+                  height={96}
+                  className="w-24 h-24 object-contain"
+                  unoptimized
+                />
+              )}
+              <div>
+                <h3 className="text-4xl font-bold mb-2">{championTeam.name}</h3>
+                {champion && (
+                  <div className="text-lg text-[hsl(var(--muted-foreground))]">
+                    Venceu {champion.scoreTeam1 > champion.scoreTeam2 ? champion.team2?.name : champion.team1?.name} por {Math.max(champion.scoreTeam1, champion.scoreTeam2)}-{Math.min(champion.scoreTeam1, champion.scoreTeam2)}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Event Info Card */}
+        <div className="mb-8 grid md:grid-cols-3 gap-4">
+          <div className="glass-card p-6">
+            <div className="flex items-center gap-2 mb-2 text-[hsl(var(--muted-foreground))]">
+              <Trophy className="w-4 h-4" />
+              <span className="text-sm font-medium">Prize Pool</span>
+            </div>
+            <div className="text-2xl font-bold">{event.prizePool || 'TBD'}</div>
+          </div>
+          <div className="glass-card p-6">
+            <div className="flex items-center gap-2 mb-2 text-[hsl(var(--muted-foreground))]">
+              📍
+              <span className="text-sm font-medium">Local</span>
+            </div>
+            <div className="text-2xl font-bold">{event.location || 'TBD'}</div>
+          </div>
+          <div className="glass-card p-6">
+            <div className="flex items-center gap-2 mb-2 text-[hsl(var(--muted-foreground))]">
+              🏆
+              <span className="text-sm font-medium">Status</span>
+            </div>
+            <div className="text-2xl font-bold capitalize">
+              {event.status === 'finished' ? 'Finalizado' : event.status === 'ongoing' ? 'Em Andamento' : 'Agendado'}
+            </div>
+          </div>
+        </div>
+
+        {/* Team Standings - Show for finished events or when we have team stats */}
+        {topTeams && topTeams.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              📊 Classificação dos Times
+              <Badge variant="outline">{topTeams.length} times</Badge>
+            </h2>
+            <div className="glass-card p-6 overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left py-3 px-2">#</th>
+                    <th className="text-left py-3 px-4">Time</th>
+                    <th className="text-center py-3 px-4">V</th>
+                    <th className="text-center py-3 px-4">D</th>
+                    <th className="text-center py-3 px-4">Maps</th>
+                    <th className="text-right py-3 px-4">Win Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topTeams.map((team: any, index: number) => (
+                    <tr key={index} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <td className="py-3 px-2">
+                        {index < 3 ? (
+                          <span className="text-lg">
+                            {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                          </span>
+                        ) : (
+                          <span className="text-[hsl(var(--muted-foreground))]">{index + 1}</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          {team.teamLogo && (
+                            <Image
+                              src={team.teamLogo}
+                              alt={team.teamName}
+                              width={32}
+                              height={32}
+                              className="w-8 h-8 object-contain"
+                              unoptimized
+                            />
+                          )}
+                          <span className="font-medium">{team.teamName}</span>
+                        </div>
+                      </td>
+                      <td className="text-center py-3 px-4 font-medium text-green-500">{team.wins}</td>
+                      <td className="text-center py-3 px-4 font-medium text-red-500">{team.losses}</td>
+                      <td className="text-center py-3 px-4 text-[hsl(var(--muted-foreground))]">{team.mapsPlayed}</td>
+                      <td className="text-right py-3 px-4">
+                        <Badge variant={team.winRate >= 70 ? 'default' : 'outline'}>
+                          {team.winRate?.toFixed(1)}%
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -174,20 +303,7 @@ export function EventDashboard({ slug, eventId, onStartMultistream }: EventDashb
               </div>
             )}
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">{event.name}</h1>
-          <div className="flex flex-wrap gap-4 text-sm text-[hsl(var(--muted-foreground))]">
-            {event.prizePool && (
-              <div className="flex items-center gap-2">
-                <Trophy className="w-4 h-4" />
-                {event.prizePool}
-              </div>
-            )}
-            {event.location && (
-              <div className="flex items-center gap-2">
-                📍 {event.location}
-              </div>
-            )}
-          </div>
+          <h2 className="text-2xl font-bold mb-2">Partidas</h2>
         </div>
 
         {/* Live Matches */}
