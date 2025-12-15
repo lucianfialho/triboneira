@@ -57,6 +57,7 @@ export async function GET(
     const matches = fastapiData?.matches || [];
     const topPlayers = fastapiData?.topPlayers || [];
     const topTeams = fastapiData?.topTeams || [];
+    const fastapiEventStatus = fastapiData?.event?.status || event.status || 'upcoming';
 
     // Separar matches por status
     const liveMatches = matches.filter((m: any) => m.status === 'live');
@@ -65,7 +66,7 @@ export async function GET(
     // Se o evento acabou, mostra TODAS as partidas finalizadas (histórico completo)
     // Se ainda está rolando, mostra apenas as 10 mais recentes
     const allFinishedMatches = matches.filter((m: any) => m.status === 'finished');
-    const finishedMatches = event.status === 'finished'
+    const finishedMatches = fastapiEventStatus === 'finished'
       ? allFinishedMatches  // Evento acabou: mostra todas
       : allFinishedMatches.slice(0, 10);  // Evento ativo: mostra só as 10 mais recentes
 
@@ -98,7 +99,7 @@ export async function GET(
         externalId: event.externalId,
         slug: event.slug,
         name: event.name,
-        status: event.status,
+        status: fastapiEventStatus,  // Use status from FastAPI (source of truth)
         dateStart: event.dateStart?.toISOString() || null,
         dateEnd: event.dateEnd?.toISOString() || null,
         prizePool: event.prizePool,
